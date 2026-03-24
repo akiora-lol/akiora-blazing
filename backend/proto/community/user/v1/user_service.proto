@@ -1,5 +1,5 @@
 syntax = "proto3";
-import "google/type/date.proto";
+
 package akiora.community.user;
 
 message CreateUserRequest {
@@ -14,38 +14,36 @@ enum Gender {
 }
 
 message Social {
-    string link = 1;
-    bool hide = 2;
+  string link = 1;
+  bool hide = 2;
 }
 
-message PatchUserRequest  {
+message PatchUserRequest {
   string email = 1;
   string name = 2;
   string bio = 3;
   Gender gender = 4;
-  google.type.Date birthday = 5;
+  string birthday = 5;
   repeated Social socials = 6;
 }
 
-message UserResponse{
-    string email = 1;
-    string name = 2;
-    string bio = 3;
-    Gender gender = 4;
-    google.type.Date birthday = 5;
-    repeated Social socials = 6;
-    string id = 7;    
+message UserResponse {
+  string email = 1;
+  string name = 2;
+  string bio = 3;
+  Gender gender = 4;
+  string birthday = 5;
+  repeated Social socials = 6;
+  string id = 7;
 }
 
-message GetUserRequest{
-    string id=1;
-    string email=2;   
+message GetUserRequest {
+  string id = 1;
+  string email = 2;
 }
 
 service UserService {
-  
-  rpc CreateUser (CreateUserRequest) returns (UserResponse);   
-  rpc UpdateUser (PatchUserRequest) returns (UserResponse);
+  rpc CreateUser(CreateUserRequest) returns (UserResponse);
+  rpc UpdateUser(PatchUserRequest) returns (UserResponse);
   rpc GetUser(GetUserRequest) returns (UserResponse);
-
 }
