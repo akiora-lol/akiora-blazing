@@ -1,7 +1,7 @@
 [workspace]
 
 resolver="3"
-members = ["proto-build", "services/draft", "services/game","shared"]
+members = ["proto-build", "services/draft", "services/game", "services/gateway","shared"]
 
 [workspace.dependencies]
 shared = { path = "shared" }
@@ -12,7 +12,7 @@ bitvec = { version = "1.0.1", features = ["serde"] }
 tokio = { version = "1.50.0", features = ["full"] }
 axum = "0.8.8"
 chrono = { version = "0.4.44", features = ["serde"] }
-redis = { version = "1.0.5", features = ["tokio-comp","aio"] }
+redis = { version = "1.0.5", features = ["tokio-comp","aio","connection-manager"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 time = "0.3.47"
