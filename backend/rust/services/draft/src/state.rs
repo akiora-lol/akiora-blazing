@@ -1,5 +1,6 @@
 use bitvec::prelude::*;
 use chrono::{DateTime, Utc};
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -8,7 +9,7 @@ pub struct Draft {
     history: Vec<Command>,
     deadline: DateTime<Utc>,
     game_id: Uuid,
-    forbidden_champions: BitArray<[u8; 20], Lsb0>,
+    forbidden_champions: BitArray<[u8; 30], Lsb0>,
     settings: Settings,
     stage: usize,
 }
