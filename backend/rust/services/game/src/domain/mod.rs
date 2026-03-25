@@ -1,7 +1,6 @@
-pub mod game;
-pub mod game_series;
-pub mod tournament;
+pub mod models;
+pub mod services;
 pub mod value_objects;
 
-pub use game::Game;
-pub use game_series::GameSeries;
+pub use crate::domain::models::Game;
+pub use crate::domain::models::GameSeries;
