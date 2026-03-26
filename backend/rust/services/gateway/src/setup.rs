@@ -1,5 +1,5 @@
+use redis::Client;
 use redis::aio::{ConnectionManager, ConnectionManagerConfig};
-use redis::{AsyncCommands, Client, RedisError};
 use std::error::Error;
 use std::time::Duration;
 pub async fn setup() -> Result<ConnectionManager, Box<dyn Error>> {

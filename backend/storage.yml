@@ -16,6 +16,16 @@ services:
             - 8082:8081
         depends_on:
             - redis
+    mongodb:
+        image: mongo:8.0
+        container_name: mongodb-akiora
+        ports:
+            - "27017:27017"
+        volumes:
+            - akiora_db_data:/data/db
+            - ./config/mongo-init.js:/docker-entrypoint-initdb.d/init.js
+        command: mongod --replSet rs0 --bind_ip_all
 
 volumes:
     akiora_redis_data:
+    akiora_db_data:
