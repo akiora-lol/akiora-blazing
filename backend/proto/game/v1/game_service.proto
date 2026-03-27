@@ -1,50 +1,94 @@
 syntax = "proto3";
 
-package akiora.game;
+package akiora.game.game;
 
-message CreateUserRequest {
-  string email = 1;
-  string name = 2;
+import "common/types.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "akiora/game/game";
+
+// --- Запросы и ответы ---
+
+message CreateGameRequest {
+  string game_series_id = 1; // ID серии игр
+  optional Draft draft = 2; // Опциональная информация о драфте
 }
 
-enum Game {
-  ANY = 0;
-  LOL = 1;
-  TFT = 2;
-  VALO = 2;
-}
-
-message Social {
-  string link = 1;
-  bool hide = 2;
-}
-
-message PatchUserRequest {
-  string email = 1;
-  string name = 2;
-  string bio = 3;
-  Gender gender = 4;
-  string birthday = 5;
-  repeated Social socials = 6;
-}
-
-message UserResponse {
-  string email = 1;
-  string name = 2;
-  string bio = 3;
-  Gender gender = 4;
-  string birthday = 5;
-  repeated Social socials = 6;
-  string id = 7;
-}
-
-message GetUserRequest {
+message GetGameRequest {
   string id = 1;
-  string email = 2;
 }
 
-service UserService {
-  rpc CreateUser(CreateUserRequest) returns (UserResponse);
-  rpc UpdateUser(PatchUserRequest) returns (UserResponse);
-  rpc GetUser(GetUserRequest) returns (UserResponse);
+message GetGamesRequest {
+  repeated string ids = 1;
+  optional string game_series_id = 2; // Фильтр по серии
+}
+
+message UpdateGameResultRequest {
+  string id = 1;
+  repeated common.TeamParticipant results = 2; // Результаты игры
+}
+
+message GameResponse {
+  string id = 1;
+  string game_series_id = 2;
+  optional Draft draft = 3;
+  repeated common.TeamParticipant results = 4;
+  optional google.protobuf.Timestamp start = 5;
+  optional google.protobuf.Timestamp end = 6;
+  common.Status status = 7;
+}
+
+message ManyGamesResponse {
+  repeated GameResponse games = 1;
+}
+
+// --- Драфт (для LoL и подобных игр) ---
+
+message Draft {
+  repeated Command history = 1;
+  repeated ChampLock picks = 2;
+  bytes forbidden_champions = 3; // BitArray в виде байтов
+}
+
+message Command {
+  Team team = 1;
+  Action action = 2;
+}
+
+enum Team {
+  TEAM_UNSPECIFIED = 0;
+  RED = 1;
+  BLUE = 2;
+}
+
+message Action {
+  oneof action_type {
+    int32 pick = 1; // индекс чемпиона
+    int32 ban = 2; // индекс чемпиона
+  }
+}
+
+message ChampLock {
+  int32 champion_id = 1;
+  string player_id = 2;
+}
+
+// --- Сервис ---
+
+service GameService {
+  // Создание игры (обычно вызывается GameSeriesService)
+  rpc CreateGame(CreateGameRequest) returns (GameResponse);
+
+  // Получение игры по ID
+  rpc GetGame(GetGameRequest) returns (GameResponse);
+
+  // Получение нескольких игр
+  rpc GetGames(GetGamesRequest) returns (ManyGamesResponse);
+
+  // Обновление результатов игры
+  rpc UpdateGameResult(UpdateGameResultRequest) returns (GameResponse);
+
+  // Завершение игры
+  rpc FinishGame(GetGameRequest) returns (GameResponse);
 }

@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package akiora.game.tournament;
+
+import "common/types.proto";
+import "game/v1/gameseries_service.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "akiora/game/tournament";
+
+// --- Настройки турнира ---
+
+message LolTournamentSettings {
+  LolBracketMode bracket_mode = 1;
+  gameseries.LolGameMode draft_mode = 2;
+  uint32 team_size = 3;
+  uint32 map = 4;
+  bytes forbidden_champions = 5;      // BitArray в виде байтов
+  repeated uint32 series_best_of = 6;  // best_of для каждого этапа (финал, полуфинал и т.д.)
+}
+
+enum LolBracketMode {
+  ANY = 0;
+  DOUBLE_ELIM = 1;
+  SINGLE_ELIM_THIRD_PLACE = 2;   // с матчем за 3-е место
+  SINGLE_ELIM_NO_THIRD_PLACE = 3; // без матча за 3-е место
+  SWISS = 4;
+  ROUND_ROBIN = 5;
+  DELETE = 6;
+}
+
+message TftTournamentSettings {
+  uint32 player_count_per_lobby = 1;
+  uint32 rounds = 2;
+  string set_version = 3;
+}
+
+message ValorantTournamentSettings {
+  uint32 team_size = 1;
+  string map_pool = 2;
+  uint32 best_of = 3;
+  bool overtime_enabled = 4;
+}
+
+message TournamentSettings {
+  gameseries.GameType game_type = 1;
+  oneof settings {
+    LolTournamentSettings lol = 2;
+    TftTournamentSettings tft = 3;
+    ValorantTournamentSettings valorant = 4;
+  }
+}
+
+// --- Запросы и ответы ---
+
+message CreateTournamentRequest {
+  common.Actor host = 1;                       // Организатор
+  repeated common.Actor participants = 2;       // Участники (команды)
+  TournamentSettings settings = 3;              // Настройки
+  google.protobuf.Timestamp start = 4;          // Дата начала
+  optional string prizepool = 5;                // Призовой фонд (можно структуру сделать)
+}
+
+message GetTournamentRequest {
+  repeated string ids = 1;
+  optional gameseries.GameType game_type = 2;
+}
+
+message TournamentResponse {
+  string id = 1;
+  common.Actor host = 2;
+  repeated common.Actor participants = 3;
+  TournamentSettings settings = 4;
+  repeated string game_series_ids = 5;          // ID серий игр в турнире
+  google.protobuf.Timestamp start = 6;
+  optional google.protobuf.Timestamp end = 7;
+  common.Status status = 8;
+  optional string prizepool = 9;
+}
+
+message ManyTournamentsResponse {
+  repeated TournamentResponse tournaments = 1;
+}
+
+// --- Сервис ---
+
+service TournamentService {
+  // Создание турнира
+  rpc CreateTournament(CreateTournamentRequest) returns (TournamentResponse);
+
+  // Получение турнира по ID
+  rpc GetTournament(GetTournamentRequest) returns (TournamentResponse);
+
+  // Получение списка турниров
+  rpc GetTournaments(GetTournamentRequest) returns (ManyTournamentsResponse);
+
+  // Запуск турнира (создаёт сетку/расписание)
+  rpc StartTournament(GetTournamentRequest) returns (TournamentResponse);
+
+  // Завершение турнира
+  rpc FinishTournament(GetTournamentRequest) returns (TournamentResponse);
+
+  // Добавление участника
+  rpc AddParticipant(AddParticipantRequest) returns (TournamentResponse);
+
+  // Удаление участника
+  rpc RemoveParticipant(RemoveParticipantRequest) returns (TournamentResponse);
+}
+
+message AddParticipantRequest {
+  string tournament_id = 1;
+  common.Actor participant = 2;
+}
+
+message RemoveParticipantRequest {
+  string tournament_id = 1;
+  string participant_id = 2;
+}

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package akiora.common;
+
+option go_package = "akiora/common";
+// Типы участников
+enum ActorType {
+  ANY = 0;
+  USER = 1;
+  GROUP = 2;
+  CLUB = 3;
+}
+
+// Участник (пользователь, группа, клуб)
+message Actor {
+  string id = 1;
+  ActorType type = 2;
+}
+
+message TeamParticipant {
+  Actor participant = 1; // ID команды/группы/клуба
+  repeated string user_ids = 2; // ID игроков в команде
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  SCHEDULED = 1;
+  ACTIVE = 2;
+  FINISHED = 3;
+  CANCELLED = 4;
+}
