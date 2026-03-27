@@ -1,4 +1,5 @@
 use bitvec::{array::BitArray, order::Lsb0};
+use mongodb::bson::{self, Bson};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -27,4 +28,10 @@ pub struct Draft {
     history: Vec<Command>,
     picks: Vec<ChampLock>,
     forbidden_champions: BitArray<[u8; 30], Lsb0>,
+}
+
+impl From<Draft> for Bson {
+    fn from(draft: Draft) -> Self {
+        bson::to_bson(&draft).unwrap() // или обработайте ошибку
+    }
 }

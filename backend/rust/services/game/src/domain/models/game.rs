@@ -1,9 +1,8 @@
-use core::str;
-
-use crate::domain::value_objects::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::domain::value_objects::*;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Game {
@@ -12,6 +11,63 @@ pub struct Game {
     game_series: Uuid,
     draft: Option<Draft>,
     results: Option<Vec<TeamParticipant>>,
-    started: Option<DateTime<Utc>>,
-    ended: Option<DateTime<Utc>>,
+    start: Option<DateTime<Utc>>,
+    end: Option<DateTime<Utc>>,
+}
+
+impl Game {
+    pub fn new(id: Uuid, game_series: Uuid) -> Self {
+        Self {
+            id,
+            game_series,
+            draft: None,
+            results: None,
+            start: None,
+            end: None,
+        }
+    }
+
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
+    pub fn game_series_id(&self) -> Uuid {
+        self.game_series
+    }
+
+    pub fn draft(&self) -> Option<&Draft> {
+        self.draft.as_ref()
+    }
+
+    pub fn set_draft(&mut self, draft: Draft) {
+        self.draft = Some(draft);
+    }
+
+    pub fn results(&self) -> Option<&Vec<TeamParticipant>> {
+        self.results.as_ref()
+    }
+
+    pub fn set_results(&mut self, results: Vec<TeamParticipant>) {
+        self.results = Some(results);
+    }
+
+    pub fn start(&self) -> Option<DateTime<Utc>> {
+        self.start
+    }
+
+    pub fn set_start(&mut self, start: DateTime<Utc>) {
+        self.start = Some(start);
+    }
+
+    pub fn end(&self) -> Option<DateTime<Utc>> {
+        self.end
+    }
+
+    pub fn set_end(&mut self, end: DateTime<Utc>) {
+        self.end = Some(end);
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.end.is_some()
+    }
 }

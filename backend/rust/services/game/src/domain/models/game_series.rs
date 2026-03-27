@@ -1,7 +1,6 @@
-use core::str;
-
 use crate::domain::Game;
 use crate::domain::value_objects::*;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -10,10 +9,73 @@ use uuid::Uuid;
 pub struct GameSeries {
     #[serde(rename = "_id")]
     id: Uuid,
-    teams: Vec<Participant>,
+    teams: Vec<Actor>,
     settings: GameSettings,
-    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     games: Option<Vec<Game>>,
-    started: Option<DateTime<Utc>>,
-    ended: Option<DateTime<Utc>>,
+
+    start: Option<DateTime<Utc>>,
+
+    end: Option<DateTime<Utc>>,
+}
+
+impl GameSeries {
+    pub fn new(id: Uuid, teams: Vec<Actor>, settings: GameSettings) -> Self {
+        Self {
+            id,
+            teams,
+            settings,
+            games: None,
+            start: None,
+            end: None,
+        }
+    }
+
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
+    pub fn teams(&self) -> &[Actor] {
+        &self.teams
+    }
+
+    pub fn settings(&self) -> &GameSettings {
+        &self.settings
+    }
+
+    pub fn games(&self) -> Option<&Vec<Game>> {
+        self.games.as_ref()
+    }
+
+    pub fn set_games(&mut self, games: Vec<Game>) {
+        self.games = Some(games);
+    }
+
+    pub fn add_game(&mut self, game: Game) {
+        if let Some(ref mut games) = self.games {
+            games.push(game);
+        } else {
+            self.games = Some(vec![game]);
+        }
+    }
+
+    pub fn start(&self) -> Option<DateTime<Utc>> {
+        self.start
+    }
+
+    pub fn set_start(&mut self, start: DateTime<Utc>) {
+        self.start = Some(start);
+    }
+
+    pub fn end(&self) -> Option<DateTime<Utc>> {
+        self.end
+    }
+
+    pub fn set_end(&mut self, end: DateTime<Utc>) {
+        self.end = Some(end);
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.end.is_some()
+    }
 }
