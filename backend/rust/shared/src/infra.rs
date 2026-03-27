@@ -18,10 +18,4 @@ where
     pub fn get_collection(&self) -> &Collection<T> {
         &self.collection
     }
-    pub async fn create_indexes(
-        &self,
-        indexes: Vec<IndexModel>,
-    ) -> Result<CreateIndexesResult, mongodb::error::Error> {
-        self.collection.create_indexes(indexes).await
-    }
 }
