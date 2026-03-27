@@ -10,8 +10,8 @@ pub enum Team {
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ChampLock {
-    champion_id: u8,
-    player: Uuid,
+    pub champion_id: u8,
+    pub player: Uuid,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -21,13 +21,13 @@ pub enum Action {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Command(Team, Action);
+pub struct Command(pub Team, pub Action);
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Draft {
-    history: Vec<Command>,
-    picks: Vec<ChampLock>,
-    forbidden_champions: BitArray<[u8; 30], Lsb0>,
+    pub history: Vec<Command>,
+    pub picks: Vec<ChampLock>,
+    pub forbidden_champions: BitArray<[u8; 30], Lsb0>,
 }
 
 impl From<Draft> for Bson {

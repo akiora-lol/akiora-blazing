@@ -25,11 +25,11 @@ pub enum LolBracketMode {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct LolTournamentSettings {
-    bracket_mode: LolBracketMode,
-    draft_mode: LolGameMode,
-    team_size: u8,
-    tournament_type: TournamentType,
-    map: u8,
-    forbidden_champions: BitArray<[u8; 30], Lsb0>,
-    series_best_of: Option<Vec<u8>>, // n=0..last is finals:boX, semifinals:boX, quarter:boX .... 1/2^n:boX
+    pub bracket_mode: LolBracketMode,
+    pub draft_mode: LolGameMode,
+    pub team_size: u8,
+    pub tournament_type: TournamentType,
+    pub map: u8,
+    pub forbidden_champions: BitArray<[u8; 30], Lsb0>,
+    pub series_best_of: Option<Vec<u8>>, // n=0..last is finals:boX, semifinals:boX, quarter:boX .... 1/2^n:boX
 }

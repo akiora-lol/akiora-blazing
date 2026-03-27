@@ -12,8 +12,8 @@ pub enum Actor {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TeamParticipant {
-    participant: Actor,
-    users: Vec<Uuid>,
+    pub participant: Actor,
+    pub users: Vec<Uuid>,
 }
 impl From<TeamParticipant> for Bson {
     fn from(tp: TeamParticipant) -> Self {

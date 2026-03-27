@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::domain::models::Game;
 use crate::domain::value_objects::*;
-use crate::infra::GameRepo;
+use crate::infra::{GameRepo, GameRepoExt};
 
 pub struct GameService {
     repo: Arc<GameRepo>,

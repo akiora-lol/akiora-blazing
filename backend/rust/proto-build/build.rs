@@ -7,6 +7,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Явно указываем файлы для компиляции
     let proto_files = vec![
         format!("{}/game/v1/gameseries_service.proto", proto_root),
+        format!("{}/common/types.proto", proto_root),
         format!("{}/game/v1/game_service.proto", proto_root),
         format!("{}/game/v1/tournament_service.proto", proto_root),
     ];

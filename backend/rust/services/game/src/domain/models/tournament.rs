@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use prost_types::Timestamp;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -64,6 +65,21 @@ impl Tournament {
         self.games = Some(games);
     }
 
+    pub fn start_timestamp(&self) -> Timestamp {
+        Timestamp {
+            seconds: self.start.timestamp(),
+            nanos: self.start.timestamp_subsec_nanos() as i32,
+        }
+    }
+    pub fn end_timestamp(&self) -> Option<Timestamp> {
+        match self.end {
+            Some(st) => Some(Timestamp {
+                seconds: st.timestamp(),
+                nanos: st.timestamp_subsec_nanos() as i32,
+            }),
+            _ => None,
+        }
+    }
     pub fn add_game_series(&mut self, game_series: GameSeries) {
         if let Some(ref mut games) = self.games {
             games.push(game_series);

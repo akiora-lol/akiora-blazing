@@ -2,6 +2,7 @@ use crate::domain::Game;
 use crate::domain::value_objects::*;
 
 use chrono::{DateTime, Utc};
+use prost_types::Timestamp;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -65,6 +66,24 @@ impl GameSeries {
 
     pub fn set_start(&mut self, start: DateTime<Utc>) {
         self.start = Some(start);
+    }
+    pub fn start_timestamp(&self) -> Option<Timestamp> {
+        match self.start {
+            Some(st) => Some(Timestamp {
+                seconds: st.timestamp(),
+                nanos: st.timestamp_subsec_nanos() as i32,
+            }),
+            _ => None,
+        }
+    }
+    pub fn end_timestamp(&self) -> Option<Timestamp> {
+        match self.end {
+            Some(st) => Some(Timestamp {
+                seconds: st.timestamp(),
+                nanos: st.timestamp_subsec_nanos() as i32,
+            }),
+            _ => None,
+        }
     }
 
     pub fn end(&self) -> Option<DateTime<Utc>> {
