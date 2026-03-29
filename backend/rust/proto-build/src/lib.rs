@@ -1,9 +1,3 @@
-pub mod community {
-    pub mod user_v1 {
-
-        tonic::include_proto!("akiora.community.user");
-    }
-}
 pub mod common {
     tonic::include_proto!("akiora.common");
 }

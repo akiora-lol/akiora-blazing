@@ -3,15 +3,16 @@ use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
+use crate::domain::services::GameService as DomainGameService;
+use crate::domain::value_objects::participant::TeamParticipant;
 use proto_build::common::Status as ProtoStatus;
 use proto_build::game::game::{
     self, CreateGameRequest, GameResponse, GetGameRequest, GetGamesRequest, ManyGamesResponse,
     UpdateGameResultRequest, game_service_server::GameService as GrpcGameService,
 };
+use shared::game::*;
 
-use crate::domain::services::GameService as DomainGameService;
-use crate::domain::value_objects::*;
-
+#[derive(Clone)]
 pub struct GrpcGameServiceImpl {
     domain_service: Arc<DomainGameService>,
 }
@@ -73,13 +74,14 @@ impl GrpcGameService for GrpcGameServiceImpl {
                 .picks
                 .into_iter()
                 .map(|lock| ChampLock {
-                    champion_id: lock.champion_id as u8,
+                    champion_id: lock.champion_id as usize,
                     player: Uuid::parse_str(&lock.player_id).unwrap_or_default(),
                 })
                 .collect(),
             forbidden_champions: bitvec::array::BitArray::new(
                 d.forbidden_champions.try_into().unwrap_or([0u8; 30]),
             ),
+            game_id: Uuid::parse_str(&d.game_id).unwrap(),
         });
 
         let game = self
@@ -157,7 +159,7 @@ impl GrpcGameService for GrpcGameServiceImpl {
                 participant: match r.participant {
                     Some(p) => match p.r#type {
                         1 => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
-                        2 => Actor::Group(Uuid::parse_str(&p.id).unwrap_or_default()),
+                        2 => Actor::Team(Uuid::parse_str(&p.id).unwrap_or_default()),
                         3 => Actor::Club(Uuid::parse_str(&p.id).unwrap_or_default()),
                         _ => Actor::User(Uuid::new_v4()),
                     },
@@ -211,6 +213,7 @@ fn game_to_proto(game: crate::domain::models::Game) -> GameResponse {
         id: game.id().to_string(),
         game_series_id: game.game_series_id().to_string(),
         draft: game.draft().map(|d| game::Draft {
+            game_id: d.game_id.to_string(),
             history: d
                 .history
                 .iter()
@@ -248,9 +251,9 @@ fn game_to_proto(game: crate::domain::models::Game) -> GameResponse {
                                 id: id.to_string(),
                                 r#type: proto_build::common::ActorType::User as i32,
                             },
-                            Actor::Group(id) => proto_build::common::Actor {
+                            Actor::Team(id) => proto_build::common::Actor {
                                 id: id.to_string(),
-                                r#type: proto_build::common::ActorType::Group as i32,
+                                r#type: proto_build::common::ActorType::Team as i32,
                             },
                             Actor::Club(id) => proto_build::common::Actor {
                                 id: id.to_string(),

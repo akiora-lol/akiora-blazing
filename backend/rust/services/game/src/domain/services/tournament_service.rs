@@ -1,4 +1,5 @@
 use chrono::Utc;
+use shared::game::Actor;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -17,13 +18,14 @@ impl TournamentService {
 
     pub async fn create(
         &self,
-        id: Uuid,
+
         host: Actor,
         participants: Vec<Actor>,
         settings: TournamentSettings,
         start: chrono::DateTime<Utc>,
         prizepool: Option<String>,
     ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
+        let id = Uuid::new_v4();
         let tournament = Tournament::new(id, host, participants, settings, start, prizepool);
         self.repo.insert(&tournament).await?;
         Ok(tournament)

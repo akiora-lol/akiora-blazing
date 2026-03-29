@@ -4,43 +4,35 @@ package akiora.game.tournament;
 
 import "common/types.proto";
 import "game/v1/gameseries_service.proto";
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "akiora/game/tournament";
-
-// --- Настройки турнира ---
 
 message LolTournamentSettings {
   LolBracketMode bracket_mode = 1;
   gameseries.LolGameMode draft_mode = 2;
   uint32 team_size = 3;
   uint32 map = 4;
-  bytes forbidden_champions = 5;      // BitArray в виде байтов
-  repeated uint32 series_best_of = 6;  // best_of для каждого этапа (финал, полуфинал и т.д.)
+  repeated uint32 forbidden_champions = 5;
+  repeated uint32 series_best_of = 6;
 }
 
 enum LolBracketMode {
   ANY = 0;
   DOUBLE_ELIM = 1;
-  SINGLE_ELIM_THIRD_PLACE = 2;   // с матчем за 3-е место
+  SINGLE_ELIM_THIRD_PLACE = 2; // с матчем за 3-е место
   SINGLE_ELIM_NO_THIRD_PLACE = 3; // без матча за 3-е место
   SWISS = 4;
   ROUND_ROBIN = 5;
-  DELETE = 6;
 }
 
 message TftTournamentSettings {
-  uint32 player_count_per_lobby = 1;
-  uint32 rounds = 2;
-  string set_version = 3;
+  string todo = 1;
 }
 
 message ValorantTournamentSettings {
-  uint32 team_size = 1;
-  string map_pool = 2;
-  uint32 best_of = 3;
-  bool overtime_enabled = 4;
+  string todo = 1;
 }
 
 message TournamentSettings {
@@ -52,14 +44,12 @@ message TournamentSettings {
   }
 }
 
-// --- Запросы и ответы ---
-
 message CreateTournamentRequest {
-  common.Actor host = 1;                       // Организатор
-  repeated common.Actor participants = 2;       // Участники (команды)
-  TournamentSettings settings = 3;              // Настройки
-  google.protobuf.Timestamp start = 4;          // Дата начала
-  optional string prizepool = 5;                // Призовой фонд (можно структуру сделать)
+  common.Actor host = 1;
+  repeated common.Actor participants = 2;
+  TournamentSettings settings = 3;
+  google.protobuf.Timestamp start = 4;
+  string prizepool = 5;
 }
 
 message GetTournamentRequest {
@@ -72,11 +62,11 @@ message TournamentResponse {
   common.Actor host = 2;
   repeated common.Actor participants = 3;
   TournamentSettings settings = 4;
-  repeated string game_series_ids = 5;          // ID серий игр в турнире
+  repeated string game_series_ids = 5;
   google.protobuf.Timestamp start = 6;
-  optional google.protobuf.Timestamp end = 7;
+  google.protobuf.Timestamp end = 7;
   common.Status status = 8;
-  optional string prizepool = 9;
+  string prizepool = 9;
 }
 
 message ManyTournamentsResponse {

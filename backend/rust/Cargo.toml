@@ -1,7 +1,7 @@
 [workspace]
 
 resolver="3"
-members = ["proto-build", "services/draft", "services/game", "services/gateway","shared"]
+members = ["proto-build", "services/*","shared"]
 
 [workspace.dependencies]
 shared = { path = "shared" }
@@ -21,8 +21,8 @@ anyhow = "1.0.102"
 thiserror = "2.0.18"
 regex = "1.12.3"
 mongodb = "3.5.1"
-
-
+serde_with = "3.18.0"
+dotenvy = "0.15.7"
 futures = "0.3.32"
 validator="0.20.0"
 

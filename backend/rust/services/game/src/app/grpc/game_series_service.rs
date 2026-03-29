@@ -9,8 +9,8 @@ use proto_build::game::gameseries::{
 };
 
 use crate::domain::services::GameSeriesService as DomainGameSeriesService;
-use crate::domain::value_objects::*;
-
+use shared::game::*;
+#[derive(Clone)]
 pub struct GrpcGameSeriesServiceImpl {
     domain_service: Arc<DomainGameSeriesService>,
 }
@@ -34,7 +34,7 @@ impl GrpcGameSeriesService for GrpcGameSeriesServiceImpl {
             .into_iter()
             .map(|p| match p.r#type {
                 1 => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
-                2 => Actor::Group(Uuid::parse_str(&p.id).unwrap_or_default()),
+                2 => Actor::Team(Uuid::parse_str(&p.id).unwrap_or_default()),
                 3 => Actor::Club(Uuid::parse_str(&p.id).unwrap_or_default()),
                 _ => Actor::User(Uuid::new_v4()),
             })
@@ -50,11 +50,9 @@ impl GrpcGameSeriesService for GrpcGameSeriesServiceImpl {
                 .ok_or_else(|| Status::invalid_argument("Game settings are required"))?,
         )?;
 
-        let id = Uuid::new_v4();
-
         let game_series = self
             .domain_service
-            .create(id, participants, game_settings)
+            .create(participants, game_settings)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
@@ -216,11 +214,11 @@ fn game_series_to_proto(game_series: crate::domain::models::GameSeries) -> GameS
             .iter()
             .map(|actor| proto_build::common::Actor {
                 id: match actor {
-                    Actor::User(id) | Actor::Group(id) | Actor::Club(id) => id.to_string(),
+                    Actor::User(id) | Actor::Team(id) | Actor::Club(id) => id.to_string(),
                 },
                 r#type: match actor {
                     Actor::User(_) => proto_build::common::ActorType::User as i32,
-                    Actor::Group(_) => proto_build::common::ActorType::Group as i32,
+                    Actor::Team(_) => proto_build::common::ActorType::Team as i32,
                     Actor::Club(_) => proto_build::common::ActorType::Club as i32,
                 },
             })

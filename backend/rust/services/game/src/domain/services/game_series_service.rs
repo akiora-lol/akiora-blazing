@@ -1,9 +1,10 @@
 use chrono::Utc;
+use shared::game::{Actor, GameSettings};
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::domain::models::{Game, GameSeries};
-use crate::domain::value_objects::*;
+
 use crate::infra::{GameSeriesRepo, GameSeriesRepoExt};
 
 pub struct GameSeriesService {
@@ -17,10 +18,10 @@ impl GameSeriesService {
 
     pub async fn create(
         &self,
-        id: Uuid,
         participants: Vec<Actor>,
         settings: GameSettings,
     ) -> Result<GameSeries, Box<dyn std::error::Error + Send + Sync>> {
+        let id = Uuid::new_v4();
         let game_series = GameSeries::new(id, participants, settings);
         self.repo.insert(&game_series).await?;
         Ok(game_series)

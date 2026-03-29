@@ -3,11 +3,12 @@ syntax = "proto3";
 package akiora.common;
 
 option go_package = "akiora/common";
+
 // Типы участников
 enum ActorType {
   ANY = 0;
   USER = 1;
-  GROUP = 2;
+  TEAM = 2;
   CLUB = 3;
 }
 

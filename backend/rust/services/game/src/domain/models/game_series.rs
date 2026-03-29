@@ -1,9 +1,9 @@
 use crate::domain::Game;
-use crate::domain::value_objects::*;
 
 use chrono::{DateTime, Utc};
 use prost_types::Timestamp;
 use serde::{Deserialize, Serialize};
+use shared::game::*;
 use uuid::Uuid;
 
 #[derive(Deserialize, Serialize, Clone)]

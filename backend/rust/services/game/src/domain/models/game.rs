@@ -1,14 +1,16 @@
+use crate::domain::value_objects::participant::TeamParticipant;
 use chrono::{DateTime, Utc};
 use prost_types::Timestamp;
 use serde::{Deserialize, Serialize};
+use shared::game::*;
 use uuid::Uuid;
-
-use crate::domain::value_objects::*;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Game {
     #[serde(rename = "_id")]
+    #[serde(with = "uuid::serde::simple")]
     id: Uuid,
+    #[serde(with = "uuid::serde::simple")]
     game_series: Uuid,
     draft: Option<Draft>,
     results: Option<Vec<TeamParticipant>>,

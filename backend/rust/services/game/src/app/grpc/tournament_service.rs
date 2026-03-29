@@ -1,7 +1,13 @@
+use bitvec::array::BitArray;
+use bitvec::order::Lsb0;
 use chrono::{DateTime, Utc};
+use shared::game::{Actor, LolGameMode};
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
+
+use crate::domain::services::TournamentService as DomainTournamentService;
+use crate::domain::value_objects::*;
 
 use proto_build::common::Status as ProtoStatus;
 use proto_build::game::tournament::{
@@ -9,10 +15,7 @@ use proto_build::game::tournament::{
     ManyTournamentsResponse, RemoveParticipantRequest, TournamentResponse,
     tournament_service_server::TournamentService as GrpcTournamentService,
 };
-
-use crate::domain::services::TournamentService as DomainTournamentService;
-use crate::domain::value_objects::*;
-
+#[derive(Clone)]
 pub struct GrpcTournamentServiceImpl {
     domain_service: Arc<DomainTournamentService>,
 }
@@ -36,7 +39,7 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
             .ok_or_else(|| Status::invalid_argument("Host is required"))
             .map(|h| match h.r#type {
                 1 => Actor::User(Uuid::parse_str(&h.id).unwrap_or_default()),
-                2 => Actor::Group(Uuid::parse_str(&h.id).unwrap_or_default()),
+                2 => Actor::Team(Uuid::parse_str(&h.id).unwrap_or_default()),
                 3 => Actor::Club(Uuid::parse_str(&h.id).unwrap_or_default()),
                 _ => Actor::User(Uuid::new_v4()),
             })?;
@@ -46,7 +49,7 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
             .into_iter()
             .map(|p| match p.r#type {
                 1 => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
-                2 => Actor::Group(Uuid::parse_str(&p.id).unwrap_or_default()),
+                2 => Actor::Team(Uuid::parse_str(&p.id).unwrap_or_default()),
                 3 => Actor::Club(Uuid::parse_str(&p.id).unwrap_or_default()),
                 _ => Actor::User(Uuid::new_v4()),
             })
@@ -67,17 +70,15 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
             .ok_or_else(|| Status::invalid_argument("Start time is required"))?;
         let start =
             DateTime::from_timestamp(start.seconds, start.nanos as u32).expect("Invalid timestamp");
-        let id = Uuid::new_v4();
 
         let tournament = self
             .domain_service
             .create(
-                id,
                 host,
                 participants,
                 tournament_settings,
                 start,
-                req.prizepool,
+                Some(req.prizepool),
             )
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
@@ -209,7 +210,7 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
             .ok_or_else(|| Status::invalid_argument("Participant is required"))
             .map(|p| match p.r#type {
                 1 => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
-                2 => Actor::Group(Uuid::parse_str(&p.id).unwrap_or_default()),
+                2 => Actor::Team(Uuid::parse_str(&p.id).unwrap_or_default()),
                 3 => Actor::Club(Uuid::parse_str(&p.id).unwrap_or_default()),
                 _ => Actor::User(Uuid::new_v4()),
             })?;
@@ -269,15 +270,20 @@ fn tournament_settings_from_proto(
 
             let series_best_of = lol.series_best_of.iter().map(|&x| x as u8).collect();
 
+            let forbidden_champs = lol.forbidden_champions.iter().fold(
+                BitArray::<[u8; 30], Lsb0>::ZERO,
+                |mut acc, &idx| {
+                    acc.set(idx as usize, true);
+                    acc
+                },
+            );
             Ok(TournamentSettings::Lol(LolTournamentSettings {
                 bracket_mode,
                 draft_mode,
                 team_size: lol.team_size as u8,
                 tournament_type: TournamentType::Classic,
                 map: lol.map as u8,
-                forbidden_champions: bitvec::array::BitArray::new(
-                    lol.forbidden_champions.try_into().unwrap_or([0u8; 30]),
-                ),
+                forbidden_champions: forbidden_champs,
                 series_best_of: Some(series_best_of),
             }))
         }
@@ -303,11 +309,11 @@ fn tournament_to_proto(tournament: crate::domain::models::Tournament) -> Tournam
         id: tournament.id().to_string(),
         host: Some(proto_build::common::Actor {
             id: match tournament.host() {
-                Actor::User(id) | Actor::Group(id) | Actor::Club(id) => id.to_string(),
+                Actor::User(id) | Actor::Team(id) | Actor::Club(id) => id.to_string(),
             },
             r#type: match tournament.host() {
                 Actor::User(_) => proto_build::common::ActorType::User as i32,
-                Actor::Group(_) => proto_build::common::ActorType::Group as i32,
+                Actor::Team(_) => proto_build::common::ActorType::Team as i32,
                 Actor::Club(_) => proto_build::common::ActorType::Club as i32,
             },
         }),
@@ -316,11 +322,11 @@ fn tournament_to_proto(tournament: crate::domain::models::Tournament) -> Tournam
             .iter()
             .map(|actor| proto_build::common::Actor {
                 id: match actor {
-                    Actor::User(id) | Actor::Group(id) | Actor::Club(id) => id.to_string(),
+                    Actor::User(id) | Actor::Team(id) | Actor::Club(id) => id.to_string(),
                 },
                 r#type: match actor {
                     Actor::User(_) => proto_build::common::ActorType::User as i32,
-                    Actor::Group(_) => proto_build::common::ActorType::Group as i32,
+                    Actor::Team(_) => proto_build::common::ActorType::Team as i32,
                     Actor::Club(_) => proto_build::common::ActorType::Club as i32,
                 },
             })
@@ -330,7 +336,7 @@ fn tournament_to_proto(tournament: crate::domain::models::Tournament) -> Tournam
         start: Some(tournament.start_timestamp().into()),
         end: tournament.end_timestamp().map(|t| t.into()),
         status,
-        prizepool: tournament.prizepool().map(String::from),
+        prizepool: tournament.prizepool().map(String::from).unwrap(),
     }
 }
 
@@ -378,9 +384,11 @@ fn tournament_settings_to_proto(
                         _ => 11,
                     },
                     forbidden_champions: match settings {
-                        TournamentSettings::Lol(lol) => {
-                            lol.forbidden_champions.as_raw_slice().to_vec()
-                        }
+                        TournamentSettings::Lol(lol) => lol
+                            .forbidden_champions
+                            .iter_ones()
+                            .map(|index| index as u32)
+                            .collect(),
                         _ => vec![0; 30],
                     },
                     series_best_of: match settings {

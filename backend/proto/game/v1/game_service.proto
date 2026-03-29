@@ -8,11 +8,9 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "akiora/game/game";
 
-// --- Запросы и ответы ---
-
 message CreateGameRequest {
-  string game_series_id = 1; // ID серии игр
-  optional Draft draft = 2; // Опциональная информация о драфте
+  string game_series_id = 1;
+  Draft draft = 2;
 }
 
 message GetGameRequest {
@@ -49,6 +47,7 @@ message Draft {
   repeated Command history = 1;
   repeated ChampLock picks = 2;
   bytes forbidden_champions = 3; // BitArray в виде байтов
+  string game_id = 4;
 }
 
 message Command {

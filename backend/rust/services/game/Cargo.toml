@@ -14,5 +14,10 @@ bitvec = { workspace=true }
 tonic={workspace=true}
 mongodb={workspace=true}
 futures={workspace=true}
+
 proto-build = { workspace=true }
 prost-types = { workspace=true }
+tokio = { workspace=true }
+dotenvy = { workspace=true }
+anyhow = { workspace=true }
+serde_with = { workspace=true }

@@ -1,7 +1,7 @@
-use crate::domain::value_objects::LolGameMode;
 use bitvec::{array::BitArray, order::Lsb0};
-use chrono::{DateTime, Utc};
+
 use serde::{Deserialize, Serialize};
+use shared::game::LolGameMode;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TournamentSettings {

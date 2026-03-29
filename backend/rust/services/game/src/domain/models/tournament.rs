@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use prost_types::Timestamp;
 use serde::{Deserialize, Serialize};
+use shared::game::Actor;
 use uuid::Uuid;
 
 use crate::domain::GameSeries;
@@ -8,8 +9,9 @@ use crate::domain::value_objects::*;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Tournament {
-    #[serde(rename = "_id")]
+    #[serde(rename = "_id", with = "uuid::serde::simple")]
     id: Uuid,
+
     host: Actor,
     teams: Vec<Actor>,
     settings: TournamentSettings,
@@ -118,7 +120,7 @@ impl Tournament {
 
     pub fn remove_participant(&mut self, participant_id: Uuid) -> bool {
         if let Some(pos) = self.teams.iter().position(|t| match t {
-            Actor::User(id) | Actor::Group(id) | Actor::Club(id) => *id == participant_id,
+            Actor::User(id) | Actor::Team(id) | Actor::Club(id) => *id == participant_id,
         }) {
             self.teams.remove(pos);
             true

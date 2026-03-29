@@ -3,12 +3,10 @@ syntax = "proto3";
 package akiora.game.gameseries;
 
 import "common/types.proto";
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "akiora/game/gameseries";
-
-// --- Настройки серии (зависят от игры) ---
 
 enum GameType {
   GAME_TYPE_UNSPECIFIED = 0;
@@ -25,7 +23,7 @@ message LolGameSettings {
 }
 
 enum LolGameMode {
-  LOL_GAME_MODE_UNSPECIFIED = 0;
+  ANY = 0;
   CLASSIC = 1;
   FEARLESS = 2;
   IRON_MAN = 3;
@@ -33,16 +31,11 @@ enum LolGameMode {
 }
 
 message TftGameSettings {
-  uint32 player_count = 1;
-  string set_version = 2;
-  bool double_up = 3;
+  string todo = 1;
 }
 
 message ValorantGameSettings {
-  uint32 team_size = 1;
-  string map = 2;
-  uint32 best_of = 3;
-  bool overtime_enabled = 4;
+  string todo = 1;
 }
 
 // Общие настройки серии
@@ -58,22 +51,21 @@ message GameSeriesSettings {
 // --- Запросы и ответы ---
 
 message CreateGameSeriesRequest {
-  repeated common.Actor participants = 1;  // Участники серии
-  GameSeriesSettings settings = 2;          // Настройки
+  repeated common.Actor participants = 1; // Участники серии
+  GameSeriesSettings settings = 2; // Настройки
 }
 
 message GetGameSeriesRequest {
   repeated string ids = 1;
-  optional GameType game_type = 2; // Фильтр по типу игры
 }
 
 message GameSeriesResponse {
   string id = 1;
   repeated common.Actor participants = 2;
   GameSeriesSettings settings = 3;
-  repeated string game_ids = 4;    // ID игр в серии
-  optional google.protobuf.Timestamp start = 5;
-  optional google.protobuf.Timestamp end = 6;
+  repeated string game_ids = 4; // ID игр в серии
+  google.protobuf.Timestamp start = 5;
+  google.protobuf.Timestamp end = 6;
   common.Status status = 7;
 }
 
