@@ -1,58 +1,58 @@
+mod constants;
+mod db;
+mod state;
 mod user;
 
-use mongodb::Client;
-use user::{UserDomain, Gender, UserMapper, UserRepository};
+use std::sync::Arc;
+
+use axum::Router;
+use tower_http::cors::CorsLayer;
+use tonic::transport::Server;
+
+use proto_build::community::user_v1::user_service_server::UserServiceServer;
+use state::AppState;
+use user::domain::{UserRepository, UserService};
+use user::grpc::UserGrpcService;
+use user::persistence::repo::MongoUserRepository;
+use user::rest::user_router;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    println!("=== User Mapper with MongoDB Example ===\n");
+    let database = db::connect_to_db().await?;
 
-    // 1. Подключаемся к MongoDB
-    let mongo_url = "mongodb://admin:password123@localhost:27017";
-    let client = Client::with_uri_str(mongo_url).await?;
-    let database = client.database("community_db");
+    let repository: Arc<dyn UserRepository> = Arc::new(MongoUserRepository::new(&database));
+    let user_service = Arc::new(UserService::new(repository));
 
-    // 2. Создаем репозиторий
-    let repository = UserRepository::new(&database).await;
+    let app_state = AppState { user_service: Arc::clone(&user_service) };
 
-    // 3. Создаем доменного пользователя
-    let mut user_domain = UserDomain::new(
-        String::from("alice@example.com"),
-        String::from("Alice"),
-        Gender::Female,
-    );
+    // ── REST (axum) ──────────────────────────────────────────────
+    let rest_app = Router::new()
+        .merge(user_router())
+        .layer(CorsLayer::permissive())
+        .with_state(app_state);
 
-    user_domain.add_social(String::from("https://twitter.com/alice"), false);
-    user_domain.add_social(String::from("https://instagram.com/alice"), false);
-    user_domain.add_social(String::from("https://facebook.com/alice"), true);
+    // ── gRPC (tonic) ─────────────────────────────────────────────
+    let grpc_addr = constants::GRPC_ADDR.parse()?;
+    let grpc_svc = UserGrpcService::new(Arc::clone(&user_service));
 
-    println!("📦 Domain user created: {:?}\n", user_domain);
+    println!("REST  → http://{}", constants::REST_ADDR);
+    println!("gRPC  → {}", grpc_addr);
 
-    // 4. Маппим в модель для БД (убрали mut)
-    let user_model = UserMapper::domain_to_data(&user_domain);
-    println!("🔄 Mapped to persistence model: {:?}\n", user_model);
+    let rest_handle = tokio::spawn(async move {
+        let listener = tokio::net::TcpListener::bind(constants::REST_ADDR).await.unwrap();
+        axum::serve(listener, rest_app).await.unwrap();
+    });
 
-    // 5. Сохраняем в MongoDB
-    let insert_result = repository.save(user_model.clone()).await?;
-    println!("💾 Saved to MongoDB with ID: {:?}\n", insert_result.inserted_id);
+    let grpc_handle = tokio::spawn(async move {
+        Server::builder()
+            .add_service(UserServiceServer::new(grpc_svc))
+            .serve(grpc_addr)
+            .await
+            .unwrap();
+    });
 
-    // 6. Ищем по email
-    let found = repository.find_by_email("alice@example.com").await?;
-    if let Some(found_user) = found {
-        println!("🔍 Found by email: {:?}\n", found_user);
-
-        // 7. Обратный маппинг в домен
-        let recovered_domain = UserMapper::data_to_domain(found_user);
-        println!("🔄 Mapped back to domain: {:?}\n", recovered_domain);
-    }
-
-    // 8. Показываем всех пользователей
-    let all_users = repository.find_all().await?;
-    println!("📋 All users in database: {} total", all_users.len());
-    for user in all_users {
-        println!("   - {} ({})", user.name, user.email);
-    }
-
-    println!("\n✅ Success!");
+    let (r1, r2) = tokio::join!(rest_handle, grpc_handle);
+    r1?;
+    r2?;
     Ok(())
 }
