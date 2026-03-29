@@ -1,5 +1,6 @@
 #[derive(Debug, Clone)]
 pub struct UserDomain {
+    pub id: Option<String>,
     pub email: String,
     pub name: String,
     pub gender: Gender,
@@ -22,6 +23,7 @@ pub struct SocialDomain {
 impl UserDomain {
     pub fn new(email: String, name: String, gender: Gender) -> Self {
         Self {
+            id: None,
             email,
             name,
             gender,
