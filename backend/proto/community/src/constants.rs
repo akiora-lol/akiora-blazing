@@ -10,8 +10,12 @@ pub const MONGO_DB_NAME_ENV: &str = "MONGODB_DB_NAME";
 
 // ─── Collections ──────────────────────────────────────────────────────────────
 pub const COLLECTION_USERS: &str = "users";
+pub const COLLECTION_GROUPS: &str = "groups";
 
 // ─── API routes ───────────────────────────────────────────────────────────────
 pub const ROUTE_USERS: &str = "/api/users";
 pub const ROUTE_USERS_BY_ID: &str = "/api/users/{id}";
 pub const ROUTE_USERS_BY_EMAIL: &str = "/api/users/by-email/{email}";
+
+pub const ROUTE_GROUPS: &str = "/api/groups";
+pub const ROUTE_GROUPS_BY_ID: &str = "/api/groups/{id}";
