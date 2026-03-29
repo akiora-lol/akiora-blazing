@@ -11,7 +11,7 @@ use crate::domain::value_objects::*;
 
 use proto_build::common::Status as ProtoStatus;
 use proto_build::game::tournament::{
-    self, AddParticipantRequest, CreateTournamentRequest, GetTournamentRequest,
+    AddParticipantRequest, CreateTournamentRequest, GetTournamentRequest,
     ManyTournamentsResponse, RemoveParticipantRequest, TournamentResponse,
     tournament_service_server::TournamentService as GrpcTournamentService,
 };

@@ -3,7 +3,7 @@ use std::error::Error;
 use crate::setup::setup;
 use axum::{
     Router,
-    routing::{delete, get, patch, post, put},
+    routing::get,
 };
 use redis::{AsyncTypedCommands, aio::ConnectionManager};
 mod setup;

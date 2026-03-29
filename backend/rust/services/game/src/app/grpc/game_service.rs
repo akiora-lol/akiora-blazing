@@ -1,4 +1,3 @@
-use chrono::Utc;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;

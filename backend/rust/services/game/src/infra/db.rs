@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use dotenvy::dotenv;
 use mongodb::{
     Client, Database,
-    options::{ClientOptions, ResolverConfig},
+    options::ClientOptions,
 };
 use std::env;
 #[derive(Debug)]

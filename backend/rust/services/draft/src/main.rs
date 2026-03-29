@@ -3,7 +3,7 @@ mod turns;
 use bitvec::prelude::*;
 fn main() {
     let mut bv: BitArray<[u8; 19], Lsb0> = bitarr!(u8,Lsb0;0;150);
-    let mut ar: [u8; 150] = [0; 150];
+    let ar: [u8; 150] = [0; 150];
     bv.set(1, true);
     bv.set(20, true);
     dbg!(bv);
