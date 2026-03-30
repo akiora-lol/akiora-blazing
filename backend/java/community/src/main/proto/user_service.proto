@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package akiora.community.user;
+
+option java_multiple_files = true;
+option java_package = "akiora.user.grpc.proto";
+
+enum Gender {
+  HELICOPTER = 0;
+  MALE = 1;
+  FEMALE = 2;
+}
+
+message Social {
+  string link = 1;
+  bool hide = 2;
+}
+
+message UserRequest {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string bio = 4;
+  Gender gender = 5;
+  string birthday = 6;
+  repeated Social socials = 7;
+}
+
+message UserResponse {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string bio = 4;
+  Gender gender = 5;
+  string birthday = 6;
+  repeated Social socials = 7;
+  repeated string games = 8;
+}
+
+message GetUserRequest {
+  string id = 1;
+  string email = 2;
+}
+
+service UserService {
+  rpc CreateUser(UserRequest) returns (UserResponse);
+  rpc UpdateUser(UserRequest) returns (UserResponse);
+  rpc GetUser(GetUserRequest) returns (UserResponse);
+}
