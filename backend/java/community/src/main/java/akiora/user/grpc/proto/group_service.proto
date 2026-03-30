@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package akiora.community.group;
+
+option java_multiple_files = true;
+option java_package = "org.example.team.grpc.proto";
+
+message CreateGroupRequest {
+  string owner_id = 1;
+  string name = 2;
+}
+
+message PatchGroupRequest {
+  string owner_id = 1;
+  string name = 2;
+  repeated string add_users = 3;
+  repeated string delete_users = 4;
+}
+
+message GroupResponse {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  repeated string users = 4;
+}
+
+message GetGroupRequest {
+  string id = 1;
+}
+
+service GroupService {
+  rpc CreateGroup(CreateGroupRequest) returns (GroupResponse);
+  rpc UpdateGroup(PatchGroupRequest) returns (GroupResponse);
+  rpc GetGroup(GetGroupRequest) returns (GroupResponse);
+}
