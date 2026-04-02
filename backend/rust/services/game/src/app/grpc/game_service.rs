@@ -77,9 +77,7 @@ impl GrpcGameService for GrpcGameServiceImpl {
                     player: Uuid::parse_str(&lock.player_id).unwrap_or_default(),
                 })
                 .collect(),
-            forbidden_champions: bitvec::array::BitArray::new(
-                d.forbidden_champions.try_into().unwrap_or([0u8; 30]),
-            ),
+            forbidden_champions: d.forbidden_champions,
             game_id: Uuid::parse_str(&d.game_id).unwrap(),
         });
 
@@ -237,7 +235,7 @@ fn game_to_proto(game: crate::domain::models::Game) -> GameResponse {
                     player_id: lock.player.to_string(),
                 })
                 .collect(),
-            forbidden_champions: d.forbidden_champions.as_raw_slice().to_vec(),
+            forbidden_champions: d.forbidden_champions.clone(),
         }),
         results: game
             .results()

@@ -28,7 +28,7 @@ pub struct Draft {
     pub game_id: Uuid,
     pub history: Vec<Command>,
     pub picks: Vec<ChampLock>,
-    pub forbidden_champions: BitArray<[u8; 30], Lsb0>,
+    pub forbidden_champions: Vec<u8>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy)]

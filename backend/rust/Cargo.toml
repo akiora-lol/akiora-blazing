@@ -25,6 +25,7 @@ serde_with = "3.18.0"
 dotenvy = "0.15.7"
 futures = "0.3.32"
 validator="0.20.0"
+redis-macros = "1.0.1"
 
 tonic = "0.14.5"
 prost = "0.14.3"

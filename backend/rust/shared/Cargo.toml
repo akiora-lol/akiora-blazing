@@ -10,3 +10,4 @@ serde={workspace=true}
 redis={workspace=true}
 uuid={workspace=true}
 bitvec={workspace=true}
+
