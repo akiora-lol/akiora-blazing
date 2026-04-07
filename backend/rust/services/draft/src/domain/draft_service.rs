@@ -1,4 +1,4 @@
-use crate::{draft::Draft, errors::DraftError};
+use crate::domain::{draft::Draft, errors::DraftError};
 
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
@@ -19,6 +19,7 @@ impl DraftService {
             game_id: game_id.to_string(),
         })
     }
+
     pub async fn save_draft(&mut self, draft: &Draft) -> Result<Draft, DraftError> {
         let set: Draft = self
             .redis

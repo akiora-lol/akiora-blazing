@@ -1,9 +1,6 @@
-mod draft;
-mod draft_service;
-mod errors;
+mod app;
+mod domain;
 mod infra;
-mod schemas;
-mod state;
 
 use bitvec::prelude::*;
 fn main() {

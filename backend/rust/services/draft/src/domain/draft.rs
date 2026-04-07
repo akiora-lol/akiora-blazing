@@ -1,4 +1,4 @@
-use crate::{draft_service::DraftService, errors::DraftError};
+use crate::domain::errors::DraftError;
 use bitvec::prelude::*;
 use chrono::{DateTime, Utc};
 
