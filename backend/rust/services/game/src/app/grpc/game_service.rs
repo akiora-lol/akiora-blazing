@@ -58,13 +58,13 @@ impl GrpcGameService for GrpcGameServiceImpl {
                                 action_type: Some(action),
                             }) => match action {
                                 proto_build::game::game::action::ActionType::Pick(p) => {
-                                    Action::Pick(p as usize)
+                                    Action::Pick(Some(p as usize))
                                 }
                                 proto_build::game::game::action::ActionType::Ban(b) => {
-                                    Action::Ban(b as usize)
+                                    Action::Ban(Some(b as usize))
                                 }
                             },
-                            _ => Action::Pick(0),
+                            _ => Action::Pick(None),
                         },
                     )
                 })
@@ -221,8 +221,10 @@ fn game_to_proto(game: crate::domain::models::Game) -> GameResponse {
                     },
                     action: Some(game::Action {
                         action_type: Some(match &cmd.1 {
-                            Action::Pick(idx) => game::action::ActionType::Pick(*idx as i32),
-                            Action::Ban(idx) => game::action::ActionType::Ban(*idx as i32),
+                            Action::Pick(idx) => {
+                                game::action::ActionType::Pick(idx.unwrap() as i32)
+                            }
+                            Action::Ban(idx) => game::action::ActionType::Ban(idx.unwrap() as i32),
                         }),
                     }),
                 })
@@ -270,8 +272,8 @@ fn game_to_proto(game: crate::domain::models::Game) -> GameResponse {
 
 fn team_from_proto(team: i32) -> Team {
     match team {
-        1 => Team::Red(Uuid::new_v4()),
-        2 => Team::Blue(Uuid::new_v4()),
-        _ => Team::Red(Uuid::new_v4()),
+        1 => Team::Red(Some(Uuid::new_v4())),
+        2 => Team::Blue(Some(Uuid::new_v4())),
+        _ => Team::Red(Some(Uuid::new_v4())),
     }
 }

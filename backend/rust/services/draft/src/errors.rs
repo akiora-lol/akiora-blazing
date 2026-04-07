@@ -4,6 +4,8 @@ use thiserror::Error;
 pub enum DraftError {
     #[error("Invalid command")]
     InvalidCommand,
+    #[error("Failed to save")]
+    SaveError,
     #[error("Draft for game_id {game_id:?} not found")]
     NotFound { game_id: String },
 }

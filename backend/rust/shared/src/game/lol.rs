@@ -3,10 +3,10 @@ use mongodb::bson::{self, Bson};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub enum Team {
-    Red(Uuid),
-    Blue(Uuid),
+    Red(Option<Uuid>),
+    Blue(Option<Uuid>),
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ChampLock {
@@ -14,13 +14,13 @@ pub struct ChampLock {
     pub player: Uuid,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub enum Action {
-    Pick(usize),
-    Ban(usize),
+    Pick(Option<usize>),
+    Ban(Option<usize>),
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Command(pub Team, pub Action);
 
 #[derive(Serialize, Deserialize, Clone)]

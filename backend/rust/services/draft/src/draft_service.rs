@@ -1,9 +1,9 @@
-use crate::{errors::DraftError, loldraft::Draft};
+use crate::{draft::Draft, errors::DraftError};
 
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
-use redis_macros;
-use redis_macros::{FromRedisValue, ToRedisArgs};
+
+use shared::game::Command;
 pub struct DraftService {
     redis: ConnectionManager,
 }
@@ -19,8 +19,20 @@ impl DraftService {
             game_id: game_id.to_string(),
         })
     }
-    pub async fn save_draft(&mut self, draft: &Draft) -> () {
-        let set: Draft = self.redis.set(draft.game_id(), draft).await.unwrap();
+    pub async fn save_draft(&mut self, draft: &Draft) -> Result<Draft, DraftError> {
+        let set: Draft = self
+            .redis
+            .set(draft.game_id(), draft)
+            .await
+            .map_err(|e| DraftError::SaveError)
+            .unwrap();
+        Ok(set)
+    }
+
+    pub async fn command(&mut self, command: &Command, game_id: &str) -> Result<Draft, DraftError> {
+        let mut draft = self.load_draft(game_id).await?;
+        let res = draft.perform_command(command).await?;
+        // if res.1 is Some, send action to pubsub, else send finish action to pubsub
         todo!()
     }
 }

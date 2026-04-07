@@ -1,9 +1,10 @@
+mod draft;
 mod draft_service;
 mod errors;
 mod infra;
-mod loldraft;
+mod schemas;
 mod state;
-mod turns;
+
 use bitvec::prelude::*;
 fn main() {
     let mut bv: BitArray<[u8; 19], Lsb0> = bitarr!(u8,Lsb0;0;150);
