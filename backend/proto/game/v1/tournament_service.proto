@@ -2,30 +2,29 @@ syntax = "proto3";
 
 package akiora.game.tournament;
 
+import "common/game_actors.proto";
+import "common/game_settings.proto";
 import "common/types.proto";
-import "game/v1/gameseries_service.proto";
-import "google/protobuf/empty.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "akiora/game/tournament";
 
-message LolTournamentSettings {
-  LolBracketMode bracket_mode = 1;
-  gameseries.LolGameMode draft_mode = 2;
-  uint32 team_size = 3;
-  uint32 map = 4;
-  repeated uint32 forbidden_champions = 5;
-  repeated uint32 series_best_of = 6;
+enum TournamentType{
+    UNSPECIFIED = 0;
+    PRESIGN =1;
+    PICKEM =2;
 }
 
-enum LolBracketMode {
-  ANY = 0;
-  DOUBLE_ELIM = 1;
-  SINGLE_ELIM_THIRD_PLACE = 2; // с матчем за 3-е место
-  SINGLE_ELIM_NO_THIRD_PLACE = 3; // без матча за 3-е место
-  SWISS = 4;
-  ROUND_ROBIN = 5;
+message LolTournamentSettings {
+    TournamentType tournament_type = 1;
+  common.LolBracketMode bracket_mode = 2;
+  repeated common.LolGameMode draft_mode = 3;
+  uint32 team_size = 4;
+  uint32 map = 5;
+  repeated uint32 forbidden_champions = 6;
+  repeated uint32 series_best_of = 7;
 }
+
+
 
 message TftTournamentSettings {
   string todo = 1;
@@ -36,7 +35,7 @@ message ValorantTournamentSettings {
 }
 
 message TournamentSettings {
-  gameseries.GameType game_type = 1;
+  common.GameType game_type = 1;
   oneof settings {
     LolTournamentSettings lol = 2;
     TftTournamentSettings tft = 3;
@@ -45,16 +44,15 @@ message TournamentSettings {
 }
 
 message CreateTournamentRequest {
-  common.Actor host = 1;
-  repeated common.Actor participants = 2;
+  common.Actor host = 1;  
   TournamentSettings settings = 3;
-  google.protobuf.Timestamp start = 4;
+  uint64 start = 4;
   string prizepool = 5;
 }
 
 message GetTournamentRequest {
   repeated string ids = 1;
-  optional gameseries.GameType game_type = 2;
+  optional common.GameType game_type = 2;
 }
 
 message TournamentResponse {
@@ -63,8 +61,8 @@ message TournamentResponse {
   repeated common.Actor participants = 3;
   TournamentSettings settings = 4;
   repeated string game_series_ids = 5;
-  google.protobuf.Timestamp start = 6;
-  google.protobuf.Timestamp end = 7;
+  uint64 start = 6;
+  optional uint64 end = 7;
   common.Status status = 8;
   string prizepool = 9;
 }
@@ -73,7 +71,7 @@ message ManyTournamentsResponse {
   repeated TournamentResponse tournaments = 1;
 }
 
-// --- Сервис ---
+
 
 service TournamentService {
   // Создание турнира
@@ -94,6 +92,8 @@ service TournamentService {
   // Добавление участника
   rpc AddParticipant(AddParticipantRequest) returns (TournamentResponse);
 
+  rpc AddParticipantToWaitList(AddParticipantRequest) returns (TournamentResponse);
+
   // Удаление участника
   rpc RemoveParticipant(RemoveParticipantRequest) returns (TournamentResponse);
 }
@@ -101,7 +101,9 @@ service TournamentService {
 message AddParticipantRequest {
   string tournament_id = 1;
   common.Actor participant = 2;
+  optional common.TeamParticipant team_participant = 3;
 }
+
 
 message RemoveParticipantRequest {
   string tournament_id = 1;

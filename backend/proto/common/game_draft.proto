@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package akiora.common.game.draft;
+package akiora.common;
 
-import "common/game/actors.proto";
-option go_package = "akiora/common/game/draft";
+import "common/game_actors.proto";
 
+option go_package = "akiora/common";
 
 message Command {
   Team team = 1;
@@ -12,19 +12,19 @@ message Command {
 }
 
 enum TeamType {
-  UNSPECIFIED = 0;
+  TEAMTYPE_UNSPECIFIED = 0;
   RED = 1;
   BLUE = 2;
 }
 message Team {
-    common.Actor actor = 1;
-    TeamType type = 2;
+  common.Actor actor = 1;
+  TeamType type = 2;
 }
 
 message Action {
   oneof action_type {
-    int32 pick = 1; 
-    int32 ban = 2; 
+    int32 pick = 1;
+    int32 ban = 2;
   }
 }
 
