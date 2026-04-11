@@ -1,19 +1,39 @@
-mod app;
 mod domain;
 mod infra;
 
-use bitvec::prelude::*;
-fn main() {
-    let mut bv: BitArray<[u8; 19], Lsb0> = bitarr!(u8,Lsb0;0;150);
-    let ar: [u8; 150] = [0; 150];
-    bv.set(1, true);
-    bv.set(20, true);
-    dbg!(bv);
+use anyhow::{self, Result};
+use redis::streams::StreamReadOptions;
+use redis::{AsyncCommands, Value};
+mod app;
 
-    dbg!(bv[0]);
+use crate::app::consumer::Consumer;
 
-    dbg!(bv[15]);
-    dbg!(bv[20]);
-    println!("Size of my_float: {} bytes", size_of_val(&bv));
-    println!("Size of my_float: {} bytes", size_of_val(&ar));
+use shared::get_redis_manager;
+use tokio;
+use uuid::Uuid;
+#[tokio::main]
+async fn main() -> Result<()> {
+    let mut con = get_redis_manager("redis://localhost:6379").await?;
+    let _: Option<Value> = con
+        .xgroup_create_mkstream("draft", "draft-workers", "$")
+        .await
+        .ok();
+
+    println!("connected");
+    let cons_id = Uuid::new_v4();
+    let opts = StreamReadOptions::default()
+        .group("draft-workers", format!("draft-worker-{}", cons_id.clone()))
+        .count(10)
+        .block(1000);
+    let mut consumer = Consumer::new(con.clone(), opts);
+    let handle = tokio::spawn(async move {
+        println!("Consumer {} started", cons_id.clone());
+        if let Err(e) = consumer.consume().await {
+            eprintln!("Consumer {} error: {}", cons_id.clone(), e);
+        }
+    });
+
+    handle.await?;
+
+    Ok(())
 }

@@ -4,7 +4,7 @@ package akiora.common;
 
 option go_package = "akiora/common";
 
-// Типы участников
+
 enum ActorType {
   ANY = 0;
   USER = 1;
@@ -12,7 +12,7 @@ enum ActorType {
   CLUB = 3;
 }
 
-// Участник (пользователь, группа, клуб)
+
 message Actor {
   string id = 1;
   ActorType type = 2;

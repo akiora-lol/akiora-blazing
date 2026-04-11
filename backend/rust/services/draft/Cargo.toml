@@ -7,7 +7,6 @@ edition = "2024"
 bitvec = { workspace=true }
 
 
-proto-build = { workspace=true }
 shared = { workspace=true }
 uuid = { workspace=true }
 chrono = {workspace = true}
@@ -16,3 +15,5 @@ serde_json = { workspace=true}
 redis = { workspace = true}
 redis-macros= { workspace = true}
 thiserror={workspace=true}
+tokio = {workspace = true}
+anyhow = { workspace = true}

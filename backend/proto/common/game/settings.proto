@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package akiora.common.game.settings;
+
+option go_package = "akiora/common/game/settings";
+
+enum GameType {
+  UNSPECIFIED = 0;
+  LOL = 1;
+  TFT = 2;
+  VALORANT = 3;
+}
+
+enum LolGameMode {
+  UNSPECIFIED = 0;
+  CLASSIC = 1;
+  FEARLESS = 2;
+  IRON_MAN = 3;
+  ALL_RANDOM = 4;
+}
+
+message LolGameSettings {
+  LolGameMode mode = 1;
+  uint32 team_size = 2;
+  uint32 map = 3;
+  uint32 best_of = 4;
+}
+
+message TftGameSettings {
+  string todo = 1;
+}
+
+message ValorantGameSettings {
+  string todo = 1;
+}
+
+message GameSettings {
+  GameType game_type = 1;
+  oneof settings {
+    LolGameSettings lol = 2;
+    TftGameSettings tft = 3;
+    ValorantGameSettings valorant = 4;
+  }
+}

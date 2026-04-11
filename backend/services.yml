@@ -21,3 +21,17 @@ services:
 
         networks:
             - backend_akiora
+
+    draft:
+        build:
+            context: .
+            dockerfile: rust/services/draft/Dockerfile
+        container_name: draftworker
+
+        depends_on:
+            - redis
+
+        restart: unless-stopped
+
+        networks:
+            - backend_akiora

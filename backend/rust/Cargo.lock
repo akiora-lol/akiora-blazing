@@ -494,15 +494,16 @@ checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 name = "draft"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bitvec",
  "chrono",
- "proto-build",
  "redis",
  "redis-macros",
  "serde",
  "serde_json",
  "shared",
  "thiserror",
+ "tokio",
  "uuid",
 ]
 
@@ -2233,7 +2234,9 @@ dependencies = [
  "bitvec",
  "mongodb",
  "redis",
+ "redis-macros",
  "serde",
+ "serde_json",
  "uuid",
 ]
 

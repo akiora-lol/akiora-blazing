@@ -3,7 +3,7 @@ use mongodb::bson::{self, Bson};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Serialize, Debug, Deserialize, Clone, PartialEq, Eq)]
 pub enum Team {
     Red(Option<Uuid>),
     Blue(Option<Uuid>),
@@ -14,13 +14,13 @@ pub struct ChampLock {
     pub player: Uuid,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Serialize, Debug, Deserialize, Clone, PartialEq, Eq)]
 pub enum Action {
     Pick(Option<usize>),
     Ban(Option<usize>),
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Serialize, Debug, Deserialize, Clone, PartialEq, Eq)]
 pub struct Command(pub Team, pub Action);
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -42,7 +42,7 @@ pub enum Actor {
     Club(Uuid),
 }
 
-#[derive(Serialize, Deserialize, Default, Clone, Copy)]
+#[derive(Serialize, Debug, Deserialize, Default, Clone, Copy)]
 pub enum LolGameMode {
     #[default]
     Classic,
@@ -51,7 +51,7 @@ pub enum LolGameMode {
     AllRandom,
 }
 
-#[derive(Serialize, Deserialize, Default, Clone, Copy)]
+#[derive(Serialize, Debug, Deserialize, Default, Clone, Copy)]
 pub struct LolGameSettings {
     pub mode: LolGameMode,
     pub team_size: u8,

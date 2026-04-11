@@ -1,9 +1,12 @@
 use crate::domain::{draft::Draft, errors::DraftError};
+use shared::contracts::draft::events::PrepareDraft;
 
-use redis::AsyncCommands;
+use chrono::{DateTime, Duration, Utc};
 use redis::aio::ConnectionManager;
+use redis::{AsyncCommands, Value};
 
-use shared::game::Command;
+use shared::game::{Command, Team};
+use uuid::Uuid;
 pub struct DraftService {
     redis: ConnectionManager,
 }
@@ -20,20 +23,60 @@ impl DraftService {
         })
     }
 
-    pub async fn save_draft(&mut self, draft: &Draft) -> Result<Draft, DraftError> {
-        let set: Draft = self
-            .redis
-            .set(draft.game_id(), draft)
-            .await
-            .map_err(|e| DraftError::SaveError)
-            .unwrap();
-        Ok(set)
+    pub async fn prepare_draft(&mut self, pd: &PrepareDraft) -> Result<Draft, DraftError> {
+        let mut team_uuids = Vec::with_capacity(2);
+
+        for team in &pd.teams {
+            match team {
+                Team::Blue(Some(uuid)) => team_uuids.push(*uuid),
+                Team::Red(Some(uuid)) => team_uuids.push(*uuid),
+                _ => {
+                    return Err(DraftError::InvalidCommand);
+                }
+            }
+        }
+        if team_uuids.len() != 2 {
+            return Err(DraftError::InvalidCommand);
+        }
+
+        let dr = Draft::new(
+            pd.game_id,
+            team_uuids, // теперь Vec<Uuid>
+            pd.settings,
+            pd.seconds_per_action as usize,
+            pd.allow_redo,
+            pd.forbidden_champions.clone(),
+        );
+        self.save_draft(&dr).await?;
+        Ok(dr)
     }
 
-    pub async fn command(&mut self, command: &Command, game_id: &str) -> Result<Draft, DraftError> {
+    pub async fn save_draft(&mut self, draft: &Draft) -> Result<(), DraftError> {
+        let _: Value = self
+            .redis
+            .set_ex(
+                format!("draft-{}", draft.game_id.to_string()),
+                draft,
+                60 * 60 * 48,
+            )
+            .await
+            .map_err(|e| {
+                dbg!(e);
+                DraftError::SaveError
+            })
+            .unwrap();
+        Ok(())
+    }
+
+    pub async fn command(
+        &mut self,
+        command: &Command,
+        game_id: &str,
+    ) -> Result<Option<Command>, DraftError> {
         let mut draft = self.load_draft(game_id).await?;
-        let res = draft.perform_command(command).await?;
-        // if res.1 is Some, send action to pubsub, else send finish action to pubsub
-        todo!()
+        let new_draft_state = draft.perform_command(command).await?;
+        let res = self.save_draft(new_draft_state.0).await?;
+
+        Ok(new_draft_state.1)
     }
 }

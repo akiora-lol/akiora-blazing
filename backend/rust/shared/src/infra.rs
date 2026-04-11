@@ -1,7 +1,7 @@
 use mongodb::{Collection, Database};
-use redis::Client;
 use redis::aio::{ConnectionManager, ConnectionManagerConfig};
-use std::error::Error;
+use redis::{Client, RedisResult};
+
 use std::time::Duration;
 
 pub struct MongoRepository<T: Send + Sync> {
@@ -22,7 +22,7 @@ where
     }
 }
 
-pub async fn get_redis_manager(redis_uri: &str) -> Result<ConnectionManager, Box<dyn Error>> {
+pub async fn get_redis_manager(redis_uri: &str) -> RedisResult<ConnectionManager> {
     let client = Client::open(redis_uri)?;
 
     let config = ConnectionManagerConfig::new()
