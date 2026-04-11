@@ -1,4 +1,3 @@
-use bitvec::{array::BitArray, order::Lsb0};
 use mongodb::bson::{self, Bson};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

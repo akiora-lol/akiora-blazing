@@ -20,13 +20,13 @@ impl TournamentService {
         &self,
 
         host: Actor,
-        participants: Vec<Actor>,
+
         settings: TournamentSettings,
         start: chrono::DateTime<Utc>,
         prizepool: Option<String>,
     ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
         let id = Uuid::new_v4();
-        let tournament = Tournament::new(id, host, participants, settings, start, prizepool);
+        let tournament = Tournament::new(id, host, settings, start, prizepool);
         self.repo.insert(&tournament).await?;
         Ok(tournament)
     }

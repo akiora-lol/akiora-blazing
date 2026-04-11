@@ -1,20 +1,21 @@
+use crate::domain::services::TournamentService as DomainTournamentService;
+use crate::domain::value_objects::LolBracketMode as DomainBracketMode;
+use crate::domain::value_objects::TournamentType as DomainTournamentType;
+use crate::domain::value_objects::*;
 use bitvec::array::BitArray;
 use bitvec::order::Lsb0;
 use chrono::{DateTime, Utc};
-use shared::game::{Actor, LolGameMode};
+use proto_build::common::{LolBracketMode, LolGameMode, Status as ProtoStatus};
+use proto_build::game::tournament::TournamentType;
+use proto_build::game::tournament::{
+    AddParticipantRequest, CreateTournamentRequest, GetTournamentRequest, ManyTournamentsResponse,
+    RemoveParticipantRequest, TournamentResponse,
+    tournament_service_server::TournamentService as GrpcTournamentService,
+};
+use shared::game::{Actor, LolGameMode as DomainLolGameMode};
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
-
-use crate::domain::services::TournamentService as DomainTournamentService;
-use crate::domain::value_objects::*;
-
-use proto_build::common::Status as ProtoStatus;
-use proto_build::game::tournament::{
-    AddParticipantRequest, CreateTournamentRequest, GetTournamentRequest,
-    ManyTournamentsResponse, RemoveParticipantRequest, TournamentResponse,
-    tournament_service_server::TournamentService as GrpcTournamentService,
-};
 #[derive(Clone)]
 pub struct GrpcTournamentServiceImpl {
     domain_service: Arc<DomainTournamentService>,
@@ -37,23 +38,12 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
         let host = req
             .host
             .ok_or_else(|| Status::invalid_argument("Host is required"))
-            .map(|h| match h.r#type {
+            .map(|h| match h.actor_type {
                 1 => Actor::User(Uuid::parse_str(&h.id).unwrap_or_default()),
                 2 => Actor::Team(Uuid::parse_str(&h.id).unwrap_or_default()),
                 3 => Actor::Club(Uuid::parse_str(&h.id).unwrap_or_default()),
                 _ => Actor::User(Uuid::new_v4()),
             })?;
-
-        let participants: Vec<Actor> = req
-            .participants
-            .into_iter()
-            .map(|p| match p.r#type {
-                1 => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
-                2 => Actor::Team(Uuid::parse_str(&p.id).unwrap_or_default()),
-                3 => Actor::Club(Uuid::parse_str(&p.id).unwrap_or_default()),
-                _ => Actor::User(Uuid::new_v4()),
-            })
-            .collect();
 
         let settings = req
             .settings
@@ -65,21 +55,12 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
                 .ok_or_else(|| Status::invalid_argument("Tournament settings are required"))?,
         )?;
 
-        let start = req
-            .start
-            .ok_or_else(|| Status::invalid_argument("Start time is required"))?;
-        let start =
-            DateTime::from_timestamp(start.seconds, start.nanos as u32).expect("Invalid timestamp");
+        let start = req.start;
+        let start = DateTime::from_timestamp(start, 0).expect("Invalid timestamp");
 
         let tournament = self
             .domain_service
-            .create(
-                host,
-                participants,
-                tournament_settings,
-                start,
-                Some(req.prizepool),
-            )
+            .create(host, tournament_settings, start, Some(req.prizepool))
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
@@ -208,7 +189,35 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
         let participant = req
             .participant
             .ok_or_else(|| Status::invalid_argument("Participant is required"))
-            .map(|p| match p.r#type {
+            .map(|p| match p.actor_type {
+                1 => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
+                2 => Actor::Team(Uuid::parse_str(&p.id).unwrap_or_default()),
+                3 => Actor::Club(Uuid::parse_str(&p.id).unwrap_or_default()),
+                _ => Actor::User(Uuid::new_v4()),
+            })?;
+
+        let tournament = self
+            .domain_service
+            .add_participant(tournament_id, participant)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        Ok(Response::new(tournament_to_proto(tournament)))
+    }
+
+    async fn add_participant_to_wait_list(
+        &self,
+        request: Request<AddParticipantRequest>,
+    ) -> Result<Response<TournamentResponse>, Status> {
+        let req = request.into_inner();
+
+        let tournament_id = Uuid::parse_str(&req.tournament_id)
+            .map_err(|_| Status::invalid_argument("Invalid tournament_id"))?;
+
+        let participant = req
+            .participant
+            .ok_or_else(|| Status::invalid_argument("Participant is required"))
+            .map(|p| match p.actor_type {
                 1 => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
                 2 => Actor::Team(Uuid::parse_str(&p.id).unwrap_or_default()),
                 3 => Actor::Club(Uuid::parse_str(&p.id).unwrap_or_default()),
@@ -251,22 +260,29 @@ fn tournament_settings_from_proto(
 ) -> Result<TournamentSettings, Status> {
     match settings {
         proto_build::game::tournament::tournament_settings::Settings::Lol(lol) => {
-            let bracket_mode = match lol.bracket_mode {
-                1 => LolBracketMode::DoubleElim,
-                2 => LolBracketMode::SingleElim(true),
-                3 => LolBracketMode::SingleElim(false),
-                4 => LolBracketMode::Swiss,
-                5 => LolBracketMode::RoundRobin,
-                _ => LolBracketMode::SingleElim(false),
+            let bracket_mode = LolBracketMode::from_i32(lol.bracket_mode);
+
+            let lbm = lol.bracket_mode();
+            let bracket_mode = match lbm {
+                LolBracketMode::DoubleElim => DomainBracketMode::DoubleElim,
+                LolBracketMode::SingleElimNoThirdPlace => DomainBracketMode::SingleElim,
+                LolBracketMode::SingleElimThirdPlace => DomainBracketMode::SingleElimWithThird,
+                LolBracketMode::Scrim => DomainBracketMode::Scrim,
+                LolBracketMode::Swiss => DomainBracketMode::Swiss,
+                LolBracketMode::RoundRobin => DomainBracketMode::RoundRobin,
+                _ => DomainBracketMode::DoubleElim,
             };
 
-            let draft_mode = match lol.draft_mode {
-                1 => LolGameMode::Classic,
-                2 => LolGameMode::Fearless,
-                3 => LolGameMode::IronMan,
-                4 => LolGameMode::AllRandom,
-                _ => LolGameMode::Classic,
-            };
+            let ldm = lol.draft_mode();
+            let draft_mode: Vec<DomainLolGameMode> = ldm
+                .map(|el| match el {
+                    LolGameMode::AllRandom => DomainLolGameMode::AllRandom,
+                    LolGameMode::Classic => DomainLolGameMode::Classic,
+                    LolGameMode::Fearless => DomainLolGameMode::Fearless,
+                    LolGameMode::IronMan => DomainLolGameMode::IronMan,
+                    _ => DomainLolGameMode::Classic,
+                })
+                .collect();
 
             let series_best_of = lol.series_best_of.iter().map(|&x| x as u8).collect();
 
@@ -277,11 +293,17 @@ fn tournament_settings_from_proto(
                     acc
                 },
             );
+
+            let tournament_type = match lol.tournament_type() {
+                TournamentType::Pickem => DomainTournamentType::PickEm,
+                TournamentType::Presign => DomainTournamentType::Presign,
+                _ => DomainTournamentType::Presign,
+            };
             Ok(TournamentSettings::Lol(LolTournamentSettings {
                 bracket_mode,
                 draft_mode,
                 team_size: lol.team_size as u8,
-                tournament_type: TournamentType::Classic,
+                tournament_type,
                 map: lol.map as u8,
                 forbidden_champions: forbidden_champs,
                 series_best_of: Some(series_best_of),
@@ -311,7 +333,7 @@ fn tournament_to_proto(tournament: crate::domain::models::Tournament) -> Tournam
             id: match tournament.host() {
                 Actor::User(id) | Actor::Team(id) | Actor::Club(id) => id.to_string(),
             },
-            r#type: match tournament.host() {
+            actor_type: match tournament.host() {
                 Actor::User(_) => proto_build::common::ActorType::User as i32,
                 Actor::Team(_) => proto_build::common::ActorType::Team as i32,
                 Actor::Club(_) => proto_build::common::ActorType::Club as i32,
@@ -324,7 +346,7 @@ fn tournament_to_proto(tournament: crate::domain::models::Tournament) -> Tournam
                 id: match actor {
                     Actor::User(id) | Actor::Team(id) | Actor::Club(id) => id.to_string(),
                 },
-                r#type: match actor {
+                actor_type: match actor {
                     Actor::User(_) => proto_build::common::ActorType::User as i32,
                     Actor::Team(_) => proto_build::common::ActorType::Team as i32,
                     Actor::Club(_) => proto_build::common::ActorType::Club as i32,
@@ -333,8 +355,8 @@ fn tournament_to_proto(tournament: crate::domain::models::Tournament) -> Tournam
             .collect(),
         settings: Some(tournament_settings_to_proto(tournament.settings())),
         game_series_ids,
-        start: Some(tournament.start_timestamp().into()),
-        end: tournament.end_timestamp().map(|t| t.into()),
+        start: tournament.start_timestamp(),
+        end: tournament.end_timestamp(),
         status,
         prizepool: tournament.prizepool().map(String::from).unwrap(),
     }
@@ -344,36 +366,49 @@ fn tournament_settings_to_proto(
     settings: &TournamentSettings,
 ) -> proto_build::game::tournament::TournamentSettings {
     proto_build::game::tournament::TournamentSettings {
-        game_type: proto_build::game::gameseries::GameType::Lol as i32,
+        game_type: proto_build::common::GameType::Lol as i32,
         settings: Some(
             proto_build::game::tournament::tournament_settings::Settings::Lol(
                 proto_build::game::tournament::LolTournamentSettings {
+                    tournament_type: match settings {
+                        TournamentSettings::Lol(lol) => match lol.tournament_type {
+                            DomainTournamentType::PickEm => {
+                                proto_build::game::tournament::TournamentType::Pickem as i32
+                            }
+                            DomainTournamentType::Presign => {
+                                proto_build::game::tournament::TournamentType::Presign as i32
+                            }
+                        },
+                        _ => 0,
+                    },
                     bracket_mode: match settings {
                         TournamentSettings::Lol(lol) => match lol.bracket_mode {
-                            LolBracketMode::DoubleElim => 1,
-                            LolBracketMode::SingleElim(true) => 2,
-                            LolBracketMode::SingleElim(false) => 3,
-                            LolBracketMode::Swiss => 4,
-                            LolBracketMode::RoundRobin => 5,
+                            DomainBracketMode::DoubleElim => LolBracketMode::DoubleElim as i32,
+                            DomainBracketMode::SingleElim => {
+                                LolBracketMode::SingleElimNoThirdPlace as i32
+                            }
+                            DomainBracketMode::SingleElimWithThird => {
+                                LolBracketMode::SingleElimThirdPlace as i32
+                            }
+                            DomainBracketMode::Swiss => LolBracketMode::Swiss as i32,
+                            DomainBracketMode::RoundRobin => LolBracketMode::RoundRobin as i32,
+                            DomainBracketMode::Scrim => LolBracketMode::Scrim as i32,
                         },
-                        _ => 3,
+                        _ => 0,
                     },
                     draft_mode: match settings {
-                        TournamentSettings::Lol(lol) => match lol.draft_mode {
-                            LolGameMode::Classic => {
-                                proto_build::game::gameseries::LolGameMode::Classic as i32
-                            }
-                            LolGameMode::Fearless => {
-                                proto_build::game::gameseries::LolGameMode::Fearless as i32
-                            }
-                            LolGameMode::IronMan => {
-                                proto_build::game::gameseries::LolGameMode::IronMan as i32
-                            }
-                            LolGameMode::AllRandom => {
-                                proto_build::game::gameseries::LolGameMode::AllRandom as i32
-                            }
-                        },
-                        _ => proto_build::game::gameseries::LolGameMode::Classic as i32,
+                        TournamentSettings::Lol(lol) => lol
+                            .draft_mode
+                            .iter()
+                            .map(|el| match el {
+                                DomainLolGameMode::AllRandom => LolGameMode::AllRandom as i32,
+                                DomainLolGameMode::Fearless => LolGameMode::Fearless as i32,
+                                DomainLolGameMode::IronMan => LolGameMode::IronMan as i32,
+                                DomainLolGameMode::Classic => LolGameMode::Classic as i32,
+                            })
+                            .collect(),
+
+                        _ => vec![],
                     },
                     team_size: match settings {
                         TournamentSettings::Lol(lol) => lol.team_size as u32,

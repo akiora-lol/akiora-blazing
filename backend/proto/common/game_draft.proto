@@ -18,7 +18,7 @@ enum TeamType {
 }
 message Team {
   common.Actor actor = 1;
-  TeamType type = 2;
+  TeamType team_type = 2;
 }
 
 message Action {

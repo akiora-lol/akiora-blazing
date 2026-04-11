@@ -11,22 +11,24 @@ pub enum TournamentSettings {
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TournamentType {
-    Classic,
+    Presign,
     PickEm,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum LolBracketMode {
-    SingleElim(bool), //bool for 3rd place
+    SingleElim,
+    SingleElimWithThird,
     DoubleElim,
     Swiss,
     RoundRobin,
+    Scrim,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct LolTournamentSettings {
     pub bracket_mode: LolBracketMode,
-    pub draft_mode: LolGameMode,
+    pub draft_mode: Vec<LolGameMode>, // n=0..last is finals:boX, semifinals:boX, quarter:boX .... 1/2^n:boX
     pub team_size: u8,
     pub tournament_type: TournamentType,
     pub map: u8,

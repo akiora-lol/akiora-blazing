@@ -14,6 +14,7 @@ pub struct Tournament {
 
     host: Actor,
     teams: Vec<Actor>,
+    participant_pool: Vec<Actor>,
     settings: TournamentSettings,
     #[serde(skip_deserializing)]
     games: Option<Vec<GameSeries>>,
@@ -26,15 +27,17 @@ impl Tournament {
     pub fn new(
         id: Uuid,
         host: Actor,
-        teams: Vec<Actor>,
         settings: TournamentSettings,
         start: DateTime<Utc>,
         prizepool: Option<String>,
     ) -> Self {
+        let teams = Vec::new();
+        let participant_pool = Vec::new();
         Self {
             id,
             host,
             teams,
+            participant_pool,
             settings,
             games: None,
             start,
@@ -67,18 +70,12 @@ impl Tournament {
         self.games = Some(games);
     }
 
-    pub fn start_timestamp(&self) -> Timestamp {
-        Timestamp {
-            seconds: self.start.timestamp(),
-            nanos: self.start.timestamp_subsec_nanos() as i32,
-        }
+    pub fn start_timestamp(&self) -> i64 {
+        self.start.timestamp()
     }
-    pub fn end_timestamp(&self) -> Option<Timestamp> {
+    pub fn end_timestamp(&self) -> Option<i64> {
         match self.end {
-            Some(st) => Some(Timestamp {
-                seconds: st.timestamp(),
-                nanos: st.timestamp_subsec_nanos() as i32,
-            }),
+            Some(st) => Some(st.timestamp()),
             _ => None,
         }
     }

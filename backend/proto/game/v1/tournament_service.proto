@@ -8,14 +8,14 @@ import "common/types.proto";
 
 option go_package = "akiora/game/tournament";
 
-enum TournamentType{
-    UNSPECIFIED = 0;
-    PRESIGN =1;
-    PICKEM =2;
+enum TournamentType {
+  UNSPECIFIED = 0;
+  PRESIGN = 1;
+  PICKEM = 2;
 }
 
 message LolTournamentSettings {
-    TournamentType tournament_type = 1;
+  TournamentType tournament_type = 1;
   common.LolBracketMode bracket_mode = 2;
   repeated common.LolGameMode draft_mode = 3;
   uint32 team_size = 4;
@@ -23,8 +23,6 @@ message LolTournamentSettings {
   repeated uint32 forbidden_champions = 6;
   repeated uint32 series_best_of = 7;
 }
-
-
 
 message TftTournamentSettings {
   string todo = 1;
@@ -44,9 +42,9 @@ message TournamentSettings {
 }
 
 message CreateTournamentRequest {
-  common.Actor host = 1;  
+  common.Actor host = 1;
   TournamentSettings settings = 3;
-  uint64 start = 4;
+  int64 start = 4;
   string prizepool = 5;
 }
 
@@ -61,8 +59,8 @@ message TournamentResponse {
   repeated common.Actor participants = 3;
   TournamentSettings settings = 4;
   repeated string game_series_ids = 5;
-  uint64 start = 6;
-  optional uint64 end = 7;
+  int64 start = 6;
+  optional int64 end = 7;
   common.Status status = 8;
   string prizepool = 9;
 }
@@ -70,8 +68,6 @@ message TournamentResponse {
 message ManyTournamentsResponse {
   repeated TournamentResponse tournaments = 1;
 }
-
-
 
 service TournamentService {
   // Создание турнира
@@ -103,7 +99,6 @@ message AddParticipantRequest {
   common.Actor participant = 2;
   optional common.TeamParticipant team_participant = 3;
 }
-
 
 message RemoveParticipantRequest {
   string tournament_id = 1;

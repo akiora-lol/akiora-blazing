@@ -17,3 +17,4 @@ redis-macros= { workspace = true}
 thiserror={workspace=true}
 tokio = {workspace = true}
 anyhow = { workspace = true}
+dotenvy.workspace = true

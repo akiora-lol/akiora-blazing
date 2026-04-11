@@ -5,7 +5,7 @@ package akiora.common;
 option go_package = "akiora/common";
 
 enum ActorType {
-  ANY = 0;
+  ACTOR_UNSPECIFIED = 0;
   USER = 1;
   TEAM = 2;
   CLUB = 3;
@@ -13,7 +13,7 @@ enum ActorType {
 
 message Actor {
   string id = 1;
-  ActorType type = 2;
+  ActorType actor_type = 2;
 }
 
 message TeamParticipant {
