@@ -1,8 +1,10 @@
 use mongodb::{Collection, Database};
 use redis::aio::{ConnectionManager, ConnectionManagerConfig};
-use redis::{Client, RedisResult};
-
+use redis::{AsyncCommands, Client, RedisError, RedisResult};
+use serde::Serialize;
 use std::time::Duration;
+
+use crate::errors::PublishError;
 
 pub struct MongoRepository<T: Send + Sync> {
     collection: Collection<T>,
@@ -34,4 +36,40 @@ pub async fn get_redis_manager(redis_uri: &str) -> RedisResult<ConnectionManager
 
     let manager = ConnectionManager::new_with_config(client, config).await?;
     Ok(manager)
+}
+
+pub struct Publisher {
+    con: ConnectionManager,
+}
+impl Publisher {
+    pub fn new(con: ConnectionManager) -> Self {
+        Self { con }
+    }
+
+    pub async fn pub_sub_publish<T: Serialize>(
+        &mut self,
+        channel: &str,
+        data: &T,
+    ) -> Result<i64, PublishError> {
+        let json = serde_json::to_string(data).map_err(|e| PublishError::ReadError)?;
+        let subscribers: i64 = self
+            .con
+            .publish(channel, json)
+            .await
+            .map_err(|e| PublishError::WriteError)?;
+        Ok(subscribers)
+    }
+    pub async fn stream_publish<T: Serialize>(
+        &mut self,
+        stream: &str,
+        data: &T,
+    ) -> Result<String, PublishError> {
+        let json = serde_json::to_string(data).map_err(|e| PublishError::ReadError)?;
+        let id: String = self
+            .con
+            .xadd(stream, "*", &[("data", json)])
+            .await
+            .map_err(|e| PublishError::WriteError)?;
+        Ok(id)
+    }
 }

@@ -12,4 +12,4 @@ uuid={workspace=true}
 bitvec={workspace=true}
 redis-macros.workspace = true
 serde_json.workspace = true
-
+thiserror = {workspace=true}

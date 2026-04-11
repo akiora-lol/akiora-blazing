@@ -2237,6 +2237,7 @@ dependencies = [
  "redis-macros",
  "serde",
  "serde_json",
+ "thiserror",
  "uuid",
 ]
 

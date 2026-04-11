@@ -1,10 +1,11 @@
-use crate::{app::publisher::Publisher, domain::draft_service::DraftService};
+use crate::domain::draft_service::DraftService;
 use anyhow::Result;
 use redis::{
     AsyncCommands, FromRedisValue,
     aio::ConnectionManager,
     streams::{StreamId, StreamReadOptions, StreamReadReply},
 };
+use shared::Publisher;
 use shared::contracts::draft::events::{
     BadAction, DraftAction, DraftEnded, DraftNextCommand, Event, PrepareDraft, RedoAction,
 };
