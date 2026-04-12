@@ -4,6 +4,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::domain::models::{GameSeries, Tournament};
+use crate::domain::value_objects::participant::TeamParticipant;
 use crate::domain::value_objects::*;
 use crate::infra::{TournamentRepo, TournamentRepoExt};
 
@@ -25,8 +26,7 @@ impl TournamentService {
         start: chrono::DateTime<Utc>,
         prizepool: Option<String>,
     ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
-        let id = Uuid::new_v4();
-        let tournament = Tournament::new(id, host, settings, start, prizepool);
+        let tournament = Tournament::new(host, settings, start, prizepool);
         self.repo.insert(&tournament).await?;
         Ok(tournament)
     }
@@ -55,7 +55,6 @@ impl TournamentService {
             .await?
             .ok_or("Tournament not found")?;
 
-        // Tournament already has start time set at creation
         Ok(tournament)
     }
 
@@ -90,10 +89,10 @@ impl TournamentService {
         Ok(tournament)
     }
 
-    pub async fn remove_participant(
+    pub async fn add_team(
         &self,
         id: Uuid,
-        participant_id: Uuid,
+        participant: Actor,
     ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
         let mut tournament = self
             .repo
@@ -101,9 +100,57 @@ impl TournamentService {
             .await?
             .ok_or("Tournament not found")?;
 
-        tournament.remove_participant(participant_id);
+        tournament.add_participant(participant);
         self.repo.update(&tournament).await?;
         Ok(tournament)
+    }
+
+    pub async fn start_tournament(
+        &self,
+        id: Uuid,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let mut tournament = self
+            .repo
+            .find_by_id(id)
+            .await?
+            .ok_or("Tournament not found")?;
+        match tournament.settings {
+            TournamentSettings::Lol(settings) => self.build_bracket(&settings, &tournament.teams),
+
+            _ => todo!(),
+        }
+        Ok(())
+    }
+    fn build_bracket(&self, settings: &LolTournamentSettings, teams: &Vec<TeamParticipant>) {
+        match settings.bracket_mode {
+            LolBracketMode::DoubleElim => {
+                todo!()
+            }
+            LolBracketMode::Scrim => {
+                todo!()
+            }
+            LolBracketMode::SingleElim => {
+                self.build_bracket_se(settings, teams);
+            }
+            LolBracketMode::SingleElimWithThird => {
+                todo!()
+            }
+            LolBracketMode::RoundRobin => {
+                todo!()
+            }
+            LolBracketMode::Swiss => {
+                todo!()
+            }
+        }
+    }
+
+    fn build_bracket_se(&self, settings: &LolTournamentSettings, teams: &Vec<TeamParticipant>) {
+        let number_of_teams = teams.len();
+        let mut log_n = number_of_teams.ilog2();
+        let base_2: i32 = 2;
+        if base_2.pow(log_n) < number_of_teams as i32 {
+            log_n += 1;
+        }
     }
 
     pub async fn add_game_series(

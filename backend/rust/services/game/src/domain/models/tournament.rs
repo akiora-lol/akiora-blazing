@@ -1,47 +1,52 @@
 use chrono::{DateTime, Utc};
 use prost_types::Timestamp;
 use serde::{Deserialize, Serialize};
-use shared::game::Actor;
+use shared::game::{Actor, LolGameSettings};
 use uuid::Uuid;
 
 use crate::domain::GameSeries;
+use crate::domain::value_objects::participant::TeamParticipant;
 use crate::domain::value_objects::*;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Tournament {
     #[serde(rename = "_id", with = "uuid::serde::simple")]
-    id: Uuid,
-
-    host: Actor,
-    teams: Vec<Actor>,
-    participant_pool: Vec<Actor>,
-    settings: TournamentSettings,
+    pub id: Uuid,
+    pub status: TournamentStatus,
+    pub host: Actor,
+    pub teams: Vec<TeamParticipant>,
+    pub participant_pool: Vec<Actor>,
+    pub wait_list: Vec<Actor>,
+    pub settings: TournamentSettings,
     #[serde(skip_deserializing)]
-    games: Option<Vec<GameSeries>>,
-    start: DateTime<Utc>,
-    end: Option<DateTime<Utc>>,
-    prizepool: Option<String>,
+    pub games: Option<Vec<GameSeries>>,
+    pub start_time: DateTime<Utc>,
+    pub end_time: Option<DateTime<Utc>>,
+    pub prizepool: Option<String>,
 }
 
 impl Tournament {
     pub fn new(
-        id: Uuid,
         host: Actor,
         settings: TournamentSettings,
         start: DateTime<Utc>,
         prizepool: Option<String>,
     ) -> Self {
+        let id = Uuid::new_v4();
         let teams = Vec::new();
         let participant_pool = Vec::new();
+        let wait_list = Vec::new();
         Self {
             id,
             host,
+            status: TournamentStatus::Sheduled,
             teams,
             participant_pool,
             settings,
             games: None,
-            start,
-            end: None,
+            wait_list,
+            start_time: start,
+            end_time: None,
             prizepool,
         }
     }
@@ -52,10 +57,6 @@ impl Tournament {
 
     pub fn host(&self) -> &Actor {
         &self.host
-    }
-
-    pub fn teams(&self) -> &[Actor] {
-        &self.teams
     }
 
     pub fn settings(&self) -> &TournamentSettings {
@@ -71,10 +72,10 @@ impl Tournament {
     }
 
     pub fn start_timestamp(&self) -> i64 {
-        self.start.timestamp()
+        self.start_time.timestamp()
     }
     pub fn end_timestamp(&self) -> Option<i64> {
-        match self.end {
+        match self.end_time {
             Some(st) => Some(st.timestamp()),
             _ => None,
         }
@@ -88,19 +89,19 @@ impl Tournament {
     }
 
     pub fn start(&self) -> DateTime<Utc> {
-        self.start
+        self.start_time
     }
 
     pub fn end(&self) -> Option<DateTime<Utc>> {
-        self.end
+        self.end_time
     }
 
     pub fn set_end(&mut self, end: DateTime<Utc>) {
-        self.end = Some(end);
+        self.end_time = Some(end);
     }
 
     pub fn is_finished(&self) -> bool {
-        self.end.is_some()
+        self.end_time.is_some()
     }
 
     pub fn prizepool(&self) -> Option<&str> {
@@ -112,17 +113,14 @@ impl Tournament {
     }
 
     pub fn add_participant(&mut self, participant: Actor) {
-        self.teams.push(participant);
+        self.participant_pool.push(participant);
     }
 
-    pub fn remove_participant(&mut self, participant_id: Uuid) -> bool {
-        if let Some(pos) = self.teams.iter().position(|t| match t {
-            Actor::User(id) | Actor::Team(id) | Actor::Club(id) => *id == participant_id,
-        }) {
-            self.teams.remove(pos);
-            true
-        } else {
-            false
-        }
+    pub fn add_team(&mut self, team: TeamParticipant) {
+        self.teams.push(team);
+    }
+
+    pub fn add_to_waitlist(&mut self, participant: Actor) {
+        self.wait_list.push(participant);
     }
 }

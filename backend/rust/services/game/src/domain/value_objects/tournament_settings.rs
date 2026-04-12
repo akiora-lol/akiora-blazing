@@ -4,6 +4,14 @@ use serde::{Deserialize, Serialize};
 use shared::game::LolGameMode;
 
 #[derive(Serialize, Deserialize, Clone)]
+pub enum TournamentStatus {
+    Sheduled,
+    Active,
+    Finished,
+    Cancelled,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub enum TournamentSettings {
     Lol(LolTournamentSettings),
     Tft,

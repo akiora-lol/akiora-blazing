@@ -4,7 +4,7 @@ use serde_with::serde_as;
 use shared::game::Actor;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Debug, Deserialize, Clone)]
 #[serde_as]
 pub struct TeamParticipant {
     pub participant: Actor,

@@ -260,8 +260,6 @@ fn tournament_settings_from_proto(
 ) -> Result<TournamentSettings, Status> {
     match settings {
         proto_build::game::tournament::tournament_settings::Settings::Lol(lol) => {
-            let bracket_mode = LolBracketMode::from_i32(lol.bracket_mode);
-
             let lbm = lol.bracket_mode();
             let bracket_mode = match lbm {
                 LolBracketMode::DoubleElim => DomainBracketMode::DoubleElim,
@@ -314,12 +312,12 @@ fn tournament_settings_from_proto(
 }
 
 fn tournament_to_proto(tournament: crate::domain::models::Tournament) -> TournamentResponse {
-    let status = if tournament.is_finished() {
-        ProtoStatus::Finished as i32
-    } else if tournament.start() < Utc::now() {
-        ProtoStatus::Active as i32
-    } else {
-        ProtoStatus::Scheduled as i32
+    let status = match tournament.status {
+        TournamentStatus::Sheduled => ProtoStatus::Scheduled,
+        TournamentStatus::Active => ProtoStatus::Active,
+        TournamentStatus::Finished => ProtoStatus::Finished,
+        TournamentStatus::Cancelled => ProtoStatus::Cancelled,
+        _ => ProtoStatus::Unspecified,
     };
 
     let game_series_ids = tournament
@@ -340,7 +338,7 @@ fn tournament_to_proto(tournament: crate::domain::models::Tournament) -> Tournam
             },
         }),
         participants: tournament
-            .teams()
+            .teams
             .iter()
             .map(|actor| proto_build::common::Actor {
                 id: match actor {
@@ -357,7 +355,7 @@ fn tournament_to_proto(tournament: crate::domain::models::Tournament) -> Tournam
         game_series_ids,
         start: tournament.start_timestamp(),
         end: tournament.end_timestamp(),
-        status,
+        status: status as i32,
         prizepool: tournament.prizepool().map(String::from).unwrap(),
     }
 }

@@ -80,7 +80,7 @@ impl TournamentRepoExt for TournamentRepo {
         let update = doc! {
             "$set": {
                 "host": tournament.host().clone(),
-                "teams": tournament.teams().to_vec(),
+                "teams": tournament.teams.clone(),
 
                 "prizepool": tournament.prizepool(),
             }

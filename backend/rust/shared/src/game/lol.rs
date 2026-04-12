@@ -30,8 +30,7 @@ pub struct Draft {
     pub forbidden_champions: Vec<u8>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy)]
-
+#[derive(Serialize, Debug, Deserialize, Clone, Copy)]
 pub enum Actor {
     #[serde(with = "uuid::serde::simple")]
     User(Uuid),
