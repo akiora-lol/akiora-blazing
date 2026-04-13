@@ -1,5 +1,8 @@
+use shared::game::Actor;
+use uuid::Uuid;
+
 use crate::domain::{
-    models::BracketBuilder,
+    interfaces::BracketBuilder,
     value_objects::{
         bracket::{Bracket, Match},
         participant::TeamParticipant,
@@ -15,7 +18,7 @@ impl SingleEliminationBuilder {
 
         for i in 0..matches_per_round {
             let match_node = Match {
-                game_series_id: None,
+                game_series_id: Uuid::new_v4(),
                 team1: None,
                 team2: None,
                 winner: None,
@@ -31,7 +34,7 @@ impl SingleEliminationBuilder {
 
         matches
     }
-    fn create_first_round(teams: Vec<Option<TeamParticipant>>) -> Vec<Match> {
+    fn create_first_round(teams: Vec<Option<Actor>>) -> Vec<Match> {
         let total_slots = teams.len();
         let mut matches = Vec::new();
         let mut match_counter = 0;
@@ -47,7 +50,7 @@ impl SingleEliminationBuilder {
             let is_bye = team1.is_none() || team2.is_none();
 
             let match_node = Match {
-                game_series_id: None,
+                game_series_id: Uuid::new_v4(),
                 team1,
                 team2,
                 winner: None,
@@ -114,7 +117,7 @@ fn next_power_of_two(n: usize) -> usize {
     power
 }
 impl BracketBuilder for SingleEliminationBuilder {
-    fn build_bracket(&self, teams: &Vec<TeamParticipant>) -> Option<Bracket> {
+    fn build_bracket(&self, teams: &Vec<Actor>) -> Option<Bracket> {
         let number_of_teams = teams.len();
 
         if number_of_teams < 2 {

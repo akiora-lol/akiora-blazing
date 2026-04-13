@@ -1,11 +1,7 @@
 mod app;
 mod domain;
 mod infra;
-use bitvec::{bitarr, order::Lsb0};
-use domain::models::BracketBuilder;
-use shared::game::{Actor, LolGameMode};
 use std::sync::Arc;
-use uuid::Uuid;
 // use app::GrpcGameSeriesServiceImpl;
 // use app::GrpcGameServiceImpl;
 use app::GrpcTournamentServiceImpl;
@@ -16,12 +12,7 @@ use infra::*;
 use proto_build::game::tournament::tournament_service_server::TournamentServiceServer;
 use tonic::transport::Server;
 
-use crate::domain::{
-    services::{GameSeriesService, GameService, TournamentService},
-    value_objects::{
-        LolBracketMode, LolTournamentSettings, TournamentType, participant::TeamParticipant,
-    },
-};
+use crate::domain::services::{GameSeriesService, GameService, TournamentService};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db = get_mongo().await?;
@@ -31,8 +22,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tournament_repo = Arc::new(TournamentRepo::new(&db.clone(), "tournaments"));
 
     let game_service = Arc::new(GameService::new(game_repo));
-    let game_series_service = Arc::new(GameSeriesService::new(game_series_repo));
-    let tournament_service = Arc::new(TournamentService::new(tournament_repo));
+    let game_series_service = Arc::new(GameSeriesService::new(game_series_repo, game_service));
+    let tournament_service = Arc::new(TournamentService::new(tournament_repo, game_series_service));
 
     let address = "0.0.0.0:50051".parse()?;
     // let grpc_gs = GrpcGameServiceImpl::new(game_service);

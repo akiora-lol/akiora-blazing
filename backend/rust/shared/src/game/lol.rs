@@ -28,15 +28,16 @@ pub struct Draft {
     pub history: Vec<Command>,
     pub picks: Vec<ChampLock>,
     pub forbidden_champions: Vec<u8>,
+    pub teams: Vec<Team>,
 }
 
-#[derive(Serialize, Debug, Deserialize, Clone, Copy)]
+#[derive(Serialize, PartialEq, Hash, Eq, Debug, Deserialize, Clone, Copy)]
 pub enum Actor {
-    #[serde(with = "uuid::serde::simple")]
+    #[serde(with = "uuid::serde::hyphenated")]
     User(Uuid),
-    #[serde(with = "uuid::serde::simple")]
+    #[serde(with = "uuid::serde::hyphenated")]
     Team(Uuid),
-    #[serde(with = "uuid::serde::simple")]
+    #[serde(with = "uuid::serde::hyphenated")]
     Club(Uuid),
 }
 
@@ -65,6 +66,11 @@ impl From<Draft> for Bson {
 
 impl From<Actor> for Bson {
     fn from(tp: Actor) -> Self {
-        bson::to_bson(&tp).unwrap()
+        let st = match tp {
+            Actor::Club(id) => format!("Club:{id}"),
+            Actor::User(id) => format!("User:{id}"),
+            Actor::Team(id) => format!("Team:{id}"),
+        };
+        bson::to_bson(&st).unwrap()
     }
 }

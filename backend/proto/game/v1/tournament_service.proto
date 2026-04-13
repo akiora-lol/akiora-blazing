@@ -46,6 +46,7 @@ message CreateTournamentRequest {
   TournamentSettings settings = 3;
   int64 start = 4;
   string prizepool = 5;
+  bool is_open = 6;
 }
 
 message GetTournamentRequest {
@@ -68,36 +69,51 @@ message TournamentResponse {
 message ManyTournamentsResponse {
   repeated TournamentResponse tournaments = 1;
 }
+message Empty {
+ 
+}
 
 service TournamentService {
   // Создание турнира
-  rpc CreateTournament(CreateTournamentRequest) returns (TournamentResponse);
+  rpc CreateTournament(CreateTournamentRequest) returns (Empty);
 
   // Получение турнира по ID
-  rpc GetTournament(GetTournamentRequest) returns (TournamentResponse);
+  rpc GetTournament(GetTournamentRequest) returns (Empty);
 
   // Получение списка турниров
-  rpc GetTournaments(GetTournamentRequest) returns (ManyTournamentsResponse);
+  rpc GetTournaments(GetTournamentRequest) returns (Empty);
 
   // Запуск турнира (создаёт сетку/расписание)
-  rpc StartTournament(GetTournamentRequest) returns (TournamentResponse);
+  rpc StartTournament(GetTournamentRequest) returns (Empty);
 
   // Завершение турнира
-  rpc FinishTournament(GetTournamentRequest) returns (TournamentResponse);
+  rpc FinishTournament(GetTournamentRequest) returns (Empty);
 
   // Добавление участника
-  rpc AddParticipant(AddParticipantRequest) returns (TournamentResponse);
+  rpc AddParticipant(AddParticipantRequest) returns (Empty);
 
-  rpc AddParticipantToWaitList(AddParticipantRequest) returns (TournamentResponse);
+  rpc AddTeam(AddTeamParticipantRequest) returns (Empty);
+  
+
+  rpc AddParticipantToWaitList(AddParticipantRequest) returns (Empty);
 
   // Удаление участника
-  rpc RemoveParticipant(RemoveParticipantRequest) returns (TournamentResponse);
+  rpc RemoveParticipant(RemoveParticipantRequest) returns (Empty);
 }
 
 message AddParticipantRequest {
   string tournament_id = 1;
+
   common.Actor participant = 2;
-  optional common.TeamParticipant team_participant = 3;
+ 
+
+}
+message AddTeamParticipantRequest {
+  string tournament_id = 1;
+
+  common.TeamParticipant team_participant = 2;
+ 
+
 }
 
 message RemoveParticipantRequest {

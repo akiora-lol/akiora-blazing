@@ -1,15 +1,19 @@
 use crate::domain::services::TournamentService as DomainTournamentService;
 use crate::domain::value_objects::LolBracketMode as DomainBracketMode;
 use crate::domain::value_objects::TournamentType as DomainTournamentType;
+use crate::domain::value_objects::participant::TeamParticipant;
 use crate::domain::value_objects::*;
 use bitvec::array::BitArray;
 use bitvec::order::Lsb0;
-use chrono::{DateTime, Utc};
-use proto_build::common::{LolBracketMode, LolGameMode, Status as ProtoStatus};
+use chrono::DateTime;
+use proto_build::common::ActorType;
+use proto_build::common::{LolBracketMode, LolGameMode};
+use proto_build::game::tournament::AddTeamParticipantRequest;
+use proto_build::game::tournament::Empty;
 use proto_build::game::tournament::TournamentType;
+
 use proto_build::game::tournament::{
-    AddParticipantRequest, CreateTournamentRequest, GetTournamentRequest, ManyTournamentsResponse,
-    RemoveParticipantRequest, TournamentResponse,
+    AddParticipantRequest, CreateTournamentRequest, GetTournamentRequest, RemoveParticipantRequest,
     tournament_service_server::TournamentService as GrpcTournamentService,
 };
 use shared::game::{Actor, LolGameMode as DomainLolGameMode};
@@ -32,7 +36,7 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
     async fn create_tournament(
         &self,
         request: Request<CreateTournamentRequest>,
-    ) -> Result<Response<TournamentResponse>, Status> {
+    ) -> Result<Response<Empty>, Status> {
         let req = request.into_inner();
 
         let host = req
@@ -60,17 +64,23 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
 
         let tournament = self
             .domain_service
-            .create(host, tournament_settings, start, Some(req.prizepool))
+            .create(
+                host,
+                req.is_open,
+                tournament_settings,
+                start,
+                Some(req.prizepool),
+            )
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
-        Ok(Response::new(tournament_to_proto(tournament)))
+        Ok(Response::new(Empty {}))
     }
 
     async fn get_tournament(
         &self,
         request: Request<GetTournamentRequest>,
-    ) -> Result<Response<TournamentResponse>, Status> {
+    ) -> Result<Response<Empty>, Status> {
         let req = request.into_inner();
 
         let ids: Vec<Uuid> = req
@@ -87,7 +97,7 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
                 .map_err(|e| Status::internal(e.to_string()))?
                 .ok_or_else(|| Status::not_found("Tournament not found"))?;
 
-            Ok(Response::new(tournament_to_proto(tournament)))
+            Ok(Response::new(Empty {}))
         } else {
             let tournament_list = self
                 .domain_service
@@ -100,14 +110,14 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
                 .next()
                 .ok_or_else(|| Status::not_found("Tournament not found"))?;
 
-            Ok(Response::new(tournament_to_proto(first)))
+            Ok(Response::new(Empty {}))
         }
     }
 
     async fn get_tournaments(
         &self,
         request: Request<GetTournamentRequest>,
-    ) -> Result<Response<ManyTournamentsResponse>, Status> {
+    ) -> Result<Response<Empty>, Status> {
         let req = request.into_inner();
 
         let ids: Vec<Uuid> = req
@@ -125,20 +135,13 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
             vec![]
         };
 
-        let proto_tournaments: Vec<TournamentResponse> = tournament_list
-            .into_iter()
-            .map(tournament_to_proto)
-            .collect();
-
-        Ok(Response::new(ManyTournamentsResponse {
-            tournaments: proto_tournaments,
-        }))
+        Ok(Response::new(Empty {}))
     }
 
     async fn start_tournament(
         &self,
         request: Request<GetTournamentRequest>,
-    ) -> Result<Response<TournamentResponse>, Status> {
+    ) -> Result<Response<Empty>, Status> {
         let req = request.into_inner();
 
         let id = req
@@ -147,19 +150,18 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
             .ok_or_else(|| Status::invalid_argument("ID is required"))?;
         let id = Uuid::parse_str(id).map_err(|_| Status::invalid_argument("Invalid id"))?;
 
-        let tournament = self
-            .domain_service
-            .start(id)
+        self.domain_service
+            .start_tournament(id)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
-        Ok(Response::new(tournament_to_proto(tournament)))
+        Ok(Response::new(Empty {}))
     }
 
     async fn finish_tournament(
         &self,
         request: Request<GetTournamentRequest>,
-    ) -> Result<Response<TournamentResponse>, Status> {
+    ) -> Result<Response<Empty>, Status> {
         let req = request.into_inner();
 
         let id = req
@@ -174,13 +176,13 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
-        Ok(Response::new(tournament_to_proto(tournament)))
+        Ok(Response::new(Empty {}))
     }
 
     async fn add_participant(
         &self,
         request: Request<AddParticipantRequest>,
-    ) -> Result<Response<TournamentResponse>, Status> {
+    ) -> Result<Response<Empty>, Status> {
         let req = request.into_inner();
 
         let tournament_id = Uuid::parse_str(&req.tournament_id)
@@ -189,11 +191,11 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
         let participant = req
             .participant
             .ok_or_else(|| Status::invalid_argument("Participant is required"))
-            .map(|p| match p.actor_type {
-                1 => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
-                2 => Actor::Team(Uuid::parse_str(&p.id).unwrap_or_default()),
-                3 => Actor::Club(Uuid::parse_str(&p.id).unwrap_or_default()),
-                _ => Actor::User(Uuid::new_v4()),
+            .map(|p| match p.actor_type() {
+                ActorType::Team => Actor::Team(Uuid::parse_str(&p.id).unwrap_or_default()),
+                ActorType::User => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
+                ActorType::Club => Actor::Club(Uuid::parse_str(&p.id).unwrap_or_default()),
+                _ => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
             })?;
 
         let tournament = self
@@ -202,13 +204,48 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
-        Ok(Response::new(tournament_to_proto(tournament)))
+        Ok(Response::new(Empty {}))
+    }
+
+    async fn add_team(
+        &self,
+        request: Request<AddTeamParticipantRequest>,
+    ) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+        let tournament_id = Uuid::parse_str(&req.tournament_id)
+            .map_err(|_| Status::invalid_argument("Invalid tournament_id"))?;
+        let team_part = req
+            .team_participant
+            .ok_or_else(|| Status::invalid_argument("Participant is required"))
+            .map(|tp| TeamParticipant {
+                participant: to_domain_actor(tp.participant.unwrap()).unwrap(),
+                users: tp
+                    .user_ids
+                    .iter()
+                    .map(|str_id| {
+                        Uuid::parse_str(str_id)
+                            .map_err(|e| {
+                                dbg!(&e);
+                                e
+                            })
+                            .unwrap()
+                    })
+                    .collect(),
+            })?;
+        dbg!(&tournament_id);
+        let tournament = self
+            .domain_service
+            .add_team(tournament_id, team_part)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        Ok(Response::new(Empty {}))
     }
 
     async fn add_participant_to_wait_list(
         &self,
         request: Request<AddParticipantRequest>,
-    ) -> Result<Response<TournamentResponse>, Status> {
+    ) -> Result<Response<Empty>, Status> {
         let req = request.into_inner();
 
         let tournament_id = Uuid::parse_str(&req.tournament_id)
@@ -216,27 +253,22 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
 
         let participant = req
             .participant
-            .ok_or_else(|| Status::invalid_argument("Participant is required"))
-            .map(|p| match p.actor_type {
-                1 => Actor::User(Uuid::parse_str(&p.id).unwrap_or_default()),
-                2 => Actor::Team(Uuid::parse_str(&p.id).unwrap_or_default()),
-                3 => Actor::Club(Uuid::parse_str(&p.id).unwrap_or_default()),
-                _ => Actor::User(Uuid::new_v4()),
-            })?;
+            .ok_or_else(|| Status::invalid_argument("Participant is required"))?;
 
-        let tournament = self
-            .domain_service
-            .add_participant(tournament_id, participant)
+        let participant = to_domain_actor(participant)
+            .ok_or_else(|| Status::invalid_argument("Participant is required"))?;
+        self.domain_service
+            .add_to_wait_list(tournament_id, participant)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
-        Ok(Response::new(tournament_to_proto(tournament)))
+        Ok(Response::new(Empty {}))
     }
 
     async fn remove_participant(
         &self,
         request: Request<RemoveParticipantRequest>,
-    ) -> Result<Response<TournamentResponse>, Status> {
+    ) -> Result<Response<Empty>, Status> {
         let req = request.into_inner();
 
         let tournament_id = Uuid::parse_str(&req.tournament_id)
@@ -251,7 +283,7 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
-        Ok(Response::new(tournament_to_proto(tournament)))
+        Ok(Response::new(Empty {}))
     }
 }
 
@@ -308,55 +340,6 @@ fn tournament_settings_from_proto(
             }))
         }
         _ => Err(Status::invalid_argument("Only LoL settings are supported")),
-    }
-}
-
-fn tournament_to_proto(tournament: crate::domain::models::Tournament) -> TournamentResponse {
-    let status = match tournament.status {
-        TournamentStatus::Sheduled => ProtoStatus::Scheduled,
-        TournamentStatus::Active => ProtoStatus::Active,
-        TournamentStatus::Finished => ProtoStatus::Finished,
-        TournamentStatus::Cancelled => ProtoStatus::Cancelled,
-        _ => ProtoStatus::Unspecified,
-    };
-
-    let game_series_ids = tournament
-        .games()
-        .map(|games| games.iter().map(|g| g.id().to_string()).collect())
-        .unwrap_or_default();
-
-    TournamentResponse {
-        id: tournament.id().to_string(),
-        host: Some(proto_build::common::Actor {
-            id: match tournament.host() {
-                Actor::User(id) | Actor::Team(id) | Actor::Club(id) => id.to_string(),
-            },
-            actor_type: match tournament.host() {
-                Actor::User(_) => proto_build::common::ActorType::User as i32,
-                Actor::Team(_) => proto_build::common::ActorType::Team as i32,
-                Actor::Club(_) => proto_build::common::ActorType::Club as i32,
-            },
-        }),
-        participants: tournament
-            .teams
-            .iter()
-            .map(|actor| proto_build::common::Actor {
-                id: match actor {
-                    Actor::User(id) | Actor::Team(id) | Actor::Club(id) => id.to_string(),
-                },
-                actor_type: match actor {
-                    Actor::User(_) => proto_build::common::ActorType::User as i32,
-                    Actor::Team(_) => proto_build::common::ActorType::Team as i32,
-                    Actor::Club(_) => proto_build::common::ActorType::Club as i32,
-                },
-            })
-            .collect(),
-        settings: Some(tournament_settings_to_proto(tournament.settings())),
-        game_series_ids,
-        start: tournament.start_timestamp(),
-        end: tournament.end_timestamp(),
-        status: status as i32,
-        prizepool: tournament.prizepool().map(String::from).unwrap(),
     }
 }
 
@@ -436,5 +419,34 @@ fn tournament_settings_to_proto(
                 },
             ),
         ),
+    }
+}
+fn to_domain_actor(act: proto_build::common::Actor) -> Option<Actor> {
+    match &act.actor_type() {
+        proto_build::common::ActorType::Club => Some(Actor::Club(
+            Uuid::parse_str(&act.id)
+                .map_err(|e| {
+                    dbg!(&e);
+                    e
+                })
+                .unwrap(),
+        )),
+        proto_build::common::ActorType::User => Some(Actor::User(
+            Uuid::parse_str(&act.id)
+                .map_err(|e| {
+                    dbg!(&e);
+                    e
+                })
+                .unwrap(),
+        )),
+        proto_build::common::ActorType::Team => Some(Actor::Team(
+            Uuid::parse_str(&act.id)
+                .map_err(|e| {
+                    dbg!(&e);
+                    e
+                })
+                .unwrap(),
+        )),
+        proto_build::common::ActorType::ActorUnspecified => None,
     }
 }

@@ -7,10 +7,9 @@ use uuid::Uuid;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Game {
-    #[serde(rename = "_id")]
-    #[serde(with = "uuid::serde::simple")]
+    #[serde(rename = "_id", with = "uuid::serde::hyphenated")]
     id: Uuid,
-    #[serde(with = "uuid::serde::simple")]
+    #[serde(with = "uuid::serde::hyphenated")]
     game_series: Uuid,
     draft: Option<Draft>,
     results: Option<Vec<TeamParticipant>>,

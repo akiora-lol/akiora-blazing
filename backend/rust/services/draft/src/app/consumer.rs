@@ -71,9 +71,7 @@ impl Consumer {
 
     async fn handle(&mut self, entry: &StreamId) -> Result<()> {
         let raw_event = entry.map.get("data").unwrap();
-        dbg!(raw_event.clone());
         let event: Event = Event::from_redis_value(raw_event.clone())?;
-        dbg!(event.clone());
 
         match event {
             Event::Draft(data) => {

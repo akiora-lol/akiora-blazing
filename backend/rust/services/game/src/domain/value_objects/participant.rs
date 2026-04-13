@@ -1,11 +1,11 @@
 use mongodb::bson::{self, Bson};
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
+use serde_with::{DisplayFromStr, serde_as};
 use shared::game::Actor;
 use uuid::Uuid;
 
-#[derive(Serialize, Debug, Deserialize, Clone)]
 #[serde_as]
+#[derive(Serialize, Debug, Deserialize, Clone)]
 pub struct TeamParticipant {
     pub participant: Actor,
 

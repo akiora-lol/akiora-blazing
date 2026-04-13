@@ -5,7 +5,7 @@ use shared::game::LolGameMode;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TournamentStatus {
-    Sheduled,
+    Scheduled,
     Active,
     Finished,
     Cancelled,

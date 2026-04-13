@@ -1,28 +1,33 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use prost_types::Timestamp;
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use shared::game::{Actor, LolGameSettings};
 use uuid::Uuid;
 
 use crate::domain::GameSeries;
+use crate::domain::value_objects::bracket::Bracket;
 use crate::domain::value_objects::participant::TeamParticipant;
 use crate::domain::value_objects::*;
 
+#[serde_as]
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Tournament {
-    #[serde(rename = "_id", with = "uuid::serde::simple")]
+    #[serde(rename = "_id", with = "uuid::serde::hyphenated")]
     pub id: Uuid,
     pub status: TournamentStatus,
     pub host: Actor,
-    pub teams: Vec<TeamParticipant>,
-    pub participant_pool: Vec<Actor>,
+    #[serde_as(as = "Vec<(_,_)>")]
+    pub participant_pool: HashMap<Actor, Option<TeamParticipant>>,
     pub wait_list: Vec<Actor>,
     pub settings: TournamentSettings,
-    #[serde(skip_deserializing)]
-    pub games: Option<Vec<GameSeries>>,
+    pub bracket: Option<Bracket>,
     pub start_time: DateTime<Utc>,
     pub end_time: Option<DateTime<Utc>>,
     pub prizepool: Option<String>,
+    pub is_open: bool,
 }
 
 impl Tournament {
@@ -30,23 +35,24 @@ impl Tournament {
         host: Actor,
         settings: TournamentSettings,
         start: DateTime<Utc>,
+        is_open: bool,
         prizepool: Option<String>,
     ) -> Self {
         let id = Uuid::new_v4();
-        let teams = Vec::new();
-        let participant_pool = Vec::new();
+
         let wait_list = Vec::new();
         Self {
             id,
             host,
-            status: TournamentStatus::Sheduled,
-            teams,
-            participant_pool,
+            status: TournamentStatus::Scheduled,
+
+            participant_pool: HashMap::new(),
             settings,
-            games: None,
+            is_open,
             wait_list,
             start_time: start,
             end_time: None,
+            bracket: None,
             prizepool,
         }
     }
@@ -63,14 +69,6 @@ impl Tournament {
         &self.settings
     }
 
-    pub fn games(&self) -> Option<&Vec<GameSeries>> {
-        self.games.as_ref()
-    }
-
-    pub fn set_games(&mut self, games: Vec<GameSeries>) {
-        self.games = Some(games);
-    }
-
     pub fn start_timestamp(&self) -> i64 {
         self.start_time.timestamp()
     }
@@ -78,13 +76,6 @@ impl Tournament {
         match self.end_time {
             Some(st) => Some(st.timestamp()),
             _ => None,
-        }
-    }
-    pub fn add_game_series(&mut self, game_series: GameSeries) {
-        if let Some(ref mut games) = self.games {
-            games.push(game_series);
-        } else {
-            self.games = Some(vec![game_series]);
         }
     }
 
@@ -112,15 +103,86 @@ impl Tournament {
         self.prizepool = Some(prizepool);
     }
 
-    pub fn add_participant(&mut self, participant: Actor) {
-        self.participant_pool.push(participant);
+    pub fn add_participant(&mut self, participant: Actor) -> Result<(), &'static str> {
+        if !matches!(self.status, TournamentStatus::Scheduled) {
+            return Err("Can only add participants while tournament is scheduled");
+        }
+        self.participant_pool.entry(participant).or_insert(None);
+        Ok(())
     }
 
-    pub fn add_team(&mut self, team: TeamParticipant) {
-        self.teams.push(team);
+    pub fn remove_participant(&mut self, participant_id: Uuid) -> Result<(), &'static str> {
+        if !matches!(self.status, TournamentStatus::Scheduled) {
+            return Err("Can only remove participants while tournament is scheduled");
+        }
+
+        self.participant_pool.retain(|&part, _| match part {
+            Actor::Club(id) | Actor::Team(id) | Actor::User(id) => id != participant_id,
+        });
+        Ok(())
     }
 
-    pub fn add_to_waitlist(&mut self, participant: Actor) {
+    pub fn add_team(&mut self, team: TeamParticipant) -> Result<(), &'static str> {
+        if !matches!(self.status, TournamentStatus::Scheduled) {
+            return Err("Can only add teams while tournament is scheduled");
+        }
+        if !self.participant_pool.contains_key(&team.participant) {
+            return Err("Can only add teams if its in participant_pool");
+        }
+
+        self.participant_pool.insert(team.participant, Some(team));
+
+        Ok(())
+    }
+
+    pub fn add_to_waitlist(&mut self, participant: Actor) -> Result<(), &'static str> {
+        if !matches!(self.status, TournamentStatus::Scheduled) {
+            return Err("Can only add to waitlist while tournament is scheduled");
+        }
         self.wait_list.push(participant);
+        Ok(())
+    }
+
+    pub fn remove_from_waitlist(&mut self, participant_id: Uuid) -> Result<(), &'static str> {
+        if !matches!(self.status, TournamentStatus::Scheduled) {
+            return Err("Can only remove from waitlist while tournament is scheduled");
+        }
+        self.wait_list.retain(|p| match p {
+            Actor::User(id) | Actor::Team(id) | Actor::Club(id) => *id != participant_id,
+        });
+        Ok(())
+    }
+
+    pub fn set_start_time(&mut self, start: DateTime<Utc>) -> Result<(), &'static str> {
+        if !matches!(self.status, TournamentStatus::Scheduled) {
+            return Err("Can only change start time while tournament is scheduled");
+        }
+        self.start_time = start;
+        Ok(())
+    }
+
+    pub fn activate(&mut self) -> Result<(), &'static str> {
+        if !matches!(self.status, TournamentStatus::Scheduled) {
+            return Err("Can only activate scheduled tournament");
+        }
+        self.status = TournamentStatus::Active;
+        Ok(())
+    }
+
+    pub fn cancel(&mut self) -> Result<(), &'static str> {
+        if matches!(self.status, TournamentStatus::Finished) {
+            return Err("Cannot cancel finished tournament");
+        }
+        self.status = TournamentStatus::Cancelled;
+        Ok(())
+    }
+
+    pub fn mark_finished(&mut self) -> Result<(), &'static str> {
+        if !matches!(self.status, TournamentStatus::Active) {
+            return Err("Can only finish active tournament");
+        }
+        self.status = TournamentStatus::Finished;
+        self.end_time = Some(Utc::now());
+        Ok(())
     }
 }

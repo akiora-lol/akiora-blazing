@@ -1,8 +1,15 @@
+use std::collections::HashMap;
+
 use futures::stream::TryStreamExt;
+use mongodb::bson;
 use mongodb::{IndexModel, bson::doc, options::IndexOptions};
+use shared::game::Actor;
 use uuid::Uuid;
 
 use crate::domain::models::Tournament;
+use crate::domain::value_objects::TournamentStatus;
+use crate::domain::value_objects::bracket::Bracket;
+use crate::domain::value_objects::participant::TeamParticipant;
 use shared::MongoRepository;
 
 pub type TournamentRepo = MongoRepository<Tournament>;
@@ -19,6 +26,41 @@ pub trait TournamentRepoExt {
     async fn insert(&self, tournament: &Tournament) -> Result<(), mongodb::error::Error>;
 
     async fn update(&self, tournament: &Tournament) -> Result<(), mongodb::error::Error>;
+
+    async fn update_participant_pool(
+        &self,
+        id: Uuid,
+        participants: &HashMap<Actor, Option<TeamParticipant>>,
+    ) -> Result<(), mongodb::error::Error>;
+
+    async fn update_wait_list(
+        &self,
+        id: Uuid,
+        wait_list: &[Actor],
+    ) -> Result<(), mongodb::error::Error>;
+
+    async fn update_teams(
+        &self,
+        id: Uuid,
+        teams: &[TeamParticipant],
+    ) -> Result<(), mongodb::error::Error>;
+
+    async fn update_status(
+        &self,
+        id: Uuid,
+        status: &TournamentStatus,
+    ) -> Result<(), mongodb::error::Error>;
+
+    async fn update_start_time(
+        &self,
+        id: Uuid,
+        start_time: &chrono::DateTime<chrono::Utc>,
+    ) -> Result<(), mongodb::error::Error>;
+    async fn update_bracket(
+        &self,
+        id: Uuid,
+        bracket: Option<Bracket>,
+    ) -> Result<(), mongodb::error::Error>;
 
     async fn delete(&self, id: Uuid) -> Result<(), mongodb::error::Error>;
 }
@@ -60,7 +102,10 @@ impl TournamentRepoExt for TournamentRepo {
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Tournament>, mongodb::error::Error> {
         let filter = doc! { "_id": id.to_string() };
-        self.get_collection().find_one(filter).await
+        self.get_collection().find_one(filter).await.map_err(|e| {
+            dbg!(&e);
+            e
+        })
     }
 
     async fn find_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Tournament>, mongodb::error::Error> {
@@ -76,15 +121,86 @@ impl TournamentRepoExt for TournamentRepo {
     }
 
     async fn update(&self, tournament: &Tournament) -> Result<(), mongodb::error::Error> {
-        let filter = doc! { "_id": tournament.id().to_string() };
-        let update = doc! {
-            "$set": {
-                "host": tournament.host().clone(),
-                "teams": tournament.teams.clone(),
+        todo!();
+        Ok(())
+    }
 
-                "prizepool": tournament.prizepool(),
-            }
-        };
+    async fn update_participant_pool(
+        &self,
+        id: Uuid,
+        participants: &HashMap<Actor, Option<TeamParticipant>>,
+    ) -> Result<(), mongodb::error::Error> {
+        let mut to_be_saved = Vec::new();
+        for (key, value) in participants {
+            to_be_saved.push((key, value));
+        }
+
+        let filter = doc! { "_id": id.to_string() };
+        let update = doc! { "$set": { "participant_pool": bson::to_bson(&to_be_saved).map_err(|e|{
+            dbg!(&e);
+            e
+        }).unwrap() }};
+        self.get_collection()
+            .update_one(filter, update)
+            .await
+            .map_err(|e| {
+                dbg!(&e);
+                e
+            })?;
+        Ok(())
+    }
+
+    async fn update_bracket(
+        &self,
+        id: Uuid,
+        bracket: Option<Bracket>,
+    ) -> Result<(), mongodb::error::Error> {
+        let filter = doc! { "_id": id.to_string() };
+        let update = doc! { "$set": { "bracket": bracket } };
+        self.get_collection().update_one(filter, update).await?;
+        Ok(())
+    }
+
+    async fn update_wait_list(
+        &self,
+        id: Uuid,
+        wait_list: &[Actor],
+    ) -> Result<(), mongodb::error::Error> {
+        let filter = doc! { "_id": id.to_string() };
+        let update = doc! { "$set": { "wait_list": wait_list.to_vec() } };
+        self.get_collection().update_one(filter, update).await?;
+        Ok(())
+    }
+
+    async fn update_teams(
+        &self,
+        id: Uuid,
+        teams: &[TeamParticipant],
+    ) -> Result<(), mongodb::error::Error> {
+        let filter = doc! { "_id": id.to_string() };
+        let update = doc! { "$set": { "teams": teams.to_vec() } };
+        self.get_collection().update_one(filter, update).await?;
+        Ok(())
+    }
+
+    async fn update_status(
+        &self,
+        id: Uuid,
+        status: &TournamentStatus,
+    ) -> Result<(), mongodb::error::Error> {
+        let filter = doc! { "_id": id.to_string() };
+        let update = doc! { "$set": { "status": bson::to_bson(status).unwrap() } };
+        self.get_collection().update_one(filter, update).await?;
+        Ok(())
+    }
+
+    async fn update_start_time(
+        &self,
+        id: Uuid,
+        start_time: &chrono::DateTime<chrono::Utc>,
+    ) -> Result<(), mongodb::error::Error> {
+        let filter = doc! { "_id": id.to_string() };
+        let update = doc! { "$set": { "start_time": bson::to_bson(start_time).unwrap() } };
         self.get_collection().update_one(filter, update).await?;
         Ok(())
     }

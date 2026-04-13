@@ -4,24 +4,27 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::domain::models::{Game, GameSeries};
+use crate::domain::services::game_service::GameService;
 
+use crate::domain::value_objects::participant::TeamParticipant;
 use crate::infra::{GameSeriesRepo, GameSeriesRepoExt};
 
 pub struct GameSeriesService {
     repo: Arc<GameSeriesRepo>,
+    game_service: Arc<GameService>,
 }
 
 impl GameSeriesService {
-    pub fn new(repo: Arc<GameSeriesRepo>) -> Self {
-        Self { repo }
+    pub fn new(repo: Arc<GameSeriesRepo>, game_service: Arc<GameService>) -> Self {
+        Self { repo, game_service }
     }
 
     pub async fn create(
         &self,
-        participants: Vec<Actor>,
+        id: Uuid,
+        participants: Vec<TeamParticipant>,
         settings: GameSettings,
     ) -> Result<GameSeries, Box<dyn std::error::Error + Send + Sync>> {
-        let id = Uuid::new_v4();
         let game_series = GameSeries::new(id, participants, settings);
         self.repo.insert(&game_series).await?;
         Ok(game_series)
@@ -89,5 +92,9 @@ impl GameSeriesService {
 
     pub async fn delete(&self, id: Uuid) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.repo.delete(id).await.map_err(|e| e.into())
+    }
+
+    pub fn game_service(&self) -> &Arc<GameService> {
+        &self.game_service
     }
 }

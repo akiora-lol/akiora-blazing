@@ -1,3 +1,5 @@
+use shared::game::{Action, Actor};
+
 use crate::domain::value_objects::{
     LolTournamentSettings,
     bracket::{Bracket, Match},
@@ -31,6 +33,7 @@ impl Bracket {
             None
         }
     }
+    pub fn fill_bracket(&mut self, teams: &Vec<Actor>) {}
 
     // Получить матч по номеру раунда и индексу матча
     pub fn get_match(&self, round: usize, match_index: usize) -> Option<&Match> {
@@ -43,12 +46,7 @@ impl Bracket {
             .and_then(|r| r.get_mut(match_index))
     }
 
-    pub fn set_match_winner(
-        &mut self,
-        round: usize,
-        match_index: usize,
-        winner: TeamParticipant,
-    ) -> bool {
+    pub fn set_match_winner(&mut self, round: usize, match_index: usize, winner: Actor) -> bool {
         let rounds_len = self.rounds.len();
 
         if let Some(match_node) = self.get_match_mut(round, match_index) {
@@ -74,7 +72,7 @@ impl Bracket {
     }
 
     // Получить всех победителей (для отладки)
-    pub fn get_all_winners(&self) -> Vec<(usize, usize, &TeamParticipant)> {
+    pub fn get_all_winners(&self) -> Vec<(usize, usize, &Actor)> {
         let mut winners = Vec::new();
         for (round_idx, round) in self.rounds.iter().enumerate() {
             for (match_idx, match_node) in round.iter().enumerate() {
@@ -88,5 +86,5 @@ impl Bracket {
 }
 
 pub trait BracketBuilder {
-    fn build_bracket(&self, teams: &Vec<TeamParticipant>) -> Option<Bracket>;
+    fn build_bracket(&self, teams: &Vec<Actor>) -> Option<Bracket>;
 }

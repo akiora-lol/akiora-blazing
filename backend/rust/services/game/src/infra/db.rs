@@ -1,9 +1,6 @@
 use anyhow::{Context, Result};
 use dotenvy::dotenv;
-use mongodb::{
-    Client, Database,
-    options::ClientOptions,
-};
+use mongodb::{Client, Database, options::ClientOptions};
 use std::env;
 #[derive(Debug)]
 struct MongoConfig {
@@ -15,10 +12,10 @@ impl MongoConfig {
     fn from_env() -> Result<Self> {
         dotenv().ok();
 
-        let connection_string =
-            env::var("MONGODB_URI").context("MONGODB_URI environment variable not set")?;
+        let connection_string = env::var("MONGODB_URI")
+            .unwrap_or("mongodb://localhost:27017/?replicaSet=rs0".to_string());
 
-        let database_name = env::var("MONGODB_DATABASE").unwrap_or_else(|_| "myapp".to_string());
+        let database_name = env::var("MONGODB_DATABASE").unwrap_or_else(|_| "game_db".to_string());
         println!("📡 Using MongoDB URI: {}", connection_string);
         Ok(MongoConfig {
             connection_string,
