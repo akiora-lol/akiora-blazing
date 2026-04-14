@@ -85,6 +85,7 @@ service TournamentService {
 
   // Запуск турнира (создаёт сетку/расписание)
   rpc StartTournament(GetTournamentRequest) returns (Empty);
+    rpc PreBuildBracket(GetTournamentRequest) returns (Empty);
 
   // Завершение турнира
   rpc FinishTournament(GetTournamentRequest) returns (Empty);
@@ -93,12 +94,16 @@ service TournamentService {
   rpc AddParticipant(AddParticipantRequest) returns (Empty);
 
   rpc AddTeam(AddTeamParticipantRequest) returns (Empty);
+
   
 
   rpc AddParticipantToWaitList(AddParticipantRequest) returns (Empty);
 
   // Удаление участника
   rpc RemoveParticipant(RemoveParticipantRequest) returns (Empty);
+
+
+
 }
 
 message AddParticipantRequest {

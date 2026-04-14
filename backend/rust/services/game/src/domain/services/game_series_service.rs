@@ -38,7 +38,10 @@ impl GameSeriesService {
             _ => bail!("Unsupported game settings"),
         }
 
-        self.repo.insert(&game_series).await.context("Failed to insert game series")?;
+        self.repo
+            .insert(&game_series)
+            .await
+            .context("Failed to insert game series")?;
         Ok(game_series)
     }
 
@@ -48,7 +51,10 @@ impl GameSeriesService {
             .await
             .context("Failed to get game series")?;
         game_series.start = Some(Utc::now());
-        self.repo.update(&game_series).await.context("Failed to update game series")?;
+        self.repo
+            .update(&game_series)
+            .await
+            .context("Failed to update game series")?;
         Ok(game_series)
     }
 
@@ -72,7 +78,10 @@ impl GameSeriesService {
             }
             None => bail!("Games list is empty"),
         }
-        self.repo.update(&game_series).await.context("Failed to update game series")?;
+        self.repo
+            .update(&game_series)
+            .await
+            .context("Failed to update game series")?;
         Ok(game_series)
     }
 
@@ -113,8 +122,34 @@ impl GameSeriesService {
         }
     }
 
+    pub async fn update_teams(
+        &self,
+        id: Uuid,
+        to_replace: TeamParticipant,
+        replacement: TeamParticipant,
+    ) -> Result<()> {
+        let mut gs = self
+            .repo
+            .find_by_id(id)
+            .await
+            .context("Failed to find game series by id")?
+            .context("Game series not found")?;
+        let idx = gs
+            .teams
+            .iter()
+            .position(|el| *el == to_replace)
+            .context("REPLACE GS ERROR")?;
+        gs.teams[idx] = replacement;
+
+        self.repo.update(&gs).await?;
+        Ok(())
+    }
     pub async fn get_by_id(&self, id: Uuid) -> Result<GameSeries> {
-        let gs = self.repo.find_by_id(id).await.context("Failed to find game series by id")?;
+        let gs = self
+            .repo
+            .find_by_id(id)
+            .await
+            .context("Failed to find game series by id")?;
         let mut gss = gs.context("Game series not found")?;
         let games = self
             .game_service
@@ -126,6 +161,9 @@ impl GameSeriesService {
     }
 
     pub async fn get_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<GameSeries>> {
-        self.repo.find_by_ids(ids).await.context("Failed to find game series by ids")
+        self.repo
+            .find_by_ids(ids)
+            .await
+            .context("Failed to find game series by ids")
     }
 }

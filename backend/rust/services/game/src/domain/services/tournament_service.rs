@@ -248,6 +248,93 @@ impl TournamentService {
         Ok(())
     }
 
+    pub async fn change_bracket(
+        &self,
+        id: Uuid,
+        swap_initiator: Actor,
+        swap_victim: Actor,
+    ) -> Result<()> {
+        let tournament = self
+            .repo
+            .find_by_id(id)
+            .await
+            .context("Failed to find tournament")?
+            .context("Tournament not found")?;
+
+        if let Some(mut br) = tournament.bracket {
+            let pp = tournament.participant_pool.clone();
+            let si_tp = pp
+                .get(&swap_initiator)
+                .context("Not TeamParticipant found for actor")?
+                .as_ref()
+                .context("Not TeamParticipant found for actor")?;
+            let sv_tp = pp
+                .get(&swap_victim)
+                .context("Not TeamParticipant found for actor")?
+                .as_ref()
+                .context("Not TeamParticipant found for actor")?;
+
+            let gs_ids = br.update_first_round(swap_initiator, swap_victim)?;
+            self.game_series_service
+                .update_teams(gs_ids.0, si_tp.clone(), sv_tp.clone())
+                .await?;
+            self.game_series_service
+                .update_teams(gs_ids.1, sv_tp.clone(), si_tp.clone())
+                .await?;
+        } else {
+            bail!("Form a bracket first");
+        }
+
+        let pp_clone = tournament.participant_pool.clone();
+        let participant_vec: Vec<Actor> = tournament.participant_pool.into_keys().collect();
+        let bracket = match &tournament.settings {
+            TournamentSettings::Lol(settings) => {
+                let bracket = self.build_bracket(settings, &participant_vec);
+                bracket.context("Failed to build bracket")?
+            }
+            _ => bail!("Only LoL tournaments are supported"),
+        };
+
+        for round in &bracket.rounds {
+            for match_node in round {
+                let participants: Vec<Actor> = match_node
+                    .team1
+                    .iter()
+                    .chain(match_node.team2.iter())
+                    .map(|t| t.clone())
+                    .collect();
+
+                if participants.is_empty() {
+                    continue;
+                }
+
+                let settings = match &tournament.settings {
+                    TournamentSettings::Lol(lol_settings) => {
+                        self.lol_settings_to_game_settings(lol_settings)
+                    }
+                    _ => bail!("Unsupported tournament type"),
+                };
+                let mut teams = Vec::new();
+                for part in participants {
+                    let tp = pp_clone
+                        .get(&part)
+                        .context("Participant not found in pool")?;
+                    teams.push(tp.clone().context("Participant should be ")?);
+                }
+                self.game_series_service
+                    .create(match_node.game_series_id, teams, settings)
+                    .await
+                    .context("Failed to create game series")?;
+            }
+        }
+
+        self.repo
+            .update_bracket(id, Some(bracket))
+            .await
+            .context("Failed to update bracket")?;
+        Ok(())
+    }
+
     pub async fn start_tournament(&self, id: Uuid) -> Result<()> {
         let mut tournament = self
             .repo

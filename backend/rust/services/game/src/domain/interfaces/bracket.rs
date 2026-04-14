@@ -1,4 +1,5 @@
 use shared::game::{Action, Actor};
+use uuid::Uuid;
 
 use crate::domain::value_objects::{
     LolTournamentSettings,
@@ -7,31 +8,39 @@ use crate::domain::value_objects::{
 };
 use anyhow::{Context, Result, bail};
 impl Bracket {
-    pub fn update_first_round(&mut self, swap_initiator: Actor, swap_victim: Actor) -> Result<()> {
+    pub fn update_first_round(
+        &mut self,
+        swap_initiator: Actor,
+        swap_victim: Actor,
+    ) -> Result<(Uuid, Uuid)> {
         let mut i1: Option<(usize, usize)> = None;
         let mut i2: Option<(usize, usize)> = None;
-
+        let mut game_series_id1: Option<Uuid> = None;
+        let mut game_series_id2: Option<Uuid> = None;
         for m in self.rounds[0].iter() {
             for (pos, team_opt) in [m.team1, m.team2].iter().enumerate() {
                 if let Some(team) = team_opt {
                     if *team == swap_initiator {
                         i1 = Some((m.match_number, pos));
+                        game_series_id1 = Some(m.game_series_id);
                     }
                     if *team == swap_victim {
                         i2 = Some((m.match_number, pos));
+                        game_series_id2 = Some(m.game_series_id);
                     }
                 }
             }
         }
+        let gameseries_to_change = (
+            game_series_id1.context("GS_ID not found")?,
+            game_series_id2.context("GS_ID not found")?,
+        );
 
         let i1 = i1.context("Swap initiator not found in round 0")?;
         let i2 = i2.context("Swap victim not found in round 0")?;
 
-        let m = self.get_match_mut(1, i1.0).context("Match not found")?;
-
-        println!("Found at {:?} and {:?}", i1, i2);
-
-        Ok(())
+        self.swap_actors_in_matches(i1, i2)?;
+        Ok(gameseries_to_change)
     }
     fn swap_actors_in_matches(&mut self, t1: (usize, usize), t2: (usize, usize)) -> Result<()> {
         let round = self.rounds.get_mut(1).context("Round not found")?;
