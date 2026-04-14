@@ -74,12 +74,12 @@ impl GameRepoExt for GameRepo {
     }
 
     async fn update(&self, game: &Game) -> Result<(), mongodb::error::Error> {
-        let filter = doc! { "_id": game.id().to_string() };
+        let filter = doc! { "_id": game.id.to_string() };
         let update = doc! {
             "$set": {
-                "game_series": game.game_series_id().to_string(),
-                "draft": game.draft().clone(),
-                "results": game.results().clone(),
+                "game_series": game.game_series.to_string(),
+                "draft": game.draft.clone(),
+                "results": game.results.clone(),
 
             }
         };

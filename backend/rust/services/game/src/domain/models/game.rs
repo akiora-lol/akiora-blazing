@@ -1,4 +1,8 @@
-use crate::domain::value_objects::participant::TeamParticipant;
+use crate::domain::{
+    GameSeries,
+    value_objects::{game_status::GameStatus, participant::TeamParticipant},
+};
+use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use prost_types::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -8,86 +12,52 @@ use uuid::Uuid;
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Game {
     #[serde(rename = "_id", with = "uuid::serde::hyphenated")]
-    id: Uuid,
+    pub id: Uuid,
     #[serde(with = "uuid::serde::hyphenated")]
-    game_series: Uuid,
-    draft: Option<Draft>,
-    results: Option<Vec<TeamParticipant>>,
-    start: Option<DateTime<Utc>>,
-    end: Option<DateTime<Utc>>,
+    pub game_series: Uuid,
+    pub draft: Option<Draft>,
+    pub teams: Vec<TeamParticipant>,
+    pub results: Option<Vec<TeamParticipant>>,
+    pub start: Option<DateTime<Utc>>,
+    pub end: Option<DateTime<Utc>>,
+    pub settings: GameSettings,
+    pub status: GameStatus,
 }
 
 impl Game {
-    pub fn new(id: Uuid, game_series: Uuid) -> Self {
+    pub fn new(
+        id: Uuid,
+        game_series: Uuid,
+        teams: Vec<TeamParticipant>,
+        settings: GameSettings,
+    ) -> Self {
         Self {
             id,
             game_series,
+            teams,
+            settings,
             draft: None,
             results: None,
             start: None,
+            status: GameStatus::Scheduled,
             end: None,
         }
     }
 
-    pub fn id(&self) -> Uuid {
-        self.id
-    }
-
-    pub fn game_series_id(&self) -> Uuid {
-        self.game_series
-    }
-
-    pub fn draft(&self) -> Option<&Draft> {
-        self.draft.as_ref()
-    }
-
-    pub fn set_draft(&mut self, draft: Draft) {
-        self.draft = Some(draft);
-    }
-
-    pub fn results(&self) -> Option<&Vec<TeamParticipant>> {
-        self.results.as_ref()
-    }
-
-    pub fn set_results(&mut self, results: Vec<TeamParticipant>) {
-        self.results = Some(results);
-    }
-
-    pub fn start(&self) -> Option<DateTime<Utc>> {
-        self.start
-    }
-    pub fn start_timestamp(&self) -> Option<Timestamp> {
-        match self.start {
-            Some(st) => Some(Timestamp {
-                seconds: st.timestamp(),
-                nanos: st.timestamp_subsec_nanos() as i32,
-            }),
-            _ => None,
+    pub fn choose_side(&mut self, actor: TeamParticipant, side: usize) -> Result<()> {
+        if self.status != GameStatus::Scheduled {
+            anyhow::bail!("Can only swap in scheduled games");
         }
-    }
-    pub fn end_timestamp(&self) -> Option<Timestamp> {
-        match self.end {
-            Some(st) => Some(Timestamp {
-                seconds: st.timestamp(),
-                nanos: st.timestamp_subsec_nanos() as i32,
-            }),
-            _ => None,
+        if !self.teams.contains(&actor) {
+            anyhow::bail!("No such team in game");
         }
-    }
-
-    pub fn set_start(&mut self, start: DateTime<Utc>) {
-        self.start = Some(start);
-    }
-
-    pub fn end(&self) -> Option<DateTime<Utc>> {
-        self.end
-    }
-
-    pub fn set_end(&mut self, end: DateTime<Utc>) {
-        self.end = Some(end);
-    }
-
-    pub fn is_finished(&self) -> bool {
-        self.end.is_some()
+        if side > 1 {
+            anyhow::bail!("Side should be 0 or 1");
+        }
+        // BAD LOGIC ONLY FOR 2 TEAMS LEAUGUE ONLY RN
+        if self.teams[side] != actor {
+            self.teams.swap(side, 1 - side);
+        }
+        Ok(())
     }
 }

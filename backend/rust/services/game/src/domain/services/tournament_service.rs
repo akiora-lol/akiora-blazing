@@ -6,7 +6,7 @@ use crate::domain::value_objects::bracket::Bracket;
 use crate::domain::value_objects::participant::TeamParticipant;
 use crate::domain::value_objects::*;
 use crate::infra::{TournamentRepo, TournamentRepoExt};
-use anyhow::Result;
+use anyhow::{Context, Result, bail};
 use bitvec::bitarr;
 use bitvec::order::Lsb0;
 use chrono::Utc;
@@ -31,134 +31,136 @@ impl TournamentService {
 
     pub async fn create(
         &self,
-
         host: Actor,
         is_open: bool,
         settings: TournamentSettings,
         start: chrono::DateTime<Utc>,
         prizepool: Option<String>,
-    ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Tournament> {
         let tournament = Tournament::new(host, settings, start, is_open, prizepool);
-        self.repo.insert(&tournament).await?;
+        self.repo
+            .insert(&tournament)
+            .await
+            .context("Failed to insert tournament")?;
         Ok(tournament)
     }
 
-    pub async fn get_by_id(
-        &self,
-        id: Uuid,
-    ) -> Result<Option<Tournament>, Box<dyn std::error::Error + Send + Sync>> {
-        self.repo.find_by_id(id).await.map_err(|e| e.into())
+    pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Tournament>> {
+        self.repo
+            .find_by_id(id)
+            .await
+            .context("Failed to find tournament by id")
     }
 
-    pub async fn get_by_ids(
-        &self,
-        ids: Vec<Uuid>,
-    ) -> Result<Vec<Tournament>, Box<dyn std::error::Error + Send + Sync>> {
-        self.repo.find_by_ids(ids).await.map_err(|e| e.into())
+    pub async fn get_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Tournament>> {
+        self.repo
+            .find_by_ids(ids)
+            .await
+            .context("Failed to find tournaments by ids")
     }
 
-    pub async fn start(
-        &self,
-        id: Uuid,
-    ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn start(&self, id: Uuid) -> Result<Tournament> {
         let tournament = self
             .repo
             .find_by_id(id)
-            .await?
-            .ok_or("Tournament not found")?;
+            .await
+            .context("Failed to find tournament")?
+            .context("Tournament not found")?;
 
         Ok(tournament)
     }
 
-    pub async fn finish(
-        &self,
-        id: Uuid,
-    ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn finish(&self, id: Uuid) -> Result<Tournament> {
         let mut tournament = self
             .repo
             .find_by_id(id)
-            .await?
-            .ok_or("Tournament not found")?;
+            .await
+            .context("Failed to find tournament")?
+            .context("Tournament not found")?;
 
-        tournament.mark_finished()?;
-        self.repo.update_status(id, &tournament.status).await?;
-        self.repo.update(&tournament).await?;
+        tournament
+            .mark_finished()
+            .context("Failed to mark tournament as finished")?;
+        self.repo
+            .update_status(id, &tournament.status)
+            .await
+            .context("Failed to update status")?;
+        self.repo
+            .update(&tournament)
+            .await
+            .context("Failed to update tournament")?;
         Ok(tournament)
     }
 
-    pub async fn add_participant(
-        &self,
-        id: Uuid,
-        participant: Actor,
-    ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn add_participant(&self, id: Uuid, participant: Actor) -> Result<Tournament> {
         let mut tournament = self
             .repo
             .find_by_id(id)
-            .await?
-            .ok_or("Tournament not found")?;
+            .await
+            .context("Failed to find tournament")?
+            .context("Tournament not found")?;
 
-        tournament.add_participant(participant.clone())?;
+        tournament
+            .add_participant(participant.clone())
+            .context("Failed to add participant")?;
         self.repo
             .update_participant_pool(id, &tournament.participant_pool)
             .await
-            .map_err(|e| {
-                dbg!(&e);
-                e
-            })?;
+            .context("Failed to update participant pool")?;
         Ok(tournament)
     }
 
-    pub async fn remove_participant(
-        &self,
-        id: Uuid,
-        participant_id: Uuid,
-    ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn remove_participant(&self, id: Uuid, participant_id: Uuid) -> Result<Tournament> {
         let mut tournament = self
             .repo
             .find_by_id(id)
-            .await?
-            .ok_or("Tournament not found")?;
+            .await
+            .context("Failed to find tournament")?
+            .context("Tournament not found")?;
 
-        tournament.remove_participant(participant_id)?;
+        tournament
+            .remove_participant(participant_id)
+            .context("Failed to remove participant")?;
         self.repo
             .update_participant_pool(id, &tournament.participant_pool)
-            .await?;
+            .await
+            .context("Failed to update participant pool")?;
         Ok(tournament)
     }
 
-    pub async fn add_team(
-        &self,
-        id: Uuid,
-        team: TeamParticipant,
-    ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn add_team(&self, id: Uuid, team: TeamParticipant) -> Result<Tournament> {
         let mut tournament = self
             .repo
             .find_by_id(id)
-            .await?
-            .ok_or("Tournament not found")?;
+            .await
+            .context("Failed to find tournament")?
+            .context("Tournament not found")?;
 
-        tournament.add_team(team.clone())?;
+        tournament
+            .add_team(team.clone())
+            .context("Failed to add team")?;
         self.repo
             .update_participant_pool(id, &tournament.participant_pool)
-            .await?;
+            .await
+            .context("Failed to update teams")?;
         Ok(tournament)
     }
 
-    pub async fn add_to_wait_list(
-        &self,
-        id: Uuid,
-        participant: Actor,
-    ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn add_to_wait_list(&self, id: Uuid, participant: Actor) -> Result<Tournament> {
         let mut tournament = self
             .repo
             .find_by_id(id)
-            .await?
-            .ok_or("Tournament not found")?;
+            .await
+            .context("Failed to find tournament")?
+            .context("Tournament not found")?;
 
-        tournament.add_to_waitlist(participant.clone())?;
+        tournament
+            .add_to_waitlist(participant.clone())
+            .context("Failed to add to waitlist")?;
         self.repo
             .update_wait_list(id, &tournament.wait_list)
-            .await?;
+            .await
+            .context("Failed to update wait list")?;
         Ok(tournament)
     }
 
@@ -166,66 +168,46 @@ impl TournamentService {
         &self,
         id: Uuid,
         participant_id: Uuid,
-    ) -> Result<Tournament, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Tournament> {
         let mut tournament = self
             .repo
             .find_by_id(id)
-            .await?
-            .ok_or("Tournament not found")?;
+            .await
+            .context("Failed to find tournament")?
+            .context("Tournament not found")?;
 
-        tournament.remove_from_waitlist(participant_id)?;
+        tournament
+            .remove_from_waitlist(participant_id)
+            .context("Failed to remove from waitlist")?;
         self.repo
             .update_wait_list(id, &tournament.wait_list)
-            .await?;
+            .await
+            .context("Failed to update wait list")?;
         Ok(tournament)
     }
 
-    pub async fn prebuild_bracket(
-        &self,
-        id: Uuid,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let mut tournament = self
+    pub async fn prebuild_bracket(&self, id: Uuid) -> Result<()> {
+        let tournament = self
             .repo
             .find_by_id(id)
-            .await?
-            .ok_or("Tournament not found")?;
+            .await
+            .context("Failed to find tournament")?
+            .context("Tournament not found")?;
 
-        let participant_vec: Vec<Actor> = tournament.participant_pool.into_keys().collect();
-        match &tournament.settings {
-            TournamentSettings::Lol(settings) => {
-                let bracket = self.build_bracket(&settings, &participant_vec);
-
-                self.repo.update_bracket(id, bracket).await?;
-            }
-            _ => todo!(),
+        if tournament.bracket.is_some() {
+            bail!("Bracket is already built, can only change in manual mode");
         }
-        Ok(())
-    }
-
-    pub async fn start_tournament(
-        &self,
-        id: Uuid,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let mut tournament = self
-            .repo
-            .find_by_id(id)
-            .await?
-            .ok_or("Tournament not found")?;
 
         let pp_clone = tournament.participant_pool.clone();
         let participant_vec: Vec<Actor> = tournament.participant_pool.into_keys().collect();
         let bracket = match &tournament.settings {
             TournamentSettings::Lol(settings) => {
                 let bracket = self.build_bracket(settings, &participant_vec);
-                if bracket.is_none() {
-                    return Err("Failed to build bracket".into());
-                }
-                bracket.unwrap()
+                bracket.context("Failed to build bracket")?
             }
-            _ => return Err("Only LoL tournaments are supported".into()),
+            _ => bail!("Only LoL tournaments are supported"),
         };
 
-        // Создаём GameSeries для каждого матча в каждом раунде
         for round in &bracket.rounds {
             for match_node in round {
                 let participants: Vec<Actor> = match_node
@@ -243,20 +225,84 @@ impl TournamentService {
                     TournamentSettings::Lol(lol_settings) => {
                         self.lol_settings_to_game_settings(lol_settings)
                     }
-                    _ => return Err("Unsupported tournament type".into()),
+                    _ => bail!("Unsupported tournament type"),
                 };
                 let mut teams = Vec::new();
                 for part in participants {
-                    let tp = pp_clone.get(&part).unwrap();
-                    teams.push(tp.clone().unwrap());
+                    let tp = pp_clone
+                        .get(&part)
+                        .context("Participant not found in pool")?;
+                    teams.push(tp.clone().context("Participant should be ")?);
                 }
                 self.game_series_service
                     .create(match_node.game_series_id, teams, settings)
-                    .await?;
+                    .await
+                    .context("Failed to create game series")?;
             }
         }
 
-        self.repo.update_bracket(id, Some(bracket)).await?;
+        self.repo
+            .update_bracket(id, Some(bracket))
+            .await
+            .context("Failed to update bracket")?;
+        Ok(())
+    }
+
+    pub async fn start_tournament(&self, id: Uuid) -> Result<()> {
+        let mut tournament = self
+            .repo
+            .find_by_id(id)
+            .await
+            .context("Failed to find tournament")?
+            .context("Tournament not found")?;
+
+        let pp_clone = tournament.participant_pool.clone();
+        let participant_vec: Vec<Actor> = tournament.participant_pool.into_keys().collect();
+        let bracket = match &tournament.settings {
+            TournamentSettings::Lol(settings) => {
+                let bracket = self.build_bracket(settings, &participant_vec);
+                bracket.context("Failed to build bracket")?
+            }
+            _ => bail!("Only LoL tournaments are supported"),
+        };
+
+        for round in &bracket.rounds {
+            for match_node in round {
+                let participants: Vec<Actor> = match_node
+                    .team1
+                    .iter()
+                    .chain(match_node.team2.iter())
+                    .map(|t| t.clone())
+                    .collect();
+
+                if participants.is_empty() {
+                    continue;
+                }
+
+                let settings = match &tournament.settings {
+                    TournamentSettings::Lol(lol_settings) => {
+                        self.lol_settings_to_game_settings(lol_settings)
+                    }
+                    _ => bail!("Unsupported tournament type"),
+                };
+                let mut teams = Vec::new();
+                for part in participants {
+                    let tp = pp_clone
+                        .get(&part)
+                        .context("Participant not found in pool")?;
+                    teams.push(tp.clone().context("Participant not found in pool")?);
+                }
+                self.game_series_service
+                    .create(match_node.game_series_id, teams, settings)
+                    .await
+                    .context("Failed to create game series")?;
+            }
+        }
+
+        self.repo
+            .update_bracket(id, Some(bracket))
+            .await
+            .context("Failed to update bracket")?;
         Ok(())
     }
 
@@ -301,11 +347,10 @@ impl TournamentService {
         }
     }
 
-    pub fn game_series_service(&self) -> &Arc<GameSeriesService> {
-        &self.game_series_service
-    }
-
-    pub async fn delete(&self, id: Uuid) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.repo.delete(id).await.map_err(|e| e.into())
+    pub async fn delete(&self, id: Uuid) -> Result<()> {
+        self.repo
+            .delete(id)
+            .await
+            .context("Failed to delete tournament")
     }
 }

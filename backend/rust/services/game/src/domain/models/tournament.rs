@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anyhow::{Context, Result, bail};
 use chrono::{DateTime, Utc};
 use prost_types::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -103,17 +104,17 @@ impl Tournament {
         self.prizepool = Some(prizepool);
     }
 
-    pub fn add_participant(&mut self, participant: Actor) -> Result<(), &'static str> {
+    pub fn add_participant(&mut self, participant: Actor) -> Result<()> {
         if !matches!(self.status, TournamentStatus::Scheduled) {
-            return Err("Can only add participants while tournament is scheduled");
+            bail!("Can only add participants while tournament is scheduled");
         }
         self.participant_pool.entry(participant).or_insert(None);
         Ok(())
     }
 
-    pub fn remove_participant(&mut self, participant_id: Uuid) -> Result<(), &'static str> {
+    pub fn remove_participant(&mut self, participant_id: Uuid) -> Result<()> {
         if !matches!(self.status, TournamentStatus::Scheduled) {
-            return Err("Can only remove participants while tournament is scheduled");
+            bail!("Can only remove participants while tournament is scheduled");
         }
 
         self.participant_pool.retain(|&part, _| match part {
@@ -122,12 +123,12 @@ impl Tournament {
         Ok(())
     }
 
-    pub fn add_team(&mut self, team: TeamParticipant) -> Result<(), &'static str> {
+    pub fn add_team(&mut self, team: TeamParticipant) -> Result<()> {
         if !matches!(self.status, TournamentStatus::Scheduled) {
-            return Err("Can only add teams while tournament is scheduled");
+            bail!("Can only add teams while tournament is scheduled");
         }
         if !self.participant_pool.contains_key(&team.participant) {
-            return Err("Can only add teams if its in participant_pool");
+            bail!("Can only add teams if it's in participant_pool");
         }
 
         self.participant_pool.insert(team.participant, Some(team));
@@ -135,17 +136,17 @@ impl Tournament {
         Ok(())
     }
 
-    pub fn add_to_waitlist(&mut self, participant: Actor) -> Result<(), &'static str> {
+    pub fn add_to_waitlist(&mut self, participant: Actor) -> Result<()> {
         if !matches!(self.status, TournamentStatus::Scheduled) {
-            return Err("Can only add to waitlist while tournament is scheduled");
+            bail!("Can only add to waitlist while tournament is scheduled");
         }
         self.wait_list.push(participant);
         Ok(())
     }
 
-    pub fn remove_from_waitlist(&mut self, participant_id: Uuid) -> Result<(), &'static str> {
+    pub fn remove_from_waitlist(&mut self, participant_id: Uuid) -> Result<()> {
         if !matches!(self.status, TournamentStatus::Scheduled) {
-            return Err("Can only remove from waitlist while tournament is scheduled");
+            bail!("Can only remove from waitlist while tournament is scheduled");
         }
         self.wait_list.retain(|p| match p {
             Actor::User(id) | Actor::Team(id) | Actor::Club(id) => *id != participant_id,
@@ -153,33 +154,33 @@ impl Tournament {
         Ok(())
     }
 
-    pub fn set_start_time(&mut self, start: DateTime<Utc>) -> Result<(), &'static str> {
+    pub fn set_start_time(&mut self, start: DateTime<Utc>) -> Result<()> {
         if !matches!(self.status, TournamentStatus::Scheduled) {
-            return Err("Can only change start time while tournament is scheduled");
+            bail!("Can only change start time while tournament is scheduled");
         }
         self.start_time = start;
         Ok(())
     }
 
-    pub fn activate(&mut self) -> Result<(), &'static str> {
+    pub fn activate(&mut self) -> Result<()> {
         if !matches!(self.status, TournamentStatus::Scheduled) {
-            return Err("Can only activate scheduled tournament");
+            bail!("Can only activate scheduled tournament");
         }
         self.status = TournamentStatus::Active;
         Ok(())
     }
 
-    pub fn cancel(&mut self) -> Result<(), &'static str> {
+    pub fn cancel(&mut self) -> Result<()> {
         if matches!(self.status, TournamentStatus::Finished) {
-            return Err("Cannot cancel finished tournament");
+            bail!("Cannot cancel finished tournament");
         }
         self.status = TournamentStatus::Cancelled;
         Ok(())
     }
 
-    pub fn mark_finished(&mut self) -> Result<(), &'static str> {
+    pub fn mark_finished(&mut self) -> Result<()> {
         if !matches!(self.status, TournamentStatus::Active) {
-            return Err("Can only finish active tournament");
+            bail!("Can only finish active tournament");
         }
         self.status = TournamentStatus::Finished;
         self.end_time = Some(Utc::now());

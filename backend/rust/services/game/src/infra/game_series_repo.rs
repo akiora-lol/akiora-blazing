@@ -1,5 +1,9 @@
 use futures::stream::TryStreamExt;
-use mongodb::{IndexModel, bson::doc, options::IndexOptions};
+use mongodb::{
+    IndexModel,
+    bson::{self, doc},
+    options::IndexOptions,
+};
 use uuid::Uuid;
 
 use crate::domain::models::GameSeries;
@@ -62,10 +66,11 @@ impl GameSeriesRepoExt for GameSeriesRepo {
     }
 
     async fn update(&self, game_series: &GameSeries) -> Result<(), mongodb::error::Error> {
-        let filter = doc! { "_id": game_series.id().to_string() };
+        let filter = doc! { "_id": game_series.id.to_string() };
         let update = doc! {
             "$set": {
-                "teams": game_series.teams().to_vec(),
+                "start":bson::to_bson(&game_series.start).unwrap() ,
+                "teams": game_series.teams.clone(),
 
 
             }

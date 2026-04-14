@@ -5,15 +5,67 @@ use crate::domain::value_objects::{
     bracket::{Bracket, Match},
     participant::TeamParticipant,
 };
-
+use anyhow::{Context, Result, bail};
 impl Bracket {
+    pub fn update_first_round(&mut self, swap_initiator: Actor, swap_victim: Actor) -> Result<()> {
+        let mut i1: Option<(usize, usize)> = None;
+        let mut i2: Option<(usize, usize)> = None;
+
+        for m in self.rounds[0].iter() {
+            for (pos, team_opt) in [m.team1, m.team2].iter().enumerate() {
+                if let Some(team) = team_opt {
+                    if *team == swap_initiator {
+                        i1 = Some((m.match_number, pos));
+                    }
+                    if *team == swap_victim {
+                        i2 = Some((m.match_number, pos));
+                    }
+                }
+            }
+        }
+
+        let i1 = i1.context("Swap initiator not found in round 0")?;
+        let i2 = i2.context("Swap victim not found in round 0")?;
+
+        let m = self.get_match_mut(1, i1.0).context("Match not found")?;
+
+        println!("Found at {:?} and {:?}", i1, i2);
+
+        Ok(())
+    }
+    fn swap_actors_in_matches(&mut self, t1: (usize, usize), t2: (usize, usize)) -> Result<()> {
+        let round = self.rounds.get_mut(1).context("Round not found")?;
+
+        let (m1, m2) = if t1.0 < t2.0 {
+            let (left, right) = round.split_at_mut(t2.0);
+            (&mut left[t1.0], &mut right[0])
+        } else {
+            let (left, right) = round.split_at_mut(t1.0);
+            (&mut right[0], &mut left[t2.0])
+        };
+
+        let team_a = if t1.1 == 0 {
+            &mut m1.team1
+        } else {
+            &mut m1.team2
+        };
+        let team_b = if t2.1 == 0 {
+            &mut m2.team1
+        } else {
+            &mut m2.team2
+        };
+
+        std::mem::swap(team_a, team_b);
+
+        Ok(())
+    }
+
     pub fn link_matches(&mut self) {
-        // Проходим по всем раундам, кроме последнего
         for round_idx in 0..self.rounds.len() - 1 {
             let current_round = self.rounds[round_idx].clone();
 
             let next_round_len = self.rounds[round_idx + 1].len();
-            // Каждые 2 матча текущего раунда ссылаются на 1 матч следующего
+
             for i in 0..current_round.len() {
                 let next_match_index = i / 2;
                 if next_match_index < next_round_len {
