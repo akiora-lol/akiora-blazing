@@ -1,13 +1,15 @@
 use chrono::Utc;
-use shared::game::{Draft, GameSettings};
+use shared::game::{Draft, GameSettings, Team};
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::domain::models::Game;
+use crate::domain::value_objects::game_status::GameStatus;
 use crate::domain::value_objects::participant::TeamParticipant;
 use crate::infra::{GameRepo, GameRepoExt};
 use anyhow::{Context, Result, bail};
 
+#[derive(Clone)]
 pub struct GameService {
     repo: Arc<GameRepo>,
 }
@@ -25,12 +27,35 @@ impl GameService {
     ) -> Result<Game> {
         let id = Uuid::new_v4();
         let game = Game::new(id, game_series_id, teams, settings);
-        self.repo.insert(&game).await.context("Failed to insert game")?;
+        self.repo
+            .insert(&game)
+            .await
+            .context("Failed to insert game")?;
+        Ok(game)
+    }
+
+    pub async fn toggle_ready(&self, id: Uuid, tp: TeamParticipant) -> Result<Game> {
+        let mut game = self
+            .repo
+            .find_by_id(id)
+            .await
+            .context("Failed to find")?
+            .context("Not Found")?;
+
+        game.toggle_ready(tp).context("Failed to toggle ready")?;
+
+        self.repo
+            .update(&game)
+            .await
+            .context("Failed to update game")?;
         Ok(game)
     }
 
     pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Game>> {
-        self.repo.find_by_id(id).await.context("Failed to find game by id")
+        self.repo
+            .find_by_id(id)
+            .await
+            .context("Failed to find game by id")
     }
 
     pub async fn choose_side(&self, id: Uuid, tp: TeamParticipant, side: usize) -> Result<()> {
@@ -40,13 +65,20 @@ impl GameService {
             .await
             .context("Failed to find game")?
             .context("Game not found")?;
-        game.choose_side(tp, side).context("Failed to choose side")?;
-        self.repo.update(&game).await.context("Failed to update game")?;
+        game.choose_side(tp, side)
+            .context("Failed to choose side")?;
+        self.repo
+            .update(&game)
+            .await
+            .context("Failed to update game")?;
         Ok(())
     }
 
     pub async fn get_by_ids(&self, ids: Vec<Uuid>) -> Result<Vec<Game>> {
-        self.repo.find_by_ids(ids).await.context("Failed to find games by ids")
+        self.repo
+            .find_by_ids(ids)
+            .await
+            .context("Failed to find games by ids")
     }
 
     pub async fn get_by_game_series_id(&self, game_series_id: Uuid) -> Result<Vec<Game>> {
@@ -65,7 +97,10 @@ impl GameService {
             .context("Game not found")?;
 
         game.results = Some(results);
-        self.repo.update(&game).await.context("Failed to update game")?;
+        self.repo
+            .update(&game)
+            .await
+            .context("Failed to update game")?;
         Ok(game)
     }
 
@@ -78,7 +113,10 @@ impl GameService {
             .context("Game not found")?;
 
         game.end = Some(Utc::now());
-        self.repo.update(&game).await.context("Failed to update game")?;
+        self.repo
+            .update(&game)
+            .await
+            .context("Failed to update game")?;
         Ok(game)
     }
 

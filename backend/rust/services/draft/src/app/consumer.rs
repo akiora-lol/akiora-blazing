@@ -30,24 +30,6 @@ impl Consumer {
         }
     }
     pub async fn consume(&mut self) -> Result<()> {
-        let event = Event::PrepareDraft(PrepareDraft {
-            game_id: Uuid::new_v4(),
-            forbidden_champions: vec![1, 2, 3, 4, 5],
-            teams: vec![
-                Team::Blue(Some(Uuid::new_v4())),
-                Team::Red(Some(Uuid::new_v4())),
-            ],
-            allow_redo: false,
-            seconds_per_action: 30,
-            settings: LolGameSettings {
-                mode: shared::game::LolGameMode::Classic,
-                team_size: 5,
-                map: 12,
-                best_of: 3,
-            },
-        });
-        self.publisher.stream_publish("draft", &event).await?;
-
         loop {
             let reply: StreamReadReply = self
                 .con

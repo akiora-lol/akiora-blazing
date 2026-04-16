@@ -7,4 +7,8 @@ pub mod game {
 
         tonic::include_proto!("akiora.game.tournament");
     }
+
+    pub mod gameseries {
+        tonic::include_proto!("akiora.game.gameseries");
+    }
 }

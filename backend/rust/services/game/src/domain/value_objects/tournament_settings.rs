@@ -40,6 +40,6 @@ pub struct LolTournamentSettings {
     pub team_size: u8,
     pub tournament_type: TournamentType,
     pub map: u8,
-    pub forbidden_champions: BitArray<[u8; 30], Lsb0>,
+    pub forbidden_champions: Vec<i32>,
     pub series_best_of: Option<Vec<u8>>, // n=0..last is finals:boX, semifinals:boX, quarter:boX .... 1/2^n:boX
 }

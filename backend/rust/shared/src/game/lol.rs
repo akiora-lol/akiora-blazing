@@ -7,7 +7,7 @@ pub enum Team {
     Red(Option<Uuid>),
     Blue(Option<Uuid>),
 }
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Debug, PartialEq, Eq, Deserialize, Clone)]
 pub struct ChampLock {
     pub champion_id: usize,
     pub player: Uuid,
@@ -22,11 +22,12 @@ pub enum Action {
 #[derive(Serialize, Debug, Deserialize, Clone, PartialEq, Eq)]
 pub struct Command(pub Team, pub Action);
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Debug, PartialEq, Eq, Deserialize, Clone)]
 pub struct Draft {
     pub game_id: Uuid,
     pub history: Vec<Command>,
     pub picks: Vec<ChampLock>,
+    pub bans: Vec<i32>,
     pub forbidden_champions: Vec<u8>,
     pub teams: Vec<Team>,
 }
@@ -41,7 +42,7 @@ pub enum Actor {
     Club(Uuid),
 }
 
-#[derive(Serialize, Debug, Deserialize, Default, Clone, Copy)]
+#[derive(Serialize, PartialEq, Eq, Debug, Deserialize, Default, Clone, Copy)]
 pub enum LolGameMode {
     #[default]
     Classic,
@@ -50,7 +51,7 @@ pub enum LolGameMode {
     AllRandom,
 }
 
-#[derive(Serialize, Debug, Deserialize, Default, Clone, Copy)]
+#[derive(Serialize, Debug, PartialEq, Eq, Deserialize, Default, Clone, Copy)]
 pub struct LolGameSettings {
     pub mode: LolGameMode,
     pub team_size: u8,

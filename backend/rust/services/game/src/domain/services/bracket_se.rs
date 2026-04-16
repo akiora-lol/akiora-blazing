@@ -9,6 +9,7 @@ use crate::domain::{
     },
 };
 
+#[derive(Clone)]
 pub struct SingleEliminationBuilder;
 impl SingleEliminationBuilder {
     fn create_next_round(prev_round_matches: &[Match], round: usize) -> Vec<Match> {

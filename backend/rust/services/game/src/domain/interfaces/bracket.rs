@@ -43,11 +43,22 @@ impl Bracket {
         Ok(gameseries_to_change)
     }
     fn swap_actors_in_matches(&mut self, t1: (usize, usize), t2: (usize, usize)) -> Result<()> {
-        let round = self.rounds.get_mut(1).context("Round not found")?;
+        let round = self.rounds.get_mut(0).context("Round not found")?;
 
         let (m1, m2) = if t1.0 < t2.0 {
             let (left, right) = round.split_at_mut(t2.0);
             (&mut left[t1.0], &mut right[0])
+        } else if t1.0 == t2.0 {
+            let mat = &mut round[t1.0];
+            let (team_a, team_b) = if t1.1 == 0 {
+                (&mut mat.team1, &mut mat.team2)
+            } else {
+                (&mut mat.team2, &mut mat.team1)
+            };
+
+            std::mem::swap(team_a, team_b);
+
+            return Ok(());
         } else {
             let (left, right) = round.split_at_mut(t1.0);
             (&mut right[0], &mut left[t2.0])

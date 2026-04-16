@@ -7,6 +7,7 @@ use crate::domain::value_objects::{LolTournamentSettings, participant::TeamParti
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Match {
+    #[serde(with = "uuid::serde::hyphenated")]
     pub game_series_id: Uuid,
     pub team1: Option<Actor>,
     pub team2: Option<Actor>,

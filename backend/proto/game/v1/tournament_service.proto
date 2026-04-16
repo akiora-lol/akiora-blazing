@@ -69,6 +69,9 @@ message TournamentResponse {
 message ManyTournamentsResponse {
   repeated TournamentResponse tournaments = 1;
 }
+
+ 
+
 message Empty {
  
 }
@@ -95,7 +98,7 @@ service TournamentService {
 
   rpc AddTeam(AddTeamParticipantRequest) returns (Empty);
 
-  
+  rpc ChangeBracket(ChangeBracketRequest) returns (Empty);
 
   rpc AddParticipantToWaitList(AddParticipantRequest) returns (Empty);
 
@@ -106,6 +109,12 @@ service TournamentService {
 
 }
 
+
+message ChangeBracketRequest {
+  string tournament_id = 1;
+  common.Actor swap_initiator = 2;
+  common.Actor swap_victim = 3;
+}
 message AddParticipantRequest {
   string tournament_id = 1;
 

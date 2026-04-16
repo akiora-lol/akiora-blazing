@@ -2,92 +2,24 @@ syntax = "proto3";
 
 package akiora.game.gameseries;
 
+import "common/game_actors.proto";
+import "common/game_settings.proto";
 import "common/types.proto";
-import "google/protobuf/empty.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "akiora/game/gameseries";
 
-enum GameType {
-  GAME_TYPE_UNSPECIFIED = 0;
-  LOL = 1;
-  TFT = 2;
-  VALORANT = 3;
+
+
+
+
+message ToggleReadyRequest{
+    string series_id = 1;
+    common.Actor actor = 2;
 }
 
-message LolGameSettings {
-  LolGameMode mode = 1;
-  uint32 team_size = 2;
-  uint32 map = 3;
-  uint32 best_of = 4;
-}
-
-enum LolGameMode {
-  ANY = 0;
-  CLASSIC = 1;
-  FEARLESS = 2;
-  IRON_MAN = 3;
-  ALL_RANDOM = 4;
-}
-
-message TftGameSettings {
-  string todo = 1;
-}
-
-message ValorantGameSettings {
-  string todo = 1;
-}
-
-// Общие настройки серии
-message GameSeriesSettings {
-  GameType game_type = 1;
-  oneof settings {
-    LolGameSettings lol = 2;
-    TftGameSettings tft = 3;
-    ValorantGameSettings valorant = 4;
-  }
-}
-
-// --- Запросы и ответы ---
-
-message CreateGameSeriesRequest {
-  repeated common.Actor participants = 1; // Участники серии
-  GameSeriesSettings settings = 2; // Настройки
-}
-
-message GetGameSeriesRequest {
-  repeated string ids = 1;
-}
-
-message GameSeriesResponse {
-  string id = 1;
-  repeated common.Actor participants = 2;
-  GameSeriesSettings settings = 3;
-  repeated string game_ids = 4; // ID игр в серии
-  google.protobuf.Timestamp start = 5;
-  google.protobuf.Timestamp end = 6;
-  common.Status status = 7;
-}
-
-message ManyGameSeriesResponse {
-  repeated GameSeriesResponse series = 1;
-}
-
-// --- Сервис ---
 
 service GameSeriesService {
   // Создание серии игр (например, Bo3, Bo5)
-  rpc CreateGameSeries(CreateGameSeriesRequest) returns (GameSeriesResponse);
+  rpc ToggleReady(ToggleReadyRequest) returns (common.Empty);
+  }
 
-  // Получение серии по ID
-  rpc GetGameSeries(GetGameSeriesRequest) returns (GameSeriesResponse);
-
-  // Получение нескольких серий
-  rpc GetGameSeriesList(GetGameSeriesRequest) returns (ManyGameSeriesResponse);
-
-  // Запуск серии (создаёт игры в соответствии с настройками)
-  rpc StartGameSeries(GetGameSeriesRequest) returns (GameSeriesResponse);
-
-  // Завершение серии
-  rpc FinishGameSeries(GetGameSeriesRequest) returns (GameSeriesResponse);
-}

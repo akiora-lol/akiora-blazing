@@ -47,7 +47,9 @@ impl DraftService {
             pd.allow_redo,
             pd.forbidden_champions.clone(),
         );
-        self.save_draft(&dr).await?;
+        let d = self.save_draft(&dr).await;
+        dbg!(&d);
+        let d = d?;
         Ok(dr)
     }
 

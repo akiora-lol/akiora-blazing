@@ -38,6 +38,7 @@ pub async fn get_redis_manager(redis_uri: &str) -> RedisResult<ConnectionManager
     Ok(manager)
 }
 
+#[derive(Clone)]
 pub struct Publisher {
     con: ConnectionManager,
 }

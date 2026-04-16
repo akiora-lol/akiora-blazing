@@ -11,6 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         format!("{}/common/game_settings.proto", proto_root),
         format!("{}/common/game_draft.proto", proto_root),
         format!("{}/game/v1/tournament_service.proto", proto_root),
+        format!("{}/game/v1/gameseries_service.proto", proto_root),
     ];
 
     // Директории, где могут находиться импортируемые файлы

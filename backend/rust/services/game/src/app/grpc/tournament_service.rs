@@ -3,13 +3,16 @@ use crate::domain::value_objects::LolBracketMode as DomainBracketMode;
 use crate::domain::value_objects::TournamentType as DomainTournamentType;
 use crate::domain::value_objects::participant::TeamParticipant;
 use crate::domain::value_objects::*;
+use anyhow::Context;
 use bitvec::array::BitArray;
 use bitvec::order::Lsb0;
 use chrono::DateTime;
 use proto_build::common::ActorType;
 use proto_build::common::{LolBracketMode, LolGameMode};
 use proto_build::game::tournament::AddTeamParticipantRequest;
+use proto_build::game::tournament::ChangeBracketRequest;
 use proto_build::game::tournament::Empty;
+
 use proto_build::game::tournament::TournamentType;
 
 use proto_build::game::tournament::{
@@ -22,11 +25,11 @@ use tonic::{Request, Response, Status};
 use uuid::Uuid;
 #[derive(Clone)]
 pub struct GrpcTournamentServiceImpl {
-    domain_service: Arc<DomainTournamentService>,
+    domain_service: DomainTournamentService,
 }
 
 impl GrpcTournamentServiceImpl {
-    pub fn new(domain_service: Arc<DomainTournamentService>) -> Self {
+    pub fn new(domain_service: DomainTournamentService) -> Self {
         Self { domain_service }
     }
 }
@@ -134,7 +137,6 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
         } else {
             vec![]
         };
-
         Ok(Response::new(Empty {}))
     }
 
@@ -152,6 +154,26 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
 
         self.domain_service
             .start_tournament(id)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        Ok(Response::new(Empty {}))
+    }
+
+    async fn pre_build_bracket(
+        &self,
+        request: Request<GetTournamentRequest>,
+    ) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+
+        let id = req
+            .ids
+            .first()
+            .ok_or_else(|| Status::invalid_argument("ID is required"))?;
+        let id = Uuid::parse_str(id).map_err(|_| Status::invalid_argument("Invalid id"))?;
+
+        self.domain_service
+            .prebuild_bracket(id)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
@@ -242,6 +264,57 @@ impl GrpcTournamentService for GrpcTournamentServiceImpl {
         Ok(Response::new(Empty {}))
     }
 
+    async fn change_bracket(
+        &self,
+        request: Request<ChangeBracketRequest>,
+    ) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+        let tournament_id = Uuid::parse_str(&req.tournament_id)
+            .map_err(|_| Status::invalid_argument("Invalid tournament_id"))?;
+        let s1 = req
+            .swap_initiator
+            .ok_or_else(|| Status::internal("Initiator required"))?;
+        let s2 = req
+            .swap_victim
+            .ok_or_else(|| Status::internal("Target required"))?;
+        let s1 = match &s1.actor_type() {
+            ActorType::Club => Actor::Club(
+                Uuid::parse_str(&s1.id).map_err(|e| Status::internal("Target required"))?,
+            ),
+            ActorType::User => Actor::User(
+                Uuid::parse_str(&s1.id).map_err(|e| Status::internal("Target required"))?,
+            ),
+            ActorType::Team => Actor::Team(
+                Uuid::parse_str(&s1.id).map_err(|e| Status::internal("Target required"))?,
+            ),
+            _ => Actor::Team(
+                Uuid::parse_str("qwer").map_err(|e| Status::internal("Target required"))?,
+            ),
+        };
+
+        let s2 = match &s2.actor_type() {
+            ActorType::Club => Actor::Club(
+                Uuid::parse_str(&s2.id).map_err(|e| Status::internal("Target required"))?,
+            ),
+            ActorType::User => Actor::User(
+                Uuid::parse_str(&s2.id).map_err(|e| Status::internal("Target required"))?,
+            ),
+            ActorType::Team => Actor::Team(
+                Uuid::parse_str(&s2.id).map_err(|e| Status::internal("Target required"))?,
+            ),
+            _ => Actor::Team(
+                Uuid::parse_str("qwer").map_err(|e| Status::internal("Target required"))?,
+            ),
+        };
+        let tournament = self
+            .domain_service
+            .change_bracket(tournament_id, s1, s2)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        Ok(Response::new(Empty {}))
+    }
+
     async fn add_participant_to_wait_list(
         &self,
         request: Request<AddParticipantRequest>,
@@ -316,13 +389,7 @@ fn tournament_settings_from_proto(
 
             let series_best_of = lol.series_best_of.iter().map(|&x| x as u8).collect();
 
-            let forbidden_champs = lol.forbidden_champions.iter().fold(
-                BitArray::<[u8; 30], Lsb0>::ZERO,
-                |mut acc, &idx| {
-                    acc.set(idx as usize, true);
-                    acc
-                },
-            );
+            let forbidden_champs = lol.forbidden_champions.iter().map(|e| *e as i32).collect();
 
             let tournament_type = match lol.tournament_type() {
                 TournamentType::Pickem => DomainTournamentType::PickEm,
@@ -402,8 +469,8 @@ fn tournament_settings_to_proto(
                     forbidden_champions: match settings {
                         TournamentSettings::Lol(lol) => lol
                             .forbidden_champions
-                            .iter_ones()
-                            .map(|index| index as u32)
+                            .iter()
+                            .map(|el| *el as u32)
                             .collect(),
                         _ => vec![0; 30],
                     },

@@ -13,3 +13,5 @@ enum Status {
   FINISHED = 3;
   CANCELLED = 4;
 }
+
+message Empty {}

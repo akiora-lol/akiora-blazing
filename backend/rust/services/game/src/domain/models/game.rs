@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::domain::{
     GameSeries,
     value_objects::{game_status::GameStatus, participant::TeamParticipant},
@@ -9,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use shared::game::*;
 use uuid::Uuid;
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, PartialEq, Eq, Serialize, Clone, Debug)]
 pub struct Game {
     #[serde(rename = "_id", with = "uuid::serde::hyphenated")]
     pub id: Uuid,
@@ -17,6 +19,7 @@ pub struct Game {
     pub game_series: Uuid,
     pub draft: Option<Draft>,
     pub teams: Vec<TeamParticipant>,
+    pub ready_check: Vec<TeamParticipant>,
     pub results: Option<Vec<TeamParticipant>>,
     pub start: Option<DateTime<Utc>>,
     pub end: Option<DateTime<Utc>>,
@@ -40,6 +43,7 @@ impl Game {
             results: None,
             start: None,
             status: GameStatus::Scheduled,
+            ready_check: Vec::new(),
             end: None,
         }
     }
@@ -57,6 +61,24 @@ impl Game {
         // BAD LOGIC ONLY FOR 2 TEAMS LEAUGUE ONLY RN
         if self.teams[side] != actor {
             self.teams.swap(side, 1 - side);
+        }
+        Ok(())
+    }
+
+    pub fn toggle_ready(&mut self, actor: TeamParticipant) -> Result<()> {
+        if self.status != GameStatus::Scheduled {
+            anyhow::bail!("Can only toggle in scheduled games");
+        }
+        if !self.ready_check.contains(&actor) {
+            self.ready_check.push(actor);
+        } else {
+            self.ready_check.retain(|f| *f != actor);
+        }
+
+        let set1: HashSet<_> = self.ready_check.iter().collect();
+        let set2: HashSet<_> = self.teams.iter().collect();
+        if set1 == set2 {
+            self.status = GameStatus::Active;
         }
         Ok(())
     }

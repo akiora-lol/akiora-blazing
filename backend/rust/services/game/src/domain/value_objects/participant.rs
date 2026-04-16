@@ -5,7 +5,7 @@ use shared::game::Actor;
 use uuid::Uuid;
 
 #[serde_as]
-#[derive(Serialize, PartialEq, Eq, Debug, Deserialize, Clone)]
+#[derive(Serialize, Hash, PartialEq, Eq, Debug, Deserialize, Clone)]
 pub struct TeamParticipant {
     pub participant: Actor,
 

@@ -77,9 +77,10 @@ impl GameRepoExt for GameRepo {
         let filter = doc! { "_id": game.id.to_string() };
         let update = doc! {
             "$set": {
-                "game_series": game.game_series.to_string(),
                 "draft": game.draft.clone(),
                 "results": game.results.clone(),
+                "status": game.status.clone(),
+                "ready_check": game.ready_check.clone(),
 
             }
         };
