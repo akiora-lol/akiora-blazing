@@ -1,5 +1,5 @@
 def main():
-    print("Hello from proto-build!")
+    print("Hello from game!")
 
 
 if __name__ == "__main__":

@@ -81,4 +81,16 @@ impl DraftService {
 
         Ok(new_draft_state.1)
     }
+    
+    pub async fn generate_next_command(
+        &mut self,
+        command: &Command,
+        game_id: &str,
+    ) -> Result<Option<Command>, DraftError> {
+        let mut draft = self.load_draft(game_id).await?;
+        let new_draft_state = draft.perform_command(command).await?;
+        let res = self.save_draft(new_draft_state.0).await?;
+
+        Ok(new_draft_state.1)
+    }
 }

@@ -1,5 +1,8 @@
+use std::time::Duration;
+
 use crate::domain::draft_service::DraftService;
 use anyhow::Result;
+use chrono::Utc;
 use redis::{
     AsyncCommands, FromRedisValue,
     aio::ConnectionManager,
@@ -10,6 +13,7 @@ use shared::contracts::draft::events::{
     DraftAction, DraftEnded, DraftNextCommand, Event, PrepareDraft, RedoAction,
 };
 use shared::game::{Action, Command, LolGameSettings, Team};
+use tokio::time::sleep;
 use uuid::Uuid;
 
 pub struct Consumer {
@@ -113,6 +117,104 @@ impl Consumer {
     }
     async fn handle_draft_prepare(&mut self, pd: &PrepareDraft) -> Result<()> {
         self.draft_service.prepare_draft(pd).await?;
+        Ok(())
+    }
+    async fn handle_draft_action_with_abort_simple(&mut self, da: &DraftAction) -> Result<()> {
+        let game_id = da.game_id;
+        let command = da.command.clone();
+
+        let draft = self
+            .draft_service
+            .load_draft(game_id.to_string().as_str())
+            .await?;
+        let deadline = draft.deadline;
+        let now = Utc::now();
+        let time_to_deadline = if deadline > now {
+            (deadline - now).num_seconds().max(1) as u64
+        } else {
+            1
+        };
+
+        let (cancel_tx, mut cancel_rx) = tokio::sync::mpsc::channel(1);
+
+        let mut publisher_clone = self.publisher.clone();
+        let mut draft_service_clone = self.draft_service;
+
+        let process_handle = tokio::spawn(async move {
+            tokio::select! {
+                result = async {
+                    let command_result = draft_service_clone
+                        .command(&command, &game_id.to_string())
+                        .await;
+
+                    if let Ok(com) = command_result {
+                        match com {
+                            Some(next_com) => {
+                                publisher_clone
+                                    .pub_sub_publish(
+                                        "notification",
+                                        &DraftNextCommand {
+                                            game_id,
+                                            command: next_com,
+                                        },
+                                    )
+                                    .await?;
+                            }
+                            None => {
+                                publisher_clone
+                                    .pub_sub_publish(
+                                        "notification",
+                                        &DraftEnded { game_id },
+                                    )
+                                    .await?;
+                            }
+                        }
+                    } else {
+                        println!("Bad action for game_id: {}", game_id);
+                    }
+                    Ok::<_, anyhow::Error>(())
+                } => result,
+                _ = cancel_rx.recv() => {
+                    println!("Process cancelled for game_id: {}", game_id);
+                    Ok(())
+                }
+            }
+        });
+        process_handle.await?;
+
+        let timeout_handle = tokio::spawn(async move {
+            sleep(Duration::from_secs(time_to_deadline)).await;
+            println!(
+                "⏰ Deadline reached for game_id: {}, generating random action",
+                game_id
+            );
+
+            let _ = cancel_tx.send(()).await;
+
+            // Ждем немного, чтобы основная задача успела отреагировать
+            sleep(Duration::from_millis(100)).await;
+
+            // Принудительно абортируем, если основная задача еще висит
+            process_handle.abort();
+
+            // Генерируем и отправляем случайное действие
+            if let Ok(random_command) = draft_service_clone
+                .generate_random_command(&game_id.to_string())
+                .await
+            {
+                let _ = publisher_clone
+                    .pub_sub_publish(
+                        "notification",
+                        &DraftAction {
+                            game_id,
+                            command: random_command,
+                        },
+                    )
+                    .await;
+            }
+        });
+
+        timeout_handle.await?;
         Ok(())
     }
 }

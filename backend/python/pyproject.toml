@@ -4,10 +4,23 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "dishka>=1.9.1",
+    "fastapi>=0.136.0",
+    "faststream>=0.6.7",
+    "granian>=2.7.3",
+    "loguru>=0.7.3",
+    "msgspec>=0.21.1",
+    "pydantic-settings>=2.13.1",
+    "redis>=7.4.0",
+    "uuid>=1.30",
+]
 
 [tool.uv.workspace]
 members = [
-    "shared",
+    "community",
     "proto-build",
+    "shared",
+    "draft",
+    "game",
 ]

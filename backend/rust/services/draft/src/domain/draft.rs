@@ -121,6 +121,7 @@ impl Draft {
             None
         };
 
+        self.deadline = Utc::now() + Duration::seconds(self.seconds_per_action as i64);
         Ok((self, next_command))
     }
     fn valid_command(&self, command: &Command) -> bool {

@@ -18,3 +18,4 @@ thiserror={workspace=true}
 tokio = {workspace = true}
 anyhow = { workspace = true}
 dotenvy.workspace = true
+tokio-utils = "0.1.2"
