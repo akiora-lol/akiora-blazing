@@ -49,8 +49,8 @@ impl Game {
     }
 
     pub fn choose_side(&mut self, actor: TeamParticipant, side: usize) -> Result<()> {
-        if self.status != GameStatus::Scheduled {
-            anyhow::bail!("Can only swap in scheduled games");
+        if self.status == GameStatus::SideChosen || self.status != GameStatus::Scheduled {
+            anyhow::bail!("Cant swap due to domain logic");
         }
         if !self.teams.contains(&actor) {
             anyhow::bail!("No such team in game");
@@ -62,11 +62,12 @@ impl Game {
         if self.teams[side] != actor {
             self.teams.swap(side, 1 - side);
         }
+        self.status = GameStatus::SideChosen;
         Ok(())
     }
 
     pub fn toggle_ready(&mut self, actor: TeamParticipant) -> Result<()> {
-        if self.status != GameStatus::Scheduled {
+        if self.status != GameStatus::Scheduled || self.status != GameStatus::SideChosen {
             anyhow::bail!("Can only toggle in scheduled games");
         }
         if !self.ready_check.contains(&actor) {

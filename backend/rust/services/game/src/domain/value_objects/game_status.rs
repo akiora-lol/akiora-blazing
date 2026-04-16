@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, PartialEq, Eq, Debug, Deserialize, Clone)]
 pub enum GameStatus {
     Scheduled,
+    SideChosen,
     Active,
     Finished,
     Cancelled,

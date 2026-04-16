@@ -1,11 +1,12 @@
 use chrono::Utc;
-use proto_build::common::TeamType;
+
 use serde_json::json;
 use shared::Publisher;
-use shared::contracts::draft::events::PrepareDraft;
-use shared::game::{self, Actor, GameSettings, Team};
+use shared::contracts::draft::events::{DraftAction, Event, PrepareDraft};
+use shared::game::{self, Action, Actor, Command, GameSettings, Team};
 use std::ops::Deref;
 use std::sync::Arc;
+
 use uuid::Uuid;
 
 use crate::domain::models::{Game, GameSeries};
@@ -82,11 +83,7 @@ impl GameSeriesService {
         match &game_series.games {
             Some(games) => {
                 if !games.is_empty() {
-                    let game = games
-                        .iter()
-                        .filter(|g| g.results.is_none() || g.results.as_ref().unwrap().is_empty())
-                        .next()
-                        .context("Games list is empty despite check")?;
+                    let game = self.get_next_game(games)?;
                     let game = self
                         .game_service
                         .toggle_ready(game.id, tp)
@@ -267,6 +264,57 @@ impl GameSeriesService {
                 bail!("No Permission");
             }
             Some(_) => Ok(()),
+            None => bail!("GameSeries games are missing (None)"),
+        }
+    }
+
+    fn get_next_game(&self, games: &Vec<Game>) -> Result<Game> {
+        let game = games
+            .iter()
+            .filter(|g| {
+                (g.status == GameStatus::SideChosen || g.status == GameStatus::Scheduled)
+                    && (g.results.is_none() || g.results.as_ref().unwrap().is_empty())
+            })
+            .next()
+            .context("Games list is empty despite check")?;
+        Ok(game.clone())
+    }
+
+    pub async fn draft_action(&mut self, actor: Actor, action: Action, id: Uuid) -> Result<()> {
+        let mut game_series = self
+            .get_by_id(id)
+            .await
+            .context("Failed to get game series")?;
+        let games = self.game_service.get_by_game_series_id(id).await?;
+        game_series.games = Some(games);
+        match &game_series.games {
+            Some(games) => {
+                let game = self
+                    .get_next_game(games)
+                    .context("Failed to get next game")?;
+                let team: Team;
+                if game.teams[0].participant == actor {
+                    let act_id = match actor {
+                        Actor::Club(id) | Actor::User(id) | Actor::Team(id) => id,
+                    };
+                    team = Team::Blue(Some(act_id))
+                } else if game.teams[1].participant == actor {
+                    let act_id = match actor {
+                        Actor::Club(id) | Actor::User(id) | Actor::Team(id) => id,
+                    };
+                    team = Team::Red(Some(act_id))
+                } else {
+                    bail!("No permission");
+                }
+                let command = Command(team, action);
+                let ev = Event::Draft(DraftAction {
+                    game_id: game.id,
+                    command,
+                });
+                self.redis_publisher.stream_publish("draft", &ev).await?;
+                return Ok(());
+            }
+
             None => bail!("GameSeries games are missing (None)"),
         }
     }

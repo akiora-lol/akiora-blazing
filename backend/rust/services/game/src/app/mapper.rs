@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 use chrono::{DateTime, Utc};
 use prost_types::Timestamp;
 pub trait TimestampExt {
@@ -19,8 +19,13 @@ impl TimestampExt for DateTime<Utc> {
     }
 }
 
-use proto_build::common::{Actor as ProtoActor, ActorType};
-use shared::game::Actor;
+use proto_build::common::{
+    Action as ProtoAction, Actor as ProtoActor, ActorType, action::ActionType,
+};
+use shared::{
+    contracts::draft::events::DraftAction,
+    game::{Action, Actor, Command, Team},
+};
 use uuid::Uuid;
 
 pub fn actor_from_proto_to_domain(ac: ProtoActor) -> Result<Actor> {
@@ -30,4 +35,15 @@ pub fn actor_from_proto_to_domain(ac: ProtoActor) -> Result<Actor> {
         ActorType::Club => Ok(Actor::Club(Uuid::parse_str(&ac.id).unwrap_or_default())),
         _ => bail!("doesnt exist"),
     }
+}
+
+pub fn action_from_proto_to_domain(ac: ProtoAction) -> Result<Action> {
+    let orig_action = ac.action_type.context("Invalid action")?;
+
+    let action = match orig_action {
+        ActionType::Pick(champ_id) => Action::Pick(Some(champ_id as usize)),
+
+        ActionType::Ban(champ_id) => Action::Ban(Some(champ_id as usize)),
+    };
+    return Ok(action);
 }

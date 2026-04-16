@@ -14,13 +14,3 @@ pub enum Event {
     Draft(DraftAction),
     Redo(RedoAction),
 }
-#[derive(Serialize, Deserialize, Clone, FromRedisValue, ToRedisArgs)]
-pub enum Action {
-    Draft(DraftAction),
-    Redo(RedoAction),
-}
-
-#[derive(Serialize, Deserialize, Clone, FromRedisValue, ToRedisArgs)]
-pub struct BadAction {
-    pub game_id: Uuid,
-}

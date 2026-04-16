@@ -7,7 +7,7 @@ use redis::{
 };
 use shared::Publisher;
 use shared::contracts::draft::events::{
-    BadAction, DraftAction, DraftEnded, DraftNextCommand, Event, PrepareDraft, RedoAction,
+    DraftAction, DraftEnded, DraftNextCommand, Event, PrepareDraft, RedoAction,
 };
 use shared::game::{Action, Command, LolGameSettings, Team};
 use uuid::Uuid;
@@ -104,14 +104,6 @@ impl Consumer {
             }
         } else {
             println!("Bad action");
-            self.publisher
-                .pub_sub_publish(
-                    "notification",
-                    &BadAction {
-                        game_id: da.game_id,
-                    },
-                )
-                .await?;
         }
 
         Ok(())

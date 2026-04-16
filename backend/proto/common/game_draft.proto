@@ -7,19 +7,12 @@ import "common/game_actors.proto";
 option go_package = "akiora/common";
 
 message Command {
-  Team team = 1;
+  common.Actor actor = 1;
   Action action = 2;
 }
 
-enum TeamType {
-  TEAMTYPE_UNSPECIFIED = 0;
-  RED = 1;
-  BLUE = 2;
-}
-message Team {
-  common.Actor actor = 1;
-  TeamType team_type = 2;
-}
+
+
 
 message Action {
   oneof action_type {
