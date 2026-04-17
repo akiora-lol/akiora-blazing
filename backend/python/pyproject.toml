@@ -25,4 +25,8 @@ members = [
     "draft",
     "game",
     "gateway",
+    "messenger",
+    "auth",
+    "search",
+    "notification",
 ]

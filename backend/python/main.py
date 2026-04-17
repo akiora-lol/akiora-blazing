@@ -25,6 +25,7 @@ def main():
 
     output_dirs = [
         Path("game").resolve(),
+        Path("auth").resolve(),
     ]
     googleapis_path = proto_root / "googleapis"
 

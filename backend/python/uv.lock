@@ -5,11 +5,15 @@ requires-python = ">=3.14"
 [manifest]
 members = [
     "akiora-workspace",
+    "auth",
     "community",
     "draft",
     "game",
     "gateway",
+    "messenger",
+    "notification",
     "proto-build",
+    "search",
     "shared",
 ]
 
@@ -73,6 +77,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/19/14/2c5dd9f512b66549a
 wheels = [
     { url = "https://files.pythonhosted.org/packages/da/42/e921fccf5015463e32a3cf6ee7f980a6ed0f395ceeaa45060b61d86486c2/anyio-4.13.0-py3-none-any.whl", hash = "sha256:08b310f9e24a9594186fd75b4f73f4a4152069e3853f1ed8bfbf58369f4ad708", size = 114353, upload-time = "2026-03-24T12:59:08.246Z" },
 ]
+
+[[package]]
+name = "auth"
+version = "0.1.0"
+source = { virtual = "auth" }
 
 [[package]]
 name = "beanie"
@@ -376,6 +385,11 @@ wheels = [
 ]
 
 [[package]]
+name = "messenger"
+version = "0.1.0"
+source = { virtual = "messenger" }
+
+[[package]]
 name = "msgspec"
 version = "0.21.1"
 source = { registry = "https://pypi.org/simple" }
@@ -411,6 +425,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/d5/48/658827446368bca30
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b4/b1/ab1e7a49930a8c1d1f7a570bbd4ec7d552ef035acc7aa4b97906e17a34a9/mypy_protobuf-5.0.0-py3-none-any.whl", hash = "sha256:3a7dd753ef3e3b8783a824eb51f07983f62812f9ec066e4fbb1b22d6c5dc36d0", size = 26008, upload-time = "2026-01-13T17:10:11.053Z" },
 ]
+
+[[package]]
+name = "notification"
+version = "0.1.0"
+source = { virtual = "notification" }
 
 [[package]]
 name = "proto-build"
@@ -560,6 +579,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/7b/7f/3759b1d0d72b7c92f
 wheels = [
     { url = "https://files.pythonhosted.org/packages/74/3a/95deec7db1eb53979973ebd156f3369a72732208d1391cd2e5d127062a32/redis-7.4.0-py3-none-any.whl", hash = "sha256:a9c74a5c893a5ef8455a5adb793a31bb70feb821c86eccb62eebef5a19c429ec", size = 409772, upload-time = "2026-03-24T09:14:35.968Z" },
 ]
+
+[[package]]
+name = "search"
+version = "0.1.0"
+source = { virtual = "search" }
 
 [[package]]
 name = "setuptools"

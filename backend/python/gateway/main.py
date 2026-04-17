@@ -45,7 +45,9 @@ async def dynamic_proxy(
 ) -> Response:
     # full_path = "akiora.game.tournament.TournamentService/GetTournament"
     if "/" not in full_path:
-        return JSONResponse(status_code=400, content={"detail": "Path must be ServiceName/MethodName"})
+        return JSONResponse(
+            status_code=400, content={"detail": "Path must be ServiceName/MethodName"}
+        )
 
     grpc_service, method_name = full_path.rsplit("/", 1)
 
@@ -68,7 +70,9 @@ async def dynamic_proxy(
     except KeyError:
         return JSONResponse(
             status_code=404,
-            content={"detail": f"gRPC method {full_method_name!r} not found via reflection"},
+            content={
+                "detail": f"gRPC method {full_method_name!r} not found via reflection"
+            },
         )
 
     input_desc = method_desc.input_type
@@ -103,7 +107,9 @@ async def dynamic_proxy(
         )
 
     return JSONResponse(
-        content=json_format.MessageToDict(grpc_response, preserving_proto_field_name=True)
+        content=json_format.MessageToDict(
+            grpc_response, preserving_proto_field_name=True
+        )
     )
 
 
