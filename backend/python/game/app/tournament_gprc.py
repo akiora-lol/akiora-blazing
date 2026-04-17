@@ -15,7 +15,7 @@ from common.types_pb2 import Empty
 from game.v1.tournament_service_pb2_grpc import (
     TournamentServiceServicer,
 )
-
+from loguru import logger
 from domain.services.lol.tournament_serivce import TournamentService
 from domain.value_objects.actors import Actor, TeamParticipant
 from domain.value_objects.settings import (
@@ -104,8 +104,10 @@ class TournamentGrpc(TournamentServiceServicer):
         context: grpc.aio.ServicerContext,
         tournament_service: FromDishka[TournamentService],
     ) -> Empty:
+        logger.info(request)
         ids = [UUID(id_str) for id_str in request.ids]
-        await tournament_service.get(ids if len(ids) > 1 else ids[0])
+        t = await tournament_service.get(ids if len(ids) > 1 else ids[0])
+        logger.info(t.model_dump())
         return Empty()
 
     @inject

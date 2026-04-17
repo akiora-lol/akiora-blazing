@@ -8,6 +8,7 @@ dependencies = [
     "beanie>=2.1.0",
     "dishka>=1.9.1",
     "grpcio>=1.80.0",
+    "grpcio-reflection>=1.80.0",
     "grpcio-tools>=1.80.0",
     "pymongo>=4.16.0",
 ]

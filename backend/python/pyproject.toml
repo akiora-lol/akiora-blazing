@@ -24,4 +24,5 @@ members = [
     "shared",
     "draft",
     "game",
+    "gateway",
 ]
