@@ -44,7 +44,6 @@ async def send_msg():
             ],
             team_size=5,
             seconds_per_action=30,
-            allow_redo=True,
         ).model_dump(),
     }
 

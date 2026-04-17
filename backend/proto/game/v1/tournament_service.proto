@@ -2,12 +2,98 @@ syntax = "proto3";
 
 package akiora.game.tournament;
 
+import "google/api/annotations.proto";
+
+import "google/api/http.proto";
 import "common/game_actors.proto";
 import "common/game_settings.proto";
 import "common/types.proto";
 
 option go_package = "akiora/game/tournament";
 
+service TournamentService {
+  // Создание турнира
+  rpc CreateTournament(CreateTournamentRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      post: "/v1/tournaments"
+      body: "*"
+    };
+  }
+
+  // Получение одного или нескольких турниров по ID
+  rpc GetTournament(GetTournamentRequest) returns (ManyTournamentsResponse) {  // лучше возвращать ManyTournamentsResponse
+    option (google.api.http) = {
+      get: "/v1/tournaments/{ids}"
+    };
+  }
+
+  // Получение списка турниров (с фильтром по game_type)
+  rpc GetTournaments(GetTournamentRequest) returns (ManyTournamentsResponse) {
+    option (google.api.http) = {
+      get: "/v1/tournaments"
+    };
+  }
+
+  // Запуск турнира
+  rpc StartTournament(GetTournamentRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{ids}/start"
+    };
+  }
+
+  // Предварительная сборка брекета
+  rpc PreBuildBracket(GetTournamentRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{ids}/prebuild-bracket"
+    };
+  }
+
+  // Завершение турнира
+  rpc FinishTournament(GetTournamentRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{ids}/finish"
+    };
+  }
+
+  // Добавление участника (одиночного)
+  rpc AddParticipant(AddParticipantRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/participants"
+      body: "*"
+    };
+  }
+
+  // Добавление команды
+  rpc AddTeam(AddTeamParticipantRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/teams"
+      body: "*"
+    };
+  }
+
+  // Добавление в лист ожидания
+  rpc AddParticipantToWaitList(AddParticipantRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/waitlist"
+      body: "*"
+    };
+  }
+
+  // Смена мест в брекете
+  rpc ChangeBracket(ChangeBracketRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/bracket/swap"
+      body: "*"
+    };
+  }
+
+  // Удаление участника
+  rpc RemoveParticipant(RemoveParticipantRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/tournaments/{tournament_id}/participants/{participant_id}"
+    };
+  }
+}
 enum TournamentType {
   UNSPECIFIED = 0;
   PRESIGN = 1;
@@ -71,43 +157,6 @@ message ManyTournamentsResponse {
 }
 
  
-
-message Empty {
- 
-}
-
-service TournamentService {
-  // Создание турнира
-  rpc CreateTournament(CreateTournamentRequest) returns (Empty);
-
-  // Получение турнира по ID
-  rpc GetTournament(GetTournamentRequest) returns (Empty);
-
-  // Получение списка турниров
-  rpc GetTournaments(GetTournamentRequest) returns (Empty);
-
-  // Запуск турнира (создаёт сетку/расписание)
-  rpc StartTournament(GetTournamentRequest) returns (Empty);
-    rpc PreBuildBracket(GetTournamentRequest) returns (Empty);
-
-  // Завершение турнира
-  rpc FinishTournament(GetTournamentRequest) returns (Empty);
-
-  // Добавление участника
-  rpc AddParticipant(AddParticipantRequest) returns (Empty);
-
-  rpc AddTeam(AddTeamParticipantRequest) returns (Empty);
-
-  rpc ChangeBracket(ChangeBracketRequest) returns (Empty);
-
-  rpc AddParticipantToWaitList(AddParticipantRequest) returns (Empty);
-
-  // Удаление участника
-  rpc RemoveParticipant(RemoveParticipantRequest) returns (Empty);
-
-
-
-}
 
 
 message ChangeBracketRequest {

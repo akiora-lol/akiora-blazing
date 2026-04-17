@@ -13,7 +13,7 @@ class Draft(BaseModel):
     forbidden_champions: list[int]
     stage: int = 0
     team_size: int
-    allow_redo: bool
+
     seconds_per_action: int
 
     @classmethod
@@ -27,7 +27,6 @@ class Draft(BaseModel):
             forbidden_champions=prepare_draft.forbidden_champions,
             stage=0,
             team_size=prepare_draft.team_size,
-            allow_redo=prepare_draft.allow_redo,
             seconds_per_action=prepare_draft.seconds_per_action,
         )
 

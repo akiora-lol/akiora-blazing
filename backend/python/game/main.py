@@ -1,5 +1,10 @@
+import asyncio
+
+from app.app import serve
+
+
 def main():
-    print("Hello from game!")
+    asyncio.run(serve())
 
 
 if __name__ == "__main__":

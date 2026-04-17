@@ -10,7 +10,7 @@ proto-build = { path = "proto-build" }
 bitvec = { version = "1.0.1", features = ["serde"] }
 prost-types = { version = "0.14.3", features = ["chrono"] }
 tokio = { version = "1.50.0", features = ["full"] }
-axum = "0.8.8"
+axum = "0.8.9"
 chrono = { version = "0.4.44", features = ["serde"] }
 redis = { version = "1.0.5", features = ["tokio-comp","aio","connection-manager"] }
 serde = { version = "1.0.228", features = ["derive"] }

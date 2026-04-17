@@ -32,5 +32,5 @@ class PrepareDraft(BaseModel):
     forbidden_champions: list[int]
     teams: list[Team]
     seconds_per_action: int
-    allow_redo: bool
+
     team_size: int

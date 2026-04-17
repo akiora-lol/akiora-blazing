@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package akiora.game.gameseries;
 
+import "google/api/annotations.proto";
+import "google/api/http.proto";
 import "common/game_actors.proto";
 import "common/game_settings.proto";
 import "common/game_draft.proto";
@@ -18,7 +20,7 @@ message ToggleReadyRequest{
     common.Actor actor = 2;
 }
 
-message DraftAction{
+message DraftActionRequest{
     string series_id = 1;
     common.Command command = 2;
 }
@@ -30,8 +32,22 @@ message ChampLockRequest{
 
 service GameSeriesService {
 
-    rpc DraftAction(DraftAction) returns (common.Empty);
-    
-  rpc ToggleReady(ToggleReadyRequest) returns (common.Empty);
-  }
+    // Действие в драфте
+    rpc DraftAction(DraftActionRequest) returns (common.Empty) {
+        option (google.api.http) = {
+            post: "/v1/game-series/{series_id}/draft/action"
+            body: "*"
+        };
+    }
 
+    // Переключение готовности
+    rpc ToggleReady(ToggleReadyRequest) returns (common.Empty) {
+        option (google.api.http) = {
+            post: "/v1/game-series/{series_id}/ready"
+            body: "*"
+        };
+    }
+
+    // (Опционально) Лок чемпиона
+    // rpc ChampLock(ChampLockRequest) returns (common.Empty) { ... }
+}

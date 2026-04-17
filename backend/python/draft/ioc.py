@@ -19,7 +19,7 @@ class InfraProvider(Provider):
     async def get_redis_manager(
         self, settings: Settings
     ) -> AsyncIterator[RedisManager]:
-        manager = RedisManager(settings.redis_url)
+        manager = RedisManager(settings.redi)
         async with manager.managed() as m:
             yield m
 

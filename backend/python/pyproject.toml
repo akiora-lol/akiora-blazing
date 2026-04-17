@@ -11,6 +11,7 @@ dependencies = [
     "granian>=2.7.3",
     "loguru>=0.7.3",
     "msgspec>=0.21.1",
+    "mypy-protobuf>=5.0.0",
     "pydantic-settings>=2.13.1",
     "redis>=7.4.0",
     "uuid>=1.30",
