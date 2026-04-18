@@ -1,0 +1,229 @@
+syntax = "proto3";
+
+package akiora.messenger;
+
+import "google/api/annotations.proto";
+import "google/api/http.proto";
+import "common/game_actors.proto";
+import "common/types.proto";
+
+option go_package = "akiora/messenger";
+
+
+// ─── Chat ───────────────────────────────────────────────────────────────────
+
+enum ChatOwnerType {
+  OWNER_UNSPECIFIED = 0;
+  SYSTEM = 1;
+  CLUB = 2;
+  TOURNAMENT = 3;
+  GAMESERIES = 4;
+}
+
+enum ChatType {
+  CHAT_TYPE_UNSPECIFIED = 0;
+  PRIVATE = 1;
+  PUBLIC = 2;
+}
+
+enum ChatStatus {
+  CHAT_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  FROZEN = 2;
+}
+
+message ChatResponse {
+  string id = 1;
+  string owner_id = 2;
+  ChatOwnerType owner_type = 3;
+  ChatType type = 4;
+  ChatStatus status = 5;
+  int64 timestamp = 6;
+  repeated string allowed_users = 7;
+}
+
+message CreateChatRequest {
+  string owner_id = 1;
+  ChatOwnerType owner_type = 2;
+  ChatType type = 3;
+  repeated string allowed_users = 4;
+}
+
+message GetChatRequest {
+  string chat_id = 1;
+}
+
+message AddAllowedUserRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+
+message RemoveAllowedUserRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+
+message FreezeChatRequest {
+  string chat_id = 1;
+}
+
+service ChatService {
+  rpc CreateChat(CreateChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v1/chats"
+      body: "*"
+    };
+  }
+
+  rpc GetChat(GetChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      get: "/v1/chats/{chat_id}"
+    };
+  }
+
+  rpc AddAllowedUser(AddAllowedUserRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v1/chats/{chat_id}/members"
+      body: "*"
+    };
+  }
+
+  rpc RemoveAllowedUser(RemoveAllowedUserRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/chats/{chat_id}/members/{user_id}"
+    };
+  }
+
+  rpc FreezeChat(FreezeChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v1/chats/{chat_id}/freeze"
+    };
+  }
+}
+
+
+// ─── Message ─────────────────────────────────────────────────────────────────
+
+enum MessageStatus {
+  MESSAGE_STATUS_UNSPECIFIED = 0;
+  SENT = 1;
+  READ = 2;
+}
+
+message ReactionProto {
+  string emote_id = 1;
+  string user_id = 2;
+}
+
+message MessageShortProto {
+  string body = 1;
+  int64 timestamp = 2;
+}
+
+message MessageResponse {
+  string id = 1;
+  string chat_id = 2;
+  string creator_id = 3;
+  string body = 4;
+  MessageStatus status = 5;
+  repeated string read_by = 6;
+  int64 timestamp = 7;
+  repeated MessageShortProto history = 8;
+  optional string reply_to = 9;
+  repeated ReactionProto reactions = 10;
+  bool spoiler = 11;
+}
+
+message SendMessageRequest {
+  string chat_id = 1;
+  string creator_id = 2;
+  string body = 3;
+  optional string reply_to = 4;
+  bool spoiler = 5;
+}
+
+message UpdateMessageRequest {
+  string message_id = 1;
+  string editor_id = 2;
+  string new_body = 3;
+}
+
+message DeleteMessageRequest {
+  string message_id = 1;
+  string deleter_id = 2;
+}
+
+message MarkAsReadRequest {
+  string message_id = 1;
+  string user_id = 2;
+}
+
+message AddReactionRequest {
+  string message_id = 1;
+  string user_id = 2;
+  string emote_id = 3;
+}
+
+message RemoveReactionRequest {
+  string message_id = 1;
+  string user_id = 2;
+  string emote_id = 3;
+}
+
+message GetMessagesRequest {
+  string chat_id = 1;
+  optional int32 limit = 2;
+  optional int64 before_timestamp = 3;
+}
+
+message GetMessagesResponse {
+  repeated MessageResponse messages = 1;
+}
+
+service MessageService {
+  rpc SendMessage(SendMessageRequest) returns (MessageResponse) {
+    option (google.api.http) = {
+      post: "/v1/chats/{chat_id}/messages"
+      body: "*"
+    };
+  }
+
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse) {
+    option (google.api.http) = {
+      get: "/v1/chats/{chat_id}/messages"
+    };
+  }
+
+  rpc UpdateMessage(UpdateMessageRequest) returns (MessageResponse) {
+    option (google.api.http) = {
+      patch: "/v1/messages/{message_id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteMessage(DeleteMessageRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/messages/{message_id}"
+    };
+  }
+
+  rpc MarkAsRead(MarkAsReadRequest) returns (MessageResponse) {
+    option (google.api.http) = {
+      post: "/v1/messages/{message_id}/read"
+      body: "*"
+    };
+  }
+
+  rpc AddReaction(AddReactionRequest) returns (MessageResponse) {
+    option (google.api.http) = {
+      post: "/v1/messages/{message_id}/reactions"
+      body: "*"
+    };
+  }
+
+  rpc RemoveReaction(RemoveReactionRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/messages/{message_id}/reactions/{emote_id}"
+    };
+  }
+}

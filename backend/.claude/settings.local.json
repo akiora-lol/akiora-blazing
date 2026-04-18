@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat D:/Dev/akiora-blazing/backend/python/proto-build/src/*.py)"
+    ]
+  }
+}
