@@ -2,35 +2,107 @@ syntax = "proto3";
 
 package akiora.community.club;
 
-message CreateClubRequest  {
+import "google/api/annotations.proto";
+import "google/api/http.proto";
+import "common/types.proto";
+
+option go_package = "akiora/community/club";
+
+message ClubPermission {
+  repeated string tokens = 1;  // e.g. ["r0", "w1"]
+}
+
+message FieldGroup {
+  repeated string fields = 1;
+}
+
+message ClubResponse {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  optional string avatar = 4;
+  optional string description = 5;
+  repeated string members = 6;
+  repeated FieldGroup fields = 7;
+  map<string, ClubPermission> permissions = 8;
+  int64 created_at = 9;
+}
+
+message CreateClubRequest {
   string owner_id = 1;
   string name = 2;
+  repeated FieldGroup fields = 3;
 }
 
-
-message PatchClubRequest  {
-  string owner_id = 1;
-  string name = 2;
-  repeated string add_users =3;
-  repeated string delete_users=4; 
+message GetClubRequest {
+  string club_id = 1;
 }
 
-message ClubResponse{   
-    string id = 1;  
-    string owner_id = 2;
-    string name = 3;
-    repeated string users = 4;
+message UpdateClubRequest {
+  string club_id = 1;
+  string actor_id = 2;
+  optional string name = 3;
+  optional string avatar = 4;
+  optional string description = 5;
+  repeated FieldGroup fields = 6;
 }
 
-message GetClubRequest{
-    string id=1;
+message AddMemberRequest {
+  string club_id = 1;
+  string user_id = 2;
+  repeated string tokens = 3;
+}
 
+message RemoveMemberRequest {
+  string club_id = 1;
+  string user_id = 2;
+}
+
+message SetPermissionRequest {
+  string club_id = 1;
+  string actor_id = 2;
+  string target_user_id = 3;
+  repeated string tokens = 4;
 }
 
 service ClubService {
-  
-  rpc CreateClub (CreateClubRequest) returns (ClubResponse);   
-  rpc UpdateClub (PatchClubRequest) returns (ClubResponse);
-  rpc GetClub(GetClubRequest) returns (ClubResponse);
+  rpc CreateClub(CreateClubRequest) returns (ClubResponse) {
+    option (google.api.http) = {
+      post: "/v1/clubs"
+      body: "*"
+    };
+  }
 
+  rpc GetClub(GetClubRequest) returns (ClubResponse) {
+    option (google.api.http) = {
+      get: "/v1/clubs/{club_id}"
+    };
+  }
+
+  rpc UpdateClub(UpdateClubRequest) returns (ClubResponse) {
+    option (google.api.http) = {
+      patch: "/v1/clubs/{club_id}"
+      body: "*"
+    };
+  }
+
+  rpc AddMember(AddMemberRequest) returns (ClubResponse) {
+    option (google.api.http) = {
+      post: "/v1/clubs/{club_id}/members"
+      body: "*"
+    };
+  }
+
+  rpc RemoveMember(RemoveMemberRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/clubs/{club_id}/members/{user_id}"
+    };
+  }
+
+  rpc SetPermission(SetPermissionRequest) returns (ClubResponse) {
+    option (google.api.http) = {
+      put: "/v1/clubs/{club_id}/members/{target_user_id}/permissions"
+      body: "*"
+    };
+  }
 }

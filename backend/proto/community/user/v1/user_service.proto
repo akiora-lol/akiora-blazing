@@ -2,48 +2,99 @@ syntax = "proto3";
 
 package akiora.community.user;
 
-message CreateUserRequest {
-  string email = 1;
-  string name = 2;
-}
+import "google/api/annotations.proto";
+import "google/api/http.proto";
+import "common/types.proto";
+
+option go_package = "akiora/community/user";
 
 enum Gender {
-  HELICOPTER = 0;
+  GENDER_UNSPECIFIED = 0;
   MALE = 1;
   FEMALE = 2;
 }
 
-message Social {
-  string link = 1;
-  bool hide = 2;
+enum UserType {
+  USER_TYPE_UNSPECIFIED = 0;
+  DEFAULT = 1;
+  STAFF = 2;
+  STREAMER = 3;
+  PRO = 4;
+  MODERATOR = 5;
 }
 
-message PatchUserRequest {
-  string email = 1;
-  string name = 2;
-  string bio = 3;
-  Gender gender = 4;
-  string birthday = 5;
-  repeated Social socials = 6;
+message Social {
+  string link = 1;
+  bool hidden = 2;
+}
+
+message Birthday {
+  string day = 1;
+  bool hidden = 2;
 }
 
 message UserResponse {
+  string id = 1;
+  string email = 2;
+  string nickname = 3;
+  UserType user_type = 4;
+  optional string avatar = 5;
+  optional string bio = 6;
+  Gender gender = 7;
+  optional Birthday birth_date = 8;
+  map<string, Social> socials = 9;
+  int64 created_at = 10;
+  int64 last_updated = 11;
+}
+
+message CreateUserRequest {
   string email = 1;
-  string name = 2;
-  string bio = 3;
-  Gender gender = 4;
-  string birthday = 5;
-  repeated Social socials = 6;
-  string id = 7;
+  optional string nickname = 2;
 }
 
 message GetUserRequest {
   string id = 1;
-  string email = 2;
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message UpdateUserRequest {
+  string user_id = 1;
+  optional string nickname = 2;
+  optional string bio = 3;
+  optional string avatar = 4;
+  Gender gender = 5;
+  UserType user_type = 6;
+  optional Birthday birth_date = 7;
+  map<string, Social> socials = 8;
 }
 
 service UserService {
-  rpc CreateUser(CreateUserRequest) returns (UserResponse);
-  rpc UpdateUser(PatchUserRequest) returns (UserResponse);
-  rpc GetUser(GetUserRequest) returns (UserResponse);
+  rpc CreateUser(CreateUserRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users"
+      body: "*"
+    };
+  }
+
+  rpc GetUser(GetUserRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{id}"
+    };
+  }
+
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/by-email/{email}"
+    };
+  }
+
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      patch: "/v1/users/{user_id}"
+      body: "*"
+    };
+  }
 }

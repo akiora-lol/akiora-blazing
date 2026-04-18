@@ -3,6 +3,7 @@
 import grpc
 import warnings
 
+from common import types_pb2 as common_dot_types__pb2
 from community.club.v1 import club_service_pb2 as community_dot_club_dot_v1_dot_club__service__pb2
 
 GRPC_GENERATED_VERSION = '1.80.0'
@@ -39,14 +40,29 @@ class ClubServiceStub(object):
                 request_serializer=community_dot_club_dot_v1_dot_club__service__pb2.CreateClubRequest.SerializeToString,
                 response_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
                 _registered_method=True)
-        self.UpdateClub = channel.unary_unary(
-                '/akiora.community.club.ClubService/UpdateClub',
-                request_serializer=community_dot_club_dot_v1_dot_club__service__pb2.PatchClubRequest.SerializeToString,
-                response_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
-                _registered_method=True)
         self.GetClub = channel.unary_unary(
                 '/akiora.community.club.ClubService/GetClub',
                 request_serializer=community_dot_club_dot_v1_dot_club__service__pb2.GetClubRequest.SerializeToString,
+                response_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
+                _registered_method=True)
+        self.UpdateClub = channel.unary_unary(
+                '/akiora.community.club.ClubService/UpdateClub',
+                request_serializer=community_dot_club_dot_v1_dot_club__service__pb2.UpdateClubRequest.SerializeToString,
+                response_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
+                _registered_method=True)
+        self.AddMember = channel.unary_unary(
+                '/akiora.community.club.ClubService/AddMember',
+                request_serializer=community_dot_club_dot_v1_dot_club__service__pb2.AddMemberRequest.SerializeToString,
+                response_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
+                _registered_method=True)
+        self.RemoveMember = channel.unary_unary(
+                '/akiora.community.club.ClubService/RemoveMember',
+                request_serializer=community_dot_club_dot_v1_dot_club__service__pb2.RemoveMemberRequest.SerializeToString,
+                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                _registered_method=True)
+        self.SetPermission = channel.unary_unary(
+                '/akiora.community.club.ClubService/SetPermission',
+                request_serializer=community_dot_club_dot_v1_dot_club__service__pb2.SetPermissionRequest.SerializeToString,
                 response_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
                 _registered_method=True)
 
@@ -60,13 +76,31 @@ class ClubServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetClub(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def UpdateClub(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetClub(self, request, context):
+    def AddMember(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RemoveMember(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetPermission(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -80,14 +114,29 @@ def add_ClubServiceServicer_to_server(servicer, server):
                     request_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.CreateClubRequest.FromString,
                     response_serializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.SerializeToString,
             ),
-            'UpdateClub': grpc.unary_unary_rpc_method_handler(
-                    servicer.UpdateClub,
-                    request_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.PatchClubRequest.FromString,
-                    response_serializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.SerializeToString,
-            ),
             'GetClub': grpc.unary_unary_rpc_method_handler(
                     servicer.GetClub,
                     request_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.GetClubRequest.FromString,
+                    response_serializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.SerializeToString,
+            ),
+            'UpdateClub': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateClub,
+                    request_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.UpdateClubRequest.FromString,
+                    response_serializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.SerializeToString,
+            ),
+            'AddMember': grpc.unary_unary_rpc_method_handler(
+                    servicer.AddMember,
+                    request_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.AddMemberRequest.FromString,
+                    response_serializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.SerializeToString,
+            ),
+            'RemoveMember': grpc.unary_unary_rpc_method_handler(
+                    servicer.RemoveMember,
+                    request_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.RemoveMemberRequest.FromString,
+                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+            ),
+            'SetPermission': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetPermission,
+                    request_deserializer=community_dot_club_dot_v1_dot_club__service__pb2.SetPermissionRequest.FromString,
                     response_serializer=community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.SerializeToString,
             ),
     }
@@ -129,33 +178,6 @@ class ClubService(object):
             _registered_method=True)
 
     @staticmethod
-    def UpdateClub(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/akiora.community.club.ClubService/UpdateClub',
-            community_dot_club_dot_v1_dot_club__service__pb2.PatchClubRequest.SerializeToString,
-            community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
     def GetClub(request,
             target,
             options=(),
@@ -171,6 +193,114 @@ class ClubService(object):
             target,
             '/akiora.community.club.ClubService/GetClub',
             community_dot_club_dot_v1_dot_club__service__pb2.GetClubRequest.SerializeToString,
+            community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateClub(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.club.ClubService/UpdateClub',
+            community_dot_club_dot_v1_dot_club__service__pb2.UpdateClubRequest.SerializeToString,
+            community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AddMember(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.club.ClubService/AddMember',
+            community_dot_club_dot_v1_dot_club__service__pb2.AddMemberRequest.SerializeToString,
+            community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RemoveMember(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.club.ClubService/RemoveMember',
+            community_dot_club_dot_v1_dot_club__service__pb2.RemoveMemberRequest.SerializeToString,
+            common_dot_types__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SetPermission(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.club.ClubService/SetPermission',
+            community_dot_club_dot_v1_dot_club__service__pb2.SetPermissionRequest.SerializeToString,
             community_dot_club_dot_v1_dot_club__service__pb2.ClubResponse.FromString,
             options,
             channel_credentials,

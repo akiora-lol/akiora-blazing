@@ -39,14 +39,19 @@ class UserServiceStub(object):
                 request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.CreateUserRequest.SerializeToString,
                 response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
                 _registered_method=True)
-        self.UpdateUser = channel.unary_unary(
-                '/akiora.community.user.UserService/UpdateUser',
-                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.PatchUserRequest.SerializeToString,
-                response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
-                _registered_method=True)
         self.GetUser = channel.unary_unary(
                 '/akiora.community.user.UserService/GetUser',
                 request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.GetUserRequest.SerializeToString,
+                response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
+                _registered_method=True)
+        self.GetUserByEmail = channel.unary_unary(
+                '/akiora.community.user.UserService/GetUserByEmail',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.GetUserByEmailRequest.SerializeToString,
+                response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
+                _registered_method=True)
+        self.UpdateUser = channel.unary_unary(
+                '/akiora.community.user.UserService/UpdateUser',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.UpdateUserRequest.SerializeToString,
                 response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
                 _registered_method=True)
 
@@ -60,13 +65,19 @@ class UserServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def UpdateUser(self, request, context):
+    def GetUser(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetUser(self, request, context):
+    def GetUserByEmail(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateUser(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -80,14 +91,19 @@ def add_UserServiceServicer_to_server(servicer, server):
                     request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.CreateUserRequest.FromString,
                     response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.SerializeToString,
             ),
-            'UpdateUser': grpc.unary_unary_rpc_method_handler(
-                    servicer.UpdateUser,
-                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.PatchUserRequest.FromString,
-                    response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.SerializeToString,
-            ),
             'GetUser': grpc.unary_unary_rpc_method_handler(
                     servicer.GetUser,
                     request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.GetUserRequest.FromString,
+                    response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.SerializeToString,
+            ),
+            'GetUserByEmail': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUserByEmail,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.GetUserByEmailRequest.FromString,
+                    response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.SerializeToString,
+            ),
+            'UpdateUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateUser,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.UpdateUserRequest.FromString,
                     response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.SerializeToString,
             ),
     }
@@ -129,33 +145,6 @@ class UserService(object):
             _registered_method=True)
 
     @staticmethod
-    def UpdateUser(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/akiora.community.user.UserService/UpdateUser',
-            community_dot_user_dot_v1_dot_user__service__pb2.PatchUserRequest.SerializeToString,
-            community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
     def GetUser(request,
             target,
             options=(),
@@ -171,6 +160,60 @@ class UserService(object):
             target,
             '/akiora.community.user.UserService/GetUser',
             community_dot_user_dot_v1_dot_user__service__pb2.GetUserRequest.SerializeToString,
+            community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetUserByEmail(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/GetUserByEmail',
+            community_dot_user_dot_v1_dot_user__service__pb2.GetUserByEmailRequest.SerializeToString,
+            community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/UpdateUser',
+            community_dot_user_dot_v1_dot_user__service__pb2.UpdateUserRequest.SerializeToString,
             community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
             options,
             channel_credentials,

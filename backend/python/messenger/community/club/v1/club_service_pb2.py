@@ -22,23 +22,53 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
+from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
+from google.api import http_pb2 as google_dot_api_dot_http__pb2
+from common import types_pb2 as common_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$community/club/v1/club_service.proto\x12\x15\x61kiora.community.club\"3\n\x11\x43reateClubRequest\x12\x10\n\x08owner_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\"[\n\x10PatchClubRequest\x12\x10\n\x08owner_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\tadd_users\x18\x03 \x03(\t\x12\x14\n\x0c\x64\x65lete_users\x18\x04 \x03(\t\"I\n\x0c\x43lubResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\x10\n\x08owner_id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\r\n\x05users\x18\x04 \x03(\t\"\x1c\n\x0eGetClubRequest\x12\n\n\x02id\x18\x01 \x01(\t2\x9d\x02\n\x0b\x43lubService\x12[\n\nCreateClub\x12(.akiora.community.club.CreateClubRequest\x1a#.akiora.community.club.ClubResponse\x12Z\n\nUpdateClub\x12\'.akiora.community.club.PatchClubRequest\x1a#.akiora.community.club.ClubResponse\x12U\n\x07GetClub\x12%.akiora.community.club.GetClubRequest\x1a#.akiora.community.club.ClubResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$community/club/v1/club_service.proto\x12\x15\x61kiora.community.club\x1a\x1cgoogle/api/annotations.proto\x1a\x15google/api/http.proto\x1a\x12\x63ommon/types.proto\" \n\x0e\x43lubPermission\x12\x0e\n\x06tokens\x18\x01 \x03(\t\"\x1c\n\nFieldGroup\x12\x0e\n\x06\x66ields\x18\x01 \x03(\t\"\x82\x03\n\x0c\x43lubResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\x10\n\x08owner_id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x13\n\x06\x61vatar\x18\x04 \x01(\tH\x00\x88\x01\x01\x12\x18\n\x0b\x64\x65scription\x18\x05 \x01(\tH\x01\x88\x01\x01\x12\x0f\n\x07members\x18\x06 \x03(\t\x12\x31\n\x06\x66ields\x18\x07 \x03(\x0b\x32!.akiora.community.club.FieldGroup\x12I\n\x0bpermissions\x18\x08 \x03(\x0b\x32\x34.akiora.community.club.ClubResponse.PermissionsEntry\x12\x12\n\ncreated_at\x18\t \x01(\x03\x1aY\n\x10PermissionsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x34\n\x05value\x18\x02 \x01(\x0b\x32%.akiora.community.club.ClubPermission:\x02\x38\x01\x42\t\n\x07_avatarB\x0e\n\x0c_description\"f\n\x11\x43reateClubRequest\x12\x10\n\x08owner_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x31\n\x06\x66ields\x18\x03 \x03(\x0b\x32!.akiora.community.club.FieldGroup\"!\n\x0eGetClubRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\"\xcf\x01\n\x11UpdateClubRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\x12\x11\n\x04name\x18\x03 \x01(\tH\x00\x88\x01\x01\x12\x13\n\x06\x61vatar\x18\x04 \x01(\tH\x01\x88\x01\x01\x12\x18\n\x0b\x64\x65scription\x18\x05 \x01(\tH\x02\x88\x01\x01\x12\x31\n\x06\x66ields\x18\x06 \x03(\x0b\x32!.akiora.community.club.FieldGroupB\x07\n\x05_nameB\t\n\x07_avatarB\x0e\n\x0c_description\"D\n\x10\x41\x64\x64MemberRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\x0e\n\x06tokens\x18\x03 \x03(\t\"7\n\x13RemoveMemberRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\"a\n\x14SetPermissionRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\x12\x16\n\x0etarget_user_id\x18\x03 \x01(\t\x12\x0e\n\x06tokens\x18\x04 \x03(\t2\x9f\x06\n\x0b\x43lubService\x12q\n\nCreateClub\x12(.akiora.community.club.CreateClubRequest\x1a#.akiora.community.club.ClubResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/clubs:\x01*\x12r\n\x07GetClub\x12%.akiora.community.club.GetClubRequest\x1a#.akiora.community.club.ClubResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/clubs/{club_id}\x12{\n\nUpdateClub\x12(.akiora.community.club.UpdateClubRequest\x1a#.akiora.community.club.ClubResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x32\x13/v1/clubs/{club_id}:\x01*\x12\x81\x01\n\tAddMember\x12\'.akiora.community.club.AddMemberRequest\x1a#.akiora.community.club.ClubResponse\"&\x82\xd3\xe4\x93\x02 \"\x1b/v1/clubs/{club_id}/members:\x01*\x12\x7f\n\x0cRemoveMember\x12*.akiora.community.club.RemoveMemberRequest\x1a\x14.akiora.common.Empty\"-\x82\xd3\xe4\x93\x02\'*%/v1/clubs/{club_id}/members/{user_id}\x12\xa6\x01\n\rSetPermission\x12+.akiora.community.club.SetPermissionRequest\x1a#.akiora.community.club.ClubResponse\"C\x82\xd3\xe4\x93\x02=\x1a\x38/v1/clubs/{club_id}/members/{target_user_id}/permissions:\x01*B\x17Z\x15\x61kiora/community/clubb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'community.club.v1.club_service_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-  DESCRIPTOR._loaded_options = None
-  _globals['_CREATECLUBREQUEST']._serialized_start=63
-  _globals['_CREATECLUBREQUEST']._serialized_end=114
-  _globals['_PATCHCLUBREQUEST']._serialized_start=116
-  _globals['_PATCHCLUBREQUEST']._serialized_end=207
-  _globals['_CLUBRESPONSE']._serialized_start=209
-  _globals['_CLUBRESPONSE']._serialized_end=282
-  _globals['_GETCLUBREQUEST']._serialized_start=284
-  _globals['_GETCLUBREQUEST']._serialized_end=312
-  _globals['_CLUBSERVICE']._serialized_start=315
-  _globals['_CLUBSERVICE']._serialized_end=600
+  _globals['DESCRIPTOR']._loaded_options = None
+  _globals['DESCRIPTOR']._serialized_options = b'Z\025akiora/community/club'
+  _globals['_CLUBRESPONSE_PERMISSIONSENTRY']._loaded_options = None
+  _globals['_CLUBRESPONSE_PERMISSIONSENTRY']._serialized_options = b'8\001'
+  _globals['_CLUBSERVICE'].methods_by_name['CreateClub']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['CreateClub']._serialized_options = b'\202\323\344\223\002\016\"\t/v1/clubs:\001*'
+  _globals['_CLUBSERVICE'].methods_by_name['GetClub']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['GetClub']._serialized_options = b'\202\323\344\223\002\025\022\023/v1/clubs/{club_id}'
+  _globals['_CLUBSERVICE'].methods_by_name['UpdateClub']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['UpdateClub']._serialized_options = b'\202\323\344\223\002\0302\023/v1/clubs/{club_id}:\001*'
+  _globals['_CLUBSERVICE'].methods_by_name['AddMember']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['AddMember']._serialized_options = b'\202\323\344\223\002 \"\033/v1/clubs/{club_id}/members:\001*'
+  _globals['_CLUBSERVICE'].methods_by_name['RemoveMember']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['RemoveMember']._serialized_options = b'\202\323\344\223\002\'*%/v1/clubs/{club_id}/members/{user_id}'
+  _globals['_CLUBSERVICE'].methods_by_name['SetPermission']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['SetPermission']._serialized_options = b'\202\323\344\223\002=\0328/v1/clubs/{club_id}/members/{target_user_id}/permissions:\001*'
+  _globals['_CLUBPERMISSION']._serialized_start=136
+  _globals['_CLUBPERMISSION']._serialized_end=168
+  _globals['_FIELDGROUP']._serialized_start=170
+  _globals['_FIELDGROUP']._serialized_end=198
+  _globals['_CLUBRESPONSE']._serialized_start=201
+  _globals['_CLUBRESPONSE']._serialized_end=587
+  _globals['_CLUBRESPONSE_PERMISSIONSENTRY']._serialized_start=471
+  _globals['_CLUBRESPONSE_PERMISSIONSENTRY']._serialized_end=560
+  _globals['_CREATECLUBREQUEST']._serialized_start=589
+  _globals['_CREATECLUBREQUEST']._serialized_end=691
+  _globals['_GETCLUBREQUEST']._serialized_start=693
+  _globals['_GETCLUBREQUEST']._serialized_end=726
+  _globals['_UPDATECLUBREQUEST']._serialized_start=729
+  _globals['_UPDATECLUBREQUEST']._serialized_end=936
+  _globals['_ADDMEMBERREQUEST']._serialized_start=938
+  _globals['_ADDMEMBERREQUEST']._serialized_end=1006
+  _globals['_REMOVEMEMBERREQUEST']._serialized_start=1008
+  _globals['_REMOVEMEMBERREQUEST']._serialized_end=1063
+  _globals['_SETPERMISSIONREQUEST']._serialized_start=1065
+  _globals['_SETPERMISSIONREQUEST']._serialized_end=1162
+  _globals['_CLUBSERVICE']._serialized_start=1165
+  _globals['_CLUBSERVICE']._serialized_end=1964
 # @@protoc_insertion_point(module_scope)

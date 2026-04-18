@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package akiora.community.team;
+
+import "google/api/annotations.proto";
+import "google/api/http.proto";
+import "common/types.proto";
+
+option go_package = "akiora/community/team";
+
+message TeamResponse {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  optional string avatar = 4;
+  optional string tag = 5;
+  repeated string members = 6;
+  int64 created_at = 7;
+}
+
+message CreateTeamRequest {
+  string owner_id = 1;
+  string name = 2;
+  optional string tag = 3;
+}
+
+message GetTeamRequest {
+  string team_id = 1;
+}
+
+message UpdateTeamRequest {
+  string team_id = 1;
+  string actor_id = 2;
+  optional string name = 3;
+  optional string avatar = 4;
+  optional string tag = 5;
+}
+
+message AddTeamMemberRequest {
+  string team_id = 1;
+  string actor_id = 2;
+  string user_id = 3;
+}
+
+message RemoveTeamMemberRequest {
+  string team_id = 1;
+  string actor_id = 2;
+  string user_id = 3;
+}
+
+service TeamService {
+  rpc CreateTeam(CreateTeamRequest) returns (TeamResponse) {
+    option (google.api.http) = {
+      post: "/v1/teams"
+      body: "*"
+    };
+  }
+
+  rpc GetTeam(GetTeamRequest) returns (TeamResponse) {
+    option (google.api.http) = {
+      get: "/v1/teams/{team_id}"
+    };
+  }
+
+  rpc UpdateTeam(UpdateTeamRequest) returns (TeamResponse) {
+    option (google.api.http) = {
+      patch: "/v1/teams/{team_id}"
+      body: "*"
+    };
+  }
+
+  rpc AddMember(AddTeamMemberRequest) returns (TeamResponse) {
+    option (google.api.http) = {
+      post: "/v1/teams/{team_id}/members"
+      body: "*"
+    };
+  }
+
+  rpc RemoveMember(RemoveTeamMemberRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/teams/{team_id}/members/{user_id}"
+    };
+  }
+}
