@@ -15,6 +15,24 @@ def find_proto_files(root_dir: Path):
     return l
 
 
+def add_init_files(directory: Path):
+    """Рекурсивно добавляет __init__.py во все поддиректории"""
+    # Проходим по всем поддиректориям
+    for subdir in sorted(directory.rglob("*")):
+        if subdir.is_dir():
+            init_file = subdir / "__init__.py"
+            if not init_file.exists():
+                # Создаем пустой __init__.py
+                init_file.touch()
+                print(f"   📄 Created {init_file.relative_to(directory.parent)}")
+
+    # Также создаем __init__.py в корневой директории, если его нет
+    root_init = directory / "__init__.py"
+    if not root_init.exists():
+        root_init.touch()
+        print(f"   📄 Created {root_init.relative_to(directory.parent)}")
+
+
 def main():
 
     proto_root = Path("../proto").resolve()
@@ -61,10 +79,18 @@ def main():
             result = subprocess.run(cmd, check=True, capture_output=True, text=True)
             if result.stdout:
                 print(result.stdout)
+
+            # Добавляем __init__.py файлы после успешной генерации
+            print(f"\n📦 Adding __init__.py files to all subdirectories...")
+            add_init_files(output_dir)
+
             print(
                 f"\n✅ Successfully generated gRPC Python code with mypy types in:\n   {output_dir}"
             )
             print("   Generated files include .pyi stubs for better type hinting.")
+            print(
+                "   Added __init__.py files to all directories for proper Python packaging."
+            )
 
         except subprocess.CalledProcessError as e:
             print(f"\n❌ Generation failed with exit code {e.returncode}")

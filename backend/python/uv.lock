@@ -22,12 +22,16 @@ name = "akiora-workspace"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "beanie" },
     { name = "dishka" },
     { name = "fastapi" },
     { name = "fastapi-sso" },
     { name = "faststream" },
     { name = "googleapis-common-protos" },
     { name = "granian" },
+    { name = "grpcio" },
+    { name = "grpcio-reflection" },
+    { name = "grpcio-tools" },
     { name = "loguru" },
     { name = "msgspec" },
     { name = "mypy-protobuf" },
@@ -40,12 +44,16 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "beanie", specifier = ">=2.0.0" },
     { name = "dishka", specifier = ">=1.9.1" },
     { name = "fastapi", specifier = ">=0.136.0" },
     { name = "fastapi-sso", specifier = ">=0.21.0" },
     { name = "faststream", specifier = ">=0.6.7" },
     { name = "googleapis-common-protos", specifier = ">=1.74.0" },
     { name = "granian", specifier = ">=2.7.3" },
+    { name = "grpcio", specifier = ">=1.80.0" },
+    { name = "grpcio-reflection", specifier = ">=1.80.0" },
+    { name = "grpcio-tools", specifier = ">=1.80.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "msgspec", specifier = ">=0.21.1" },
     { name = "mypy-protobuf", specifier = ">=5.0.0" },
@@ -196,14 +204,10 @@ version = "0.1.0"
 source = { virtual = "draft" }
 dependencies = [
     { name = "faststream" },
-    { name = "shared" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "faststream", specifier = ">=0.6.7" },
-    { name = "shared", editable = "shared" },
-]
+requires-dist = [{ name = "faststream", specifier = ">=0.6.7" }]
 
 [[package]]
 name = "email-validator"

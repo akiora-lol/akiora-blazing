@@ -26,8 +26,7 @@ async def serve():
     add_MessageServiceServicer_to_server(MessageGrpc(), server)
 
     service_names = [
-        s.full_name
-        for s in messenger_descriptor.services_by_name.values()
+        s.full_name for s in messenger_descriptor.services_by_name.values()
     ]
     reflection.enable_server_reflection(
         service_names + [reflection.SERVICE_NAME], server

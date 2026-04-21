@@ -28,6 +28,7 @@ services:
             - "27017:27017"
         volumes:
             - akiora_db_data:/data/db
+            - ./backend/config/mongo-init.js:/docker-entrypoint-initdb.d/init.js 
             - ./config/mongo-init.js:/docker-entrypoint-initdb.d/init.js
         networks:
             - backend_akiora

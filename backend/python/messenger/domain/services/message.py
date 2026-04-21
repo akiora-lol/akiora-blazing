@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from beanie import WriteError
 
 from pydantic import ValidationError
 

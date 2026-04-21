@@ -7,10 +7,10 @@ COPY pyproject.toml .
 RUN pip install --no-cache-dir -e .
 
 COPY gateway/ ./gateway/
+
+COPY proto-build/src/proto_build/ ./gateway/
 COPY stubs/ ./gateway/stubs/
 COPY shared/src/shared/ ./gateway/shared/
-COPY proto-build/src/proto_build/ ./gateway/
-
 # Переменные окружения по умолчанию
 ENV PYTHONUNBUFFERED=1
 ENV LOG_LEVEL=INFO

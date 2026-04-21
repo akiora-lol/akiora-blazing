@@ -14,8 +14,13 @@ services:
       - .env
     environment:
       APP_NAME: auth
+      mongo_url: mongodb://mongodb:27017/?replicaSet=rs0
+      redis_url: redis://redis:6379/0
     networks:
       - backend_akiora
+    depends_on :
+      - mongodb
+      - redis
     restart: unless-stopped
 
   community:
@@ -28,8 +33,14 @@ services:
       - .env
     environment:
       APP_NAME: community
+      mongo_url: mongodb://mongodb:27017/?replicaSet=rs0
+      redis_url: redis://redis:6379/0
     networks:
       - backend_akiora
+
+    depends_on :
+      - mongodb
+      - redis
     restart: unless-stopped
 
   messenger:
@@ -42,8 +53,13 @@ services:
       - .env
     environment:
       APP_NAME: messenger
+      mongo_url: mongodb://mongodb:27017/?replicaSet=rs0
+      redis_url: redis://redis:6379/0
     networks:
       - backend_akiora
+    depends_on :
+      - mongodb
+      - redis
     restart: unless-stopped
 
   game:
@@ -56,8 +72,13 @@ services:
       - .env
     environment:
       APP_NAME: game
+      mongo_url: mongodb://mongodb:27017/?replicaSet=rs0
+      redis_url: redis://redis:6379/0
     networks:
       - backend_akiora
+    depends_on :
+      - mongodb
+      - redis
     restart: unless-stopped
 
   draft:
@@ -70,8 +91,13 @@ services:
       - .env
     environment:
       APP_NAME: draft
+      mongo_url: mongodb://mongodb:27017/?replicaSet=rs0
+      redis_url: redis://redis:6379/0
     networks:
       - backend_akiora
+    depends_on :
+      - mongodb
+      - redis
     restart: unless-stopped
 
   search:
@@ -84,8 +110,13 @@ services:
       - .env
     environment:
       APP_NAME: search
+      mongo_url: mongodb://mongodb:27017/?replicaSet=rs0
+      redis_url: redis://redis:6379/0
     networks:
       - backend_akiora
+    depends_on :
+      - mongodb
+      - redis
     restart: unless-stopped
 
   gateway:
@@ -101,6 +132,8 @@ services:
       COMMUNITY_SERVICE_ADDRESS: community:50051
       MESSENGER_SERVICE_ADDRESS: messenger:50051
       GAME_SERVICE_ADDRESS: game:50051
+      mongo_url: mongodb://mongodb:27017/?replicaSet=rs0
+      redis_url: redis://redis:6379/0
     depends_on:
       - community
       - messenger

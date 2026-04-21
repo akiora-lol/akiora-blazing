@@ -5,12 +5,16 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "beanie>=2.0.0",
     "dishka>=1.9.1",
     "fastapi>=0.136.0",
     "fastapi-sso>=0.21.0",
     "faststream>=0.6.7",
     "googleapis-common-protos>=1.74.0",
     "granian>=2.7.3",
+    "grpcio>=1.80.0",
+    "grpcio-reflection>=1.80.0",
+    "grpcio-tools>=1.80.0",
     "loguru>=0.7.3",
     "msgspec>=0.21.1",
     "mypy-protobuf>=5.0.0",

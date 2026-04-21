@@ -4,16 +4,16 @@ WORKDIR /app
 
 # Установка зависимостей
 COPY pyproject.toml .
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir -e .
 
-COPY messenger/ ./messenger/
-COPY proto-build/src/proto_build/ ./messenger/
-COPY shared/src/shared/ ./messenger/shared/
+COPY community/ ./community/
+COPY proto-build/src/proto_build/ ./community/
+COPY shared/src/shared/ ./community/shared/
 # Переменные окружения по умолчанию
 ENV PYTHONUNBUFFERED=1
 ENV LOG_LEVEL=INFO
 ENV PYTHONPATH=/app
 
 # Запуск приложения
-WORKDIR /app/messenger
+WORKDIR /app/community
 CMD ["python", "main.py"]

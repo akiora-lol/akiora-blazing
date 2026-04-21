@@ -45,7 +45,7 @@ if __name__ == "__main__":
     from granian import Granian
 
     Granian(
-        "app",
+        "main:app",
         address="0.0.0.0",
         port=8000,
         interface="asgi",

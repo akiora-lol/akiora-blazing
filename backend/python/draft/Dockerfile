@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir -e .
 COPY draft/ ./draft/
 COPY proto-build/src/proto_build/ ./draft/
 
+COPY shared/src/shared/ ./draft/shared/
 # Переменные окружения по умолчанию
 ENV PYTHONUNBUFFERED=1
 ENV LOG_LEVEL=INFO
