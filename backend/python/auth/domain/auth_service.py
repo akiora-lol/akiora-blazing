@@ -17,7 +17,9 @@ from shared.redis import RedisService
 from domain.session_service import SessionService
 from shared.mail import MailSender
 from loguru import logger
-from msgspec import msgpack
+
+from stubs.user_stub import UserStub
+from shared.contracts.user import GetUserByEmailRequest, CreateUserRequest
 
 
 class AuthService:
@@ -28,6 +30,7 @@ class AuthService:
         redis_service: RedisService,
         settings: Settings,
         sso_dict: dict[str, SSOBase],
+        user_stub: UserStub,
     ):
 
         self.session_service = ss
@@ -35,6 +38,7 @@ class AuthService:
         self.sso_dict = sso_dict
         self.redis = redis_service
         self.mail_serive = mail_service
+        self.user_stub = user_stub
 
     def sign_session(self, session_id: UUID) -> str:
 
@@ -100,7 +104,7 @@ class AuthService:
     async def finish_verify_user_email(self, email: EmailStr, cvid: str, code: str):
 
         req_code = await self.redis.get(f"cvid:{cvid}")
-        print(req_code, code)
+
         if req_code == code:
             return await self.register_user(email, "email")
         response = RedirectResponse(url="/auth-error")
@@ -121,25 +125,22 @@ class AuthService:
         return RedirectResponse(url="/auth-error")
 
     async def register_user(self, email, provider):
-        # TODO add grpc for community
-        if not self.broker:
-            raise
         user_data = None
         try:
-            user_data = await self.broker.request(
-                stream="user.rpc",
-                message=msgpack.encode(GetUser(email=email)),
-                timeout=5,
+            user_data = await self.user_stub.get_user_by_email(
+                GetUserByEmailRequest(email=email)
             )
-        except TimeoutError as e:
-            print(e)
-            # TODO amqp logic and maybe retries
-            ...
-        print(user_data)
-        print(msgpack.decode(user_data.body))
+        except Exception as e:
+            logger.warning(f"User not found, creating new user: {e}")
+            try:
+                user_data = await self.user_stub.create_user(
+                    CreateUserRequest(email=email)
+                )
+            except Exception as create_e:
+                logger.error(f"Failed to create user: {create_e}")
+                return RedirectResponse(url="/auth-error")
 
-        data = msgpack.decode(user_data.body) if user_data else None
-        print(data)
+        data = user_data.model_dump() if user_data else None
         ses_id = await self.session_service.create_session(email, provider, data)
 
         response = RedirectResponse(url="http://localhost:5173/welcome")

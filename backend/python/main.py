@@ -9,11 +9,7 @@ def find_proto_files(root_dir: Path):
     """Рекурсивно находит все .proto файлы"""
     l = list(root_dir.rglob("*.proto"))
     l = [p for p in l if "googleapis" not in p.as_uri().split("/")]
-    l = [
-        p
-        for p in l
-        if "google" not in p.as_uri().split("/") or ("api" in p.as_uri().split("/"))
-    ]
+    l = [p for p in l if "google" not in p.as_uri().split("/")]
     print(l)
 
     return l
@@ -24,9 +20,7 @@ def main():
     proto_root = Path("../proto").resolve()
 
     output_dirs = [
-        Path("game").resolve(),
-        Path("community").resolve(),
-        Path("messenger").resolve(),
+        Path("proto-build/src/proto_build").resolve(),
     ]
     googleapis_path = proto_root / "googleapis"
 

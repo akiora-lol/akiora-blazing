@@ -4,7 +4,7 @@ from typing import AsyncIterator
 from dishka import Provider, Scope, make_async_container, provide
 
 from redis.asyncio import Redis
-from faststream.redis import RedisBroker
+import grpc
 
 from settings import Settings
 from fastapi_sso.sso.yandex import YandexSSO
@@ -21,6 +21,10 @@ from shared.redis import RedisService
 from domain.session_repo import SessionRepo
 from domain.session_service import SessionService
 from domain.auth_service import AuthService
+
+from stubs.user_stub import UserStub
+from community.user.v1 import user_service_pb2 as user_pb2
+from community.user.v1 import user_service_pb2_grpc as user_pb2_grpc
 
 
 class SSOProvider(Provider):
@@ -55,6 +59,16 @@ class ConfigProvider(Provider):
     @provide(scope=Scope.APP)
     def get_settings(self) -> Settings:
         return Settings()
+
+
+class GrpcProvider(Provider):
+    @provide(scope=Scope.APP)
+    def get_community_channel(self, settings: Settings) -> grpc.Channel:
+        return grpc.insecure_channel(settings.community_grpc_address)
+
+    @provide(scope=Scope.APP)
+    def get_user_stub(self, channel: grpc.Channel) -> UserStub:
+        return UserStub(channel, user_pb2, user_pb2_grpc)
 
 
 class ServiceProvider(Provider):
@@ -98,9 +112,10 @@ class ServiceProvider(Provider):
         redis_service: RedisService,
         settings: Settings,
         sso_dict: dict[str, SSOBase],
+        user_stub: UserStub,
     ) -> AuthService:
         return AuthService(
-            session_service, mail_service, redis_service, settings, sso_dict
+            session_service, mail_service, redis_service, settings, sso_dict, user_stub
         )
 
 
@@ -108,5 +123,6 @@ container = make_async_container(
     ServiceProvider(),
     ConfigProvider(),
     SSOProvider(),
+    GrpcProvider(),
     FastapiProvider(),
 )

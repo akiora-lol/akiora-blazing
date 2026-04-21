@@ -1,0 +1,25 @@
+{
+  "welcome": {
+    "title": "League of Legends",
+    "subtitle": "Dominate the Rift",
+    "description": "Your ultimate companion for mastering League of Legends. Track champions, analyze builds, and climb the ranks.",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More"
+  },
+  "nav": {
+    "home": "Home",
+    "champions": "Champions",
+    "items": "Items",
+    "builds": "Builds",
+    "settings": "Settings"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "language": "Language"
+  },
+  "language": {
+    "en": "English",
+    "ru": "Russian"
+  }
+}

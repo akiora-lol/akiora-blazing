@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes.api import router
+from routes import router
 from dishka.integrations.fastapi import setup_dishka
 from ioc import container
 from shared.logging import setup_logging
