@@ -24,4 +24,5 @@ target
 #.idea/
 *.log
 *.pyc
-.claude/settings.local.json
+.claude
+.vscode
