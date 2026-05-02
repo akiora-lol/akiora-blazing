@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from uuid import UUID
 import grpc
+from loguru import logger
 
 from shared.contracts.group import (
     CreateGroupRequest,
@@ -27,6 +28,7 @@ async def create_group(request: CreateGroupRequest):
     try:
         return await _get_stub().create_group(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in create_group: {} {}", e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -35,6 +37,7 @@ async def get_group(group_id: UUID):
     try:
         return await _get_stub().get_group(GetGroupRequest(id=group_id))
     except grpc.RpcError as e:
+        logger.warning("gRPC error in get_group({}): {} {}", group_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -43,6 +46,7 @@ async def patch_group(group_id: UUID, request: PatchGroupRequest):
     try:
         return await _get_stub().patch_group(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in patch_group({}): {} {}", group_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 

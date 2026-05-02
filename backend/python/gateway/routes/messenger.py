@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Query
 from uuid import UUID
 from typing import Optional
 import grpc
+from loguru import logger
 
 from shared.contracts.messenger import (
     CreateChatRequest,
@@ -40,6 +41,7 @@ async def create_chat(request: CreateChatRequest):
     try:
         return await _get_stub().create_chat(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in create_chat: {} {}", e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -48,6 +50,7 @@ async def get_chat(chat_id: UUID):
     try:
         return await _get_stub().get_chat(GetChatRequest(chat_id=chat_id))
     except grpc.RpcError as e:
+        logger.warning("gRPC error in get_chat({}): {} {}", chat_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -89,6 +92,7 @@ async def send_message(chat_id: UUID, request: SendMessageRequest):
     try:
         return await _get_stub().send_message(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in send_message(chat={}): {} {}", chat_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -103,6 +107,7 @@ async def get_messages(
             GetMessagesRequest(chat_id=chat_id, limit=limit, before_timestamp=before_timestamp)
         )
     except grpc.RpcError as e:
+        logger.warning("gRPC error in get_messages(chat={}): {} {}", chat_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -116,6 +121,7 @@ async def update_message(message_id: UUID, request: UpdateMessageRequest):
     try:
         return await _get_stub().update_message(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in update_message({}): {} {}", message_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -126,6 +132,7 @@ async def delete_message(message_id: UUID, deleter_id: UUID):
             DeleteMessageRequest(message_id=message_id, deleter_id=deleter_id)
         )
     except grpc.RpcError as e:
+        logger.warning("gRPC error in delete_message({}): {} {}", message_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 

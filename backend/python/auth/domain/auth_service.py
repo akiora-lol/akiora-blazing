@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import json
 import logging
-
+import msgspec
 from settings import Settings
 from fastapi import Request
 from fastapi.responses import RedirectResponse
@@ -76,17 +76,18 @@ class AuthService:
     async def init_verify_user_email(self, email: EmailStr):
         ver_ses_id = uuid4()
         code = shortuuid.ShortUUID().random(length=6)
-        await self.redis.create(
-            prefix="cvid:", key=str(ver_ses_id), value=code, ttl=10 * 60
-        )
+        await self.redis.create(key=f"cvid:{str(ver_ses_id)}", value=code, ttl=10 * 60)
         self.mail_serive.send_email(email, "Code verification", str(code))
-        response = RedirectResponse(url="/auth/email/login/finish", status_code=303)
+
+        from fastapi.responses import JSONResponse
+
+        response = JSONResponse(content={"message": "code_sent"})
 
         response.set_cookie(
             key="email",
             value=email,
+            domain="localhost",
             httponly=True,
-            # secure=True,
             samesite="lax",
             max_age=30 * 24 * 60 * 60,
         )
@@ -95,7 +96,7 @@ class AuthService:
             key="cvid",
             value=str(ver_ses_id),
             httponly=True,
-            # secure=True,
+            domain="localhost",
             samesite="lax",
             max_age=30 * 24 * 60 * 60,
         )
@@ -106,10 +107,11 @@ class AuthService:
         req_code = await self.redis.get(f"cvid:{cvid}")
 
         if req_code == code:
-            return await self.register_user(email, "email")
-        response = RedirectResponse(url="/auth-error")
+            return await self.register_user(email, "email", return_json=True)
 
-        return response
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=401, detail="Invalid verification code")
 
     async def verify_user_oauth(
         self, provider: Literal["yandex", "discord"], request: Request
@@ -124,7 +126,7 @@ class AuthService:
                 return await self.register_user(user.email, user.provider)
         return RedirectResponse(url="/auth-error")
 
-    async def register_user(self, email, provider):
+    async def register_user(self, email, provider, return_json=False):
         user_data = None
         try:
             user_data = await self.user_stub.get_user_by_email(
@@ -138,19 +140,36 @@ class AuthService:
                 )
             except Exception as create_e:
                 logger.error(f"Failed to create user: {create_e}")
+                if return_json:
+                    from fastapi import HTTPException
+
+                    raise HTTPException(status_code=500, detail="Failed to create user")
                 return RedirectResponse(url="/auth-error")
 
         data = user_data.model_dump() if user_data else None
-        ses_id = await self.session_service.create_session(email, provider, data)
-
-        response = RedirectResponse(url="http://localhost:5173/welcome")
+        ses_id = uuid4()
         signed_ses = self.sign_session(ses_id)
+        ses_id = await self.session_service.create_session(
+            ses_id=ses_id,
+            email=email,
+            provider=provider,
+            user_data=data,
+            sign=signed_ses,
+        )
+        for k, v in data.items():
+            if "id" in k.lower():
+                data[k] = str(data[k])
+        if return_json:
+            from fastapi.responses import JSONResponse
+
+            response = JSONResponse(content={"authenticated": True, "user": data})
+        else:
+            response = RedirectResponse(url="http://localhost:3000/about")
 
         response.set_cookie(
             key="sid",
             value=signed_ses,
             httponly=True,
-            # secure=True,
             samesite="lax",
             max_age=30 * 24 * 60 * 60,
             path="/",

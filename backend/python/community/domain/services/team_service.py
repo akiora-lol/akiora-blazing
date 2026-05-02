@@ -1,4 +1,5 @@
 from uuid import UUID
+from loguru import logger
 
 from domain.entites.team import Team, MAX_TEAM_SIZE
 
@@ -9,6 +10,7 @@ class TeamService:
         team = Team(owner_id=owner_id, name=name, tag=tag)
         team.members.append(owner_id)
         await team.insert()
+        logger.info("Team created id={} owner={}", team.id, owner_id)
         return team
 
     @staticmethod
@@ -27,6 +29,7 @@ class TeamService:
         if user_id not in team.members:
             team.members.append(user_id)
             await team.save()
+        logger.info("Member added team={} user={}", team_id, user_id)
         return team
 
     @staticmethod

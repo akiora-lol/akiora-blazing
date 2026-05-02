@@ -1,8 +1,9 @@
-from beanie import Document
+from beanie import Document, Indexed
 from pydantic import ConfigDict, Field, EmailStr, field_serializer, BaseModel
 from uuid import UUID, uuid4
-from typing import Literal
+from typing import Literal, Annotated
 from datetime import datetime, UTC, date
+import pymongo
 
 
 def time_now():
@@ -30,7 +31,7 @@ class Birthday(BaseModel):
 
 class User(Document):
     id: UUID = Field(default_factory=uuid4)
-    email: EmailStr
+    email: Annotated[EmailStr, Indexed(unique=True)]
     user_type: UserType = "default"
     avatar: str | None = None
     bio: str | None = Field(default=None, max_length=500)
@@ -40,6 +41,7 @@ class User(Document):
     socials: dict[Platform, Social] | None = None
     created_at: datetime = Field(default_factory=time_now)
     last_updated: datetime = Field(default_factory=time_now)
+    
 
     @field_serializer("id")
     def serialize_id(self, id: UUID):

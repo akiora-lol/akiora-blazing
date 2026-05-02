@@ -1,4 +1,5 @@
 from uuid import UUID
+from loguru import logger
 
 from domain.entites.club import Club, ClubPermission
 
@@ -13,6 +14,7 @@ class ClubService:
         )
         club.members.append(owner_id)
         await club.insert()
+        logger.info("Club created id={} owner={}", club.id, owner_id)
         return club
 
     @staticmethod
@@ -33,6 +35,7 @@ class ClubService:
             club.permissions[str(user_id)] = perm
 
         await club.save()
+        logger.info("Member added club={} user={}", club_id, user_id)
         return club
 
     @staticmethod

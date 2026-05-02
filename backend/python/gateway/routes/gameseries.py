@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from uuid import UUID
 import grpc
+from loguru import logger
 
 from shared.contracts.gameseries import ToggleReadyRequest
 from stubs.gameseries_stub import GameSeriesStub
@@ -23,6 +24,7 @@ async def toggle_ready(series_id: UUID, request: ToggleReadyRequest):
     try:
         await _get_stub().toggle_ready(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in toggle_ready({}): {} {}", series_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 

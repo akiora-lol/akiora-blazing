@@ -5,6 +5,7 @@ from dishka.integrations.fastapi import FromDishka, DishkaRoute
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from domain.auth_service import AuthService
 from domain.session_service import SessionService
+from loguru import logger
 
 
 class CookieSchema(BaseModel):
@@ -35,6 +36,27 @@ ProviderType = Literal[
 ]
 
 
+@router.post("/logout")
+async def logout(
+    cookie: Annotated[CookieSchema, Cookie()],
+    auth_service: FromDishka[AuthService],
+    session_service: FromDishka[SessionService],
+):
+    from fastapi.responses import JSONResponse
+
+    response = JSONResponse(content={"message": "logged_out"})
+    response.delete_cookie(key="sid", path="/", domain="localhost")
+    response.delete_cookie(key="email", path="/", domain="localhost")
+    response.delete_cookie(key="cvid", path="/", domain="localhost")
+
+    if cookie.sid:
+        session_id = auth_service.verify_session(cookie.sid)
+        if session_id:
+            await session_service.delete_session(session_id)
+
+    return response
+
+
 @router.get("/me", response_model=AuthResponse)
 async def me(
     cookie: Annotated[CookieSchema, Cookie()],
@@ -43,9 +65,12 @@ async def me(
 ):
     if not cookie.sid:
         raise HTTPException(status_code=401)
-    sid = cookie.sid
-    sid = auth_service.verify_session(sid)
-    if data := await session_service.get_session_user(sid):
+    ssid = cookie.sid
+    logger.info(f"Session ID from cookie: {ssid}")
+    sid = auth_service.verify_session(ssid)
+    logger.info(f"Verified Session ID: {sid}")
+    if data := await session_service.get_session_user(ssid):
+        logger.info(f"User data from session: {data}")
         return {"authenticated": True, "user": data}
     raise HTTPException(status_code=404)
 

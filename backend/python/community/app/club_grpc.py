@@ -1,5 +1,6 @@
 import grpc
 from uuid import UUID
+from loguru import logger
 
 from dishka.integrations.grpcio import inject
 
@@ -30,6 +31,7 @@ class ClubGrpc:
     @inject
     async def CreateClub(self, request, context: grpc.aio.ServicerContext):
         from community.club.v1 import club_service_pb2 as pb2
+        logger.debug("CreateClub owner={}", request.owner_id)
         fields = [list(fg.fields) for fg in request.fields]
         club = await ClubService.create(
             owner_id=UUID(request.owner_id),
@@ -41,6 +43,7 @@ class ClubGrpc:
     @inject
     async def GetClub(self, request, context: grpc.aio.ServicerContext):
         from community.club.v1 import club_service_pb2 as pb2
+        logger.debug("GetClub id={}", request.club_id)
         club = await ClubService.get(UUID(request.club_id))
         if not club:
             await context.abort(grpc.StatusCode.NOT_FOUND, "Club not found")
@@ -49,6 +52,7 @@ class ClubGrpc:
     @inject
     async def UpdateClub(self, request, context: grpc.aio.ServicerContext):
         from community.club.v1 import club_service_pb2 as pb2
+        logger.debug("UpdateClub id={}", request.club_id)
         fields = [list(fg.fields) for fg in request.fields] if request.fields else None
         club = await ClubService.update(
             club_id=UUID(request.club_id),
@@ -63,6 +67,7 @@ class ClubGrpc:
     @inject
     async def AddMember(self, request, context: grpc.aio.ServicerContext):
         from community.club.v1 import club_service_pb2 as pb2
+        logger.debug("AddMember club={} user={}", request.club_id, request.user_id)
         club = await ClubService.add_member(
             club_id=UUID(request.club_id),
             user_id=UUID(request.user_id),
@@ -73,6 +78,7 @@ class ClubGrpc:
     @inject
     async def RemoveMember(self, request, context: grpc.aio.ServicerContext):
         from common.types_pb2 import Empty
+        logger.debug("RemoveMember club={} user={}", request.club_id, request.user_id)
         await ClubService.remove_member(
             club_id=UUID(request.club_id),
             user_id=UUID(request.user_id),

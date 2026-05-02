@@ -2,6 +2,7 @@ from domain.session import Session
 from shared.redis import RedisService
 from uuid import UUID
 from datetime import datetime, UTC
+from loguru import logger
 
 
 class SessionRepo:
@@ -9,13 +10,16 @@ class SessionRepo:
         self.prefix = "sid:"
         self.redis = redis_service
 
-    async def get(self, id: UUID) -> Session | None:
+    async def get(self, id: UUID | str) -> Session | None:
+        logger.info(f"Getting session with id: {self.prefix}{id}")
         data = await self.redis.get(f"{self.prefix}{id}", obj_type=Session)
         if data:
             data.last_activity = datetime.now(tz=UTC)
+            logger.info(
+                f"Updating session last activity: {self.prefix}{id if id else data.id}"
+            )
             await self.redis.create(
-                prefix=self.prefix,
-                key=str(data.id),
+                key=f"{self.prefix}{id if id else data.id}",
                 value=data.model_dump(),
                 ttl=int(
                     (
@@ -25,11 +29,10 @@ class SessionRepo:
             )
         return data
 
-    async def create(self, data: Session) -> Session:
+    async def create(self, sign: str, data: Session) -> Session:
         data.last_activity = datetime.now(tz=UTC)
         await self.redis.create(
-            prefix=self.prefix,
-            key=str(data.id),
+            key=f"{self.prefix}{sign if sign else data.id}",
             value=data.model_dump(),
             ttl=int(
                 (

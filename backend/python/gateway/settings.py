@@ -7,5 +7,6 @@ class Settings(BaseSettings):
     community_service_address: str = Field(default="localhost:50051")
     messenger_service_address: str = Field(default="localhost:50052")
     game_service_address: str = Field(default="localhost:50053")
-
+    redis_url: str = "redis://localhost:6379/0"
+    redis_ttl: int = 0
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}

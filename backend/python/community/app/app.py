@@ -1,6 +1,7 @@
 import asyncio
 from grpc import aio
 from grpc_reflection.v1alpha import reflection
+from loguru import logger
 
 from dishka.integrations.grpcio import DishkaAioInterceptor
 
@@ -62,10 +63,11 @@ async def serve():
     server.add_insecure_port(listen_addr)
 
     await server.start()
-    print(f"gRPC server started on {listen_addr}")
+    logger.info("Community gRPC server started on {}", listen_addr)
 
     try:
         await server.wait_for_termination()
     finally:
+        logger.info("Community gRPC server shutting down...")
         await container.close()
         await server.stop(grace=5)

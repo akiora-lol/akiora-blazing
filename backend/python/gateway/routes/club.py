@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from uuid import UUID
 import grpc
+from loguru import logger
 
 from shared.contracts.club import (
     CreateClubRequest,
@@ -30,6 +31,7 @@ async def create_club(request: CreateClubRequest):
     try:
         return await _get_stub().create_club(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in create_club: {} {}", e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -38,6 +40,7 @@ async def get_club(club_id: UUID):
     try:
         return await _get_stub().get_club(GetClubRequest(club_id=club_id))
     except grpc.RpcError as e:
+        logger.warning("gRPC error in get_club({}): {} {}", club_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -51,6 +54,7 @@ async def update_club(club_id: UUID, request: UpdateClubRequest):
     try:
         return await _get_stub().update_club(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in update_club({}): {} {}", club_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -64,6 +68,7 @@ async def add_member(club_id: UUID, request: AddMemberRequest):
     try:
         return await _get_stub().add_member(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in add_member(club={}): {} {}", club_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -72,6 +77,7 @@ async def remove_member(club_id: UUID, user_id: UUID):
     try:
         await _get_stub().remove_member(RemoveMemberRequest(club_id=club_id, user_id=user_id))
     except grpc.RpcError as e:
+        logger.warning("gRPC error in remove_member(club={}, user={}): {} {}", club_id, user_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -85,6 +91,7 @@ async def set_permission(club_id: UUID, target_user_id: UUID, request: SetPermis
     try:
         return await _get_stub().set_permission(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in set_permission(club={}): {} {}", club_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 

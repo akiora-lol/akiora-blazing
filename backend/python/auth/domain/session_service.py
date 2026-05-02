@@ -14,14 +14,20 @@ class SessionService:
         self.repo = repo
 
     async def create_session(
-        self, email: EmailStr, provider: str, user_data: dict | None = None
+        self,
+        ses_id: UUID,
+        email: EmailStr,
+        provider: str,
+        sign: str,
+        user_data: dict | None = None,
     ) -> UUID:
         session_data = Session(
+            id=ses_id,
             email=email,
             auth_source=provider,
             custom_data={"user": user_data},
         )
-        data = await self.repo.create(session_data)
+        data = await self.repo.create(sign, session_data)
 
         return data.id
 
@@ -31,7 +37,7 @@ class SessionService:
 
         return data
 
-    async def get_session_user(self, session_id: UUID) -> Session | None:
+    async def get_session_user(self, session_id: UUID | str) -> Session | None:
 
         data = await self.repo.get(session_id)
         if data:

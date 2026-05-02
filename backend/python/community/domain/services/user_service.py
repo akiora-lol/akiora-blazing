@@ -1,6 +1,7 @@
 from datetime import datetime, UTC
 from typing import Literal
 from uuid import UUID
+from loguru import logger
 
 from beanie.operators import Set, Push, Pull
 
@@ -12,6 +13,7 @@ class UserService:
     async def create(email: str, nickname: str | None = None) -> User:
         user = User(email=email, nickname=nickname or f"user{int(datetime.now(tz=UTC).timestamp())}")
         await user.insert()
+        logger.info("User created id={} email={}", user.id, email)
         return user
 
     @staticmethod
@@ -55,4 +57,5 @@ class UserService:
             patch["socials"] = {k: v.model_dump() for k, v in socials.items()}
 
         await user.update({"$set": patch})
+        logger.info("User updated id={}", user_id)
         return await User.get(user_id)

@@ -47,7 +47,7 @@ class RedisService:
         if not obj_type:
             return data
 
-        return T(**data)
+        return obj_type(**data)
 
     async def delete(self, pattern: str):
         await self.redis.delete(pattern)

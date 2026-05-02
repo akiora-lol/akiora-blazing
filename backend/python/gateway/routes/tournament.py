@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Query
 from uuid import UUID
 from typing import Optional, List
 import grpc
+from loguru import logger
 
 from shared.contracts.tournament import (
     CreateTournamentRequest,
@@ -33,6 +34,7 @@ async def create_tournament(request: CreateTournamentRequest):
     try:
         return await _get_stub().create_tournament(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in create_tournament: {} {}", e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -41,6 +43,7 @@ async def get_tournament(tournament_id: str):
     try:
         return await _get_stub().get_tournament(GetTournamentRequest(ids=[tournament_id]))
     except grpc.RpcError as e:
+        logger.warning("gRPC error in get_tournament({}): {} {}", tournament_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -54,6 +57,7 @@ async def get_tournaments(
             GetTournamentRequest(ids=ids or [], game_type=game_type)
         )
     except grpc.RpcError as e:
+        logger.warning("gRPC error in get_tournaments: {} {}", e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 

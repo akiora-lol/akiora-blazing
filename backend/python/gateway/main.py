@@ -1,7 +1,10 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+import time
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
-
+from dishka.integrations.fastapi import setup_dishka
+from ioc import container
 from routes.user import router as user_router
 from routes.club import router as club_router
 from routes.team import router as team_router
@@ -28,6 +31,30 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Akiora Gateway", lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = (time.perf_counter() - start) * 1000
+    logger.info(
+        "{method} {path} → {status} ({duration:.1f}ms)",
+        method=request.method,
+        path=request.url.path,
+        status=response.status_code,
+        duration=duration_ms,
+    )
+    return response
+
+
 # Community routes
 app.include_router(user_router)
 app.include_router(club_router)
@@ -41,6 +68,7 @@ app.include_router(messenger_router)
 app.include_router(tournament_router)
 app.include_router(gameseries_router)
 
+setup_dishka(container=container, app=app)
 
 if __name__ == "__main__":
     from granian import Granian
@@ -48,6 +76,6 @@ if __name__ == "__main__":
     Granian(
         "main:app",
         address="0.0.0.0",
-        port=8001,
+        port=8000,
         interface="asgi",
     ).serve()

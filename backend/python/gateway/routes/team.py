@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from uuid import UUID
 import grpc
+from loguru import logger
 
 from shared.contracts.team import (
     CreateTeamRequest,
@@ -29,6 +30,7 @@ async def create_team(request: CreateTeamRequest):
     try:
         return await _get_stub().create_team(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in create_team: {} {}", e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -37,6 +39,7 @@ async def get_team(team_id: UUID):
     try:
         return await _get_stub().get_team(GetTeamRequest(team_id=team_id))
     except grpc.RpcError as e:
+        logger.warning("gRPC error in get_team({}): {} {}", team_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -50,6 +53,7 @@ async def update_team(team_id: UUID, request: UpdateTeamRequest):
     try:
         return await _get_stub().update_team(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in update_team({}): {} {}", team_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -63,6 +67,7 @@ async def add_member(team_id: UUID, request: AddTeamMemberRequest):
     try:
         return await _get_stub().add_member(request)
     except grpc.RpcError as e:
+        logger.warning("gRPC error in add_member(team={}): {} {}", team_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -73,6 +78,7 @@ async def remove_member(team_id: UUID, user_id: UUID, actor_id: UUID):
             RemoveTeamMemberRequest(team_id=team_id, actor_id=actor_id, user_id=user_id)
         )
     except grpc.RpcError as e:
+        logger.warning("gRPC error in remove_member(team={}, user={}): {} {}", team_id, user_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 

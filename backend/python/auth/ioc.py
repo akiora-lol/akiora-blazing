@@ -63,12 +63,17 @@ class ConfigProvider(Provider):
 
 class GrpcProvider(Provider):
     @provide(scope=Scope.APP)
-    def get_community_channel(self, settings: Settings) -> grpc.Channel:
-        return grpc.insecure_channel(settings.community_grpc_address)
+    async def get_community_channel(
+        self, settings: Settings
+    ) -> AsyncIterator[grpc.aio.Channel]:
+        async with grpc.aio.insecure_channel(
+            settings.community_grpc_address
+        ) as channel:
+            yield channel
 
     @provide(scope=Scope.APP)
-    def get_user_stub(self, channel: grpc.Channel) -> UserStub:
-        return UserStub(channel, user_pb2, user_pb2_grpc)
+    def get_user_stub(self, channel: grpc.aio.Channel) -> UserStub:
+        return UserStub(channel)
 
 
 class ServiceProvider(Provider):

@@ -1,5 +1,6 @@
 import grpc
 from uuid import UUID
+from loguru import logger
 
 from dishka.integrations.grpcio import inject
 
@@ -23,6 +24,7 @@ class TeamGrpc:
     @inject
     async def CreateTeam(self, request, context: grpc.aio.ServicerContext):
         from community.team.v1 import team_service_pb2 as pb2
+        logger.debug("CreateTeam owner={}", request.owner_id)
         team = await TeamService.create(
             owner_id=UUID(request.owner_id),
             name=request.name,
@@ -33,6 +35,7 @@ class TeamGrpc:
     @inject
     async def GetTeam(self, request, context: grpc.aio.ServicerContext):
         from community.team.v1 import team_service_pb2 as pb2
+        logger.debug("GetTeam id={}", request.team_id)
         team = await TeamService.get(UUID(request.team_id))
         if not team:
             await context.abort(grpc.StatusCode.NOT_FOUND, "Team not found")
@@ -41,6 +44,7 @@ class TeamGrpc:
     @inject
     async def UpdateTeam(self, request, context: grpc.aio.ServicerContext):
         from community.team.v1 import team_service_pb2 as pb2
+        logger.debug("UpdateTeam id={}", request.team_id)
         team = await TeamService.update(
             team_id=UUID(request.team_id),
             actor_id=UUID(request.actor_id),
@@ -53,6 +57,7 @@ class TeamGrpc:
     @inject
     async def AddMember(self, request, context: grpc.aio.ServicerContext):
         from community.team.v1 import team_service_pb2 as pb2
+        logger.debug("AddMember team={} user={}", request.team_id, request.user_id)
         team = await TeamService.add_member(
             team_id=UUID(request.team_id),
             actor_id=UUID(request.actor_id),

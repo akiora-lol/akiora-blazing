@@ -2,8 +2,14 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { FiGithub, FiMail, FiArrowLeft, FiSend } from 'react-icons/fi'
 import { PageShell } from '../components/PageShell'
+import { requireAuth } from '../lib/auth'
 
-export const Route = createFileRoute('/about')({ component: AboutPage })
+export const Route = createFileRoute('/about')({
+  beforeLoad: async ({ context }) => {
+    await requireAuth(context.queryClient)
+  },
+  component: AboutPage,
+})
 
 const T = {
   en: {
@@ -212,7 +218,7 @@ function AboutPage() {
         .about-back:hover { color: rgba(255,255,255,0.6); }
       `}</style>
 
-      <PageShell logoVariant="large" lang={lang} onLangChange={setLang}>
+      <PageShell lang={lang} onLangChange={setLang}>
         <div className="about-scene">
           <div className="orbit-wrap">
             {/* Rings */}

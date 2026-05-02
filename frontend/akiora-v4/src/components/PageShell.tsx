@@ -100,9 +100,10 @@ interface PageShellProps {
   logoVariant?: 'hero' | 'center' | 'large'
   lang: 'en' | 'ru'
   onLangChange: (l: 'en' | 'ru') => void
+  hideEffects?: boolean
 }
 
-export function PageShell({ children, logoVariant = 'center', lang, onLangChange }: PageShellProps) {
+export function PageShell({ children, logoVariant = 'center', lang, onLangChange, hideEffects = false }: PageShellProps) {
   return (
     <div className="ak-page">
       <img
@@ -111,7 +112,7 @@ export function PageShell({ children, logoVariant = 'center', lang, onLangChange
         className={`ak-bg-logo ak-bg-logo--${logoVariant}`}
         aria-hidden="true"
       />
-      <AkioraBackground />
+      {!hideEffects && <AkioraBackground />}
 
       <div className="ak-lang" role="group" aria-label="Language">
         <button className={`ak-lang-btn${lang === 'en' ? ' active' : ''}`} onClick={() => onLangChange('en')} aria-pressed={lang === 'en'}>EN</button>

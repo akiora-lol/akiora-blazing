@@ -1,5 +1,6 @@
 import grpc
 from uuid import UUID
+from loguru import logger
 
 from dishka.integrations.grpcio import inject
 
@@ -54,6 +55,7 @@ class UserGrpc:
     @inject
     async def CreateUser(self, request, context: grpc.aio.ServicerContext):
         from community.user.v1 import user_service_pb2 as pb2
+        logger.debug("CreateUser email={}", request.email)
         user = await UserService.create(
             email=request.email,
             nickname=request.nickname if request.HasField("nickname") else None,
@@ -63,6 +65,7 @@ class UserGrpc:
     @inject
     async def GetUser(self, request, context: grpc.aio.ServicerContext):
         from community.user.v1 import user_service_pb2 as pb2
+        logger.debug("GetUser id={}", request.id)
         user = await UserService.get(UUID(request.id))
         if not user:
             await context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
@@ -71,6 +74,7 @@ class UserGrpc:
     @inject
     async def GetUserByEmail(self, request, context: grpc.aio.ServicerContext):
         from community.user.v1 import user_service_pb2 as pb2
+        logger.debug("GetUserByEmail email={}", request.email)
         user = await UserService.get_by_email(request.email)
         if not user:
             await context.abort(grpc.StatusCode.NOT_FOUND, "User not found")
@@ -79,6 +83,7 @@ class UserGrpc:
     @inject
     async def UpdateUser(self, request, context: grpc.aio.ServicerContext):
         from community.user.v1 import user_service_pb2 as pb2
+        logger.debug("UpdateUser id={}", request.user_id)
 
         _type_reverse = {
             pb2.UserType.DEFAULT: "default",

@@ -1,4 +1,4 @@
-import grpc
+import grpc.aio as grpc
 from uuid import UUID
 
 from shared.contracts.user import (

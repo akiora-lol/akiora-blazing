@@ -10,5 +10,6 @@ dependencies = [
     "granian>=2.7.3",
     "grpcio>=1.80.0",
     "grpcio-reflection>=1.80.0",
+    "loguru>=0.7.0",
     "pydantic-settings>=2.13.1",
 ]
