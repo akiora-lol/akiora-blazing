@@ -3,14 +3,14 @@ syntax = "proto3";
 package akiora.messenger;
 
 import "google/api/annotations.proto";
-import "google/api/http.proto";
-import "common/game_actors.proto";
+
+
 import "common/types.proto";
 
 option go_package = "akiora/messenger";
 
 
-// ─── Chat ───────────────────────────────────────────────────────────────────
+// ─── Chat ─────────────────────────────────────────────────────────────────────
 
 enum ChatOwnerType {
   OWNER_UNSPECIFIED = 0;
@@ -42,6 +42,66 @@ message ChatResponse {
   repeated string allowed_users = 7;
 }
 
+// Pagination request
+message PaginationRequest {
+  optional int32 page = 1;
+  optional int32 page_size = 2;
+  optional int64 before_timestamp = 3;
+}
+
+// Filter request
+message ChatFilter {
+  optional string owner_id = 1;
+  optional ChatOwnerType owner_type = 2;
+  optional ChatType type = 3;
+  optional ChatStatus status = 4;
+  optional bool is_member = 5;
+}
+
+// Request with filters and pagination
+message ListChatsRequest {
+  optional ChatFilter filter = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+// List response
+message ListChatsResponse {
+  repeated ChatResponse chats = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  bool has_next = 5;
+}
+
+// Chat member info
+message ChatMemberInfo {
+  string user_id = 1;
+  string nickname = 2;
+  string avatar = 3;
+}
+
+// Get chat members
+message GetChatMembersRequest {
+  string chat_id = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+message GetChatMembersResponse {
+  repeated ChatMemberInfo members = 1;
+  int32 total_count = 2;
+}
+
+// Check if user is a member
+message IsChatMemberRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+
+message IsChatMemberResponse {
+  bool is_member = 1;
+}
+
+// CRUD operations
 message CreateChatRequest {
   string owner_id = 1;
   ChatOwnerType owner_type = 2;
@@ -53,21 +113,42 @@ message GetChatRequest {
   string chat_id = 1;
 }
 
+message UpdateChatRequest {
+  string chat_id = 1;
+  string actor_id = 2;
+  optional ChatStatus status = 3;
+  optional string owner_id = 4; // Only for system type
+}
+
+message DeleteChatRequest {
+  string chat_id = 1;
+  string actor_id = 2;
+}
+
 message AddAllowedUserRequest {
   string chat_id = 1;
-  string user_id = 2;
+  string actor_id = 2;
+  string user_id = 3;
 }
 
 message RemoveAllowedUserRequest {
   string chat_id = 1;
-  string user_id = 2;
+  string actor_id = 2;
+  string user_id = 3;
 }
 
 message FreezeChatRequest {
   string chat_id = 1;
+  string actor_id = 2;
+}
+
+message UnfreezeChatRequest {
+  string chat_id = 1;
+  string actor_id = 2;
 }
 
 service ChatService {
+  // Basic CRUD
   rpc CreateChat(CreateChatRequest) returns (ChatResponse) {
     option (google.api.http) = {
       post: "/v1/chats"
@@ -81,6 +162,27 @@ service ChatService {
     };
   }
 
+  rpc UpdateChat(UpdateChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      patch: "/v1/chats/{chat_id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteChat(DeleteChatRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/chats/{chat_id}"
+    };
+  }
+
+  // List with filters and pagination
+  rpc ListChats(ListChatsRequest) returns (ListChatsResponse) {
+    option (google.api.http) = {
+      get: "/v1/chats"
+    };
+  }
+
+  // Member management
   rpc AddAllowedUser(AddAllowedUserRequest) returns (ChatResponse) {
     option (google.api.http) = {
       post: "/v1/chats/{chat_id}/members"
@@ -88,17 +190,49 @@ service ChatService {
     };
   }
 
-  rpc RemoveAllowedUser(RemoveAllowedUserRequest) returns (common.Empty) {
+  rpc RemoveAllowedUser(RemoveAllowedUserRequest) returns (ChatResponse) {
     option (google.api.http) = {
       delete: "/v1/chats/{chat_id}/members/{user_id}"
     };
   }
 
+  rpc GetChatMembers(GetChatMembersRequest) returns (GetChatMembersResponse) {
+    option (google.api.http) = {
+      get: "/v1/chats/{chat_id}/members"
+    };
+  }
+
+  rpc IsChatMember(IsChatMemberRequest) returns (IsChatMemberResponse) {
+    option (google.api.http) = {
+      get: "/v1/chats/{chat_id}/members/{user_id}/is-member"
+    };
+  }
+
+  // Status management
   rpc FreezeChat(FreezeChatRequest) returns (ChatResponse) {
     option (google.api.http) = {
       post: "/v1/chats/{chat_id}/freeze"
     };
   }
+
+  rpc UnfreezeChat(UnfreezeChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v1/chats/{chat_id}/unfreeze"
+    };
+  }
+
+  // Get user's chats
+  rpc GetUserChats(GetUserChatsRequest) returns (ListChatsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}/chats"
+    };
+  }
+}
+
+// Additional messages
+message GetUserChatsRequest {
+  string user_id = 1;
+  optional PaginationRequest pagination = 2;
 }
 
 
@@ -113,6 +247,7 @@ enum MessageStatus {
 message ReactionProto {
   string emote_id = 1;
   string user_id = 2;
+  int64 timestamp = 3;
 }
 
 message MessageShortProto {
@@ -134,6 +269,27 @@ message MessageResponse {
   bool spoiler = 11;
 }
 
+// Filter for messages
+message MessageFilter {
+  optional string creator_id = 1;
+  optional MessageStatus status = 2;
+  optional bool has_reactions = 3;
+}
+
+// Request with filters and pagination
+message ListMessagesRequest {
+  string chat_id = 1;
+  optional MessageFilter filter = 2;
+  optional PaginationRequest pagination = 3;
+}
+
+// List response for messages
+message ListMessagesResponse {
+  repeated MessageResponse messages = 1;
+  int32 total_count = 2;
+}
+
+// CRUD operations
 message SendMessageRequest {
   string chat_id = 1;
   string creator_id = 2;
@@ -158,6 +314,16 @@ message MarkAsReadRequest {
   string user_id = 2;
 }
 
+message GetUnreadCountRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+
+message GetUnreadCountResponse {
+  int32 count = 1;
+}
+
+// Reaction operations
 message AddReactionRequest {
   string message_id = 1;
   string user_id = 2;
@@ -170,17 +336,22 @@ message RemoveReactionRequest {
   string emote_id = 3;
 }
 
-message GetMessagesRequest {
-  string chat_id = 1;
-  optional int32 limit = 2;
-  optional int64 before_timestamp = 3;
+message GetReactionsRequest {
+  string message_id = 1;
 }
 
-message GetMessagesResponse {
-  repeated MessageResponse messages = 1;
+message GetReactionsResponse {
+  repeated ReactionProto reactions = 1;
+}
+
+// Message history
+message GetMessageHistoryRequest {
+  string message_id = 1;
+  optional int32 limit = 2;
 }
 
 service MessageService {
+  // Basic CRUD
   rpc SendMessage(SendMessageRequest) returns (MessageResponse) {
     option (google.api.http) = {
       post: "/v1/chats/{chat_id}/messages"
@@ -188,9 +359,9 @@ service MessageService {
     };
   }
 
-  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse) {
+  rpc GetMessage(GetMessageRequest) returns (MessageResponse) {
     option (google.api.http) = {
-      get: "/v1/chats/{chat_id}/messages"
+      get: "/v1/messages/{message_id}"
     };
   }
 
@@ -207,6 +378,14 @@ service MessageService {
     };
   }
 
+  // List with filters and pagination
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse) {
+    option (google.api.http) = {
+      get: "/v1/chats/{chat_id}/messages"
+    };
+  }
+
+  // Read status
   rpc MarkAsRead(MarkAsReadRequest) returns (MessageResponse) {
     option (google.api.http) = {
       post: "/v1/messages/{message_id}/read"
@@ -214,6 +393,13 @@ service MessageService {
     };
   }
 
+  rpc GetUnreadCount(GetUnreadCountRequest) returns (GetUnreadCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/chats/{chat_id}/unread-count"
+    };
+  }
+
+  // Reactions
   rpc AddReaction(AddReactionRequest) returns (MessageResponse) {
     option (google.api.http) = {
       post: "/v1/messages/{message_id}/reactions"
@@ -221,9 +407,40 @@ service MessageService {
     };
   }
 
-  rpc RemoveReaction(RemoveReactionRequest) returns (common.Empty) {
+  rpc RemoveReaction(RemoveReactionRequest) returns (MessageResponse) {
     option (google.api.http) = {
       delete: "/v1/messages/{message_id}/reactions/{emote_id}"
     };
   }
+
+  rpc GetReactions(GetReactionsRequest) returns (GetReactionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/messages/{message_id}/reactions"
+    };
+  }
+
+  // Message history
+  rpc GetMessageHistory(GetMessageHistoryRequest) returns (ListMessagesResponse) {
+    option (google.api.http) = {
+      get: "/v1/messages/{message_id}/history"
+    };
+  }
+
+  // Get user's messages
+  rpc GetUserMessages(GetUserMessagesRequest) returns (ListMessagesResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}/messages"
+    };
+  }
+}
+
+// Additional messages
+message GetMessageRequest {
+  string message_id = 1;
+}
+
+message GetUserMessagesRequest {
+  string user_id = 1;
+  optional PaginationRequest pagination = 2;
+  optional string chat_id = 3;
 }

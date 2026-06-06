@@ -3,6 +3,7 @@
 import grpc
 import warnings
 
+from common import types_pb2 as common_dot_types__pb2
 from community.user.v1 import user_service_pb2 as community_dot_user_dot_v1_dot_user__service__pb2
 
 GRPC_GENERATED_VERSION = '1.80.0'
@@ -54,13 +55,64 @@ class UserServiceStub(object):
                 request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.UpdateUserRequest.SerializeToString,
                 response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
                 _registered_method=True)
+        self.DeleteUser = channel.unary_unary(
+                '/akiora.community.user.UserService/DeleteUser',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.DeleteUserRequest.SerializeToString,
+                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                _registered_method=True)
+        self.ListUsers = channel.unary_unary(
+                '/akiora.community.user.UserService/ListUsers',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.ListUsersRequest.SerializeToString,
+                response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.ListUsersResponse.FromString,
+                _registered_method=True)
+        self.SendFriendRequest = channel.unary_unary(
+                '/akiora.community.user.UserService/SendFriendRequest',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.SendFriendRequestRequest.SerializeToString,
+                response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.FriendResponse.FromString,
+                _registered_method=True)
+        self.RespondFriendRequest = channel.unary_unary(
+                '/akiora.community.user.UserService/RespondFriendRequest',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.RespondFriendRequestRequest.SerializeToString,
+                response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.FriendResponse.FromString,
+                _registered_method=True)
+        self.GetPendingFriendRequests = channel.unary_unary(
+                '/akiora.community.user.UserService/GetPendingFriendRequests',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.GetUserRequest.SerializeToString,
+                response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.ListFriendsResponse.FromString,
+                _registered_method=True)
+        self.GetFriends = channel.unary_unary(
+                '/akiora.community.user.UserService/GetFriends',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.ListFriendsRequest.SerializeToString,
+                response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.ListFriendsResponse.FromString,
+                _registered_method=True)
+        self.RemoveFriend = channel.unary_unary(
+                '/akiora.community.user.UserService/RemoveFriend',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.RemoveFriendRequest.SerializeToString,
+                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                _registered_method=True)
+        self.BlockUser = channel.unary_unary(
+                '/akiora.community.user.UserService/BlockUser',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.BlockUserRequest.SerializeToString,
+                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                _registered_method=True)
+        self.UnblockUser = channel.unary_unary(
+                '/akiora.community.user.UserService/UnblockUser',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.UnblockUserRequest.SerializeToString,
+                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                _registered_method=True)
+        self.GetFriendStatus = channel.unary_unary(
+                '/akiora.community.user.UserService/GetFriendStatus',
+                request_serializer=community_dot_user_dot_v1_dot_user__service__pb2.GetFriendStatusRequest.SerializeToString,
+                response_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.GetFriendStatusResponse.FromString,
+                _registered_method=True)
 
 
 class UserServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def CreateUser(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Basic CRUD
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -78,6 +130,68 @@ class UserServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def UpdateUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListUsers(self, request, context):
+        """List with filters and pagination
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SendFriendRequest(self, request, context):
+        """Friend management
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RespondFriendRequest(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetPendingFriendRequests(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetFriends(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RemoveFriend(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def BlockUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UnblockUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetFriendStatus(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -105,6 +219,56 @@ def add_UserServiceServicer_to_server(servicer, server):
                     servicer.UpdateUser,
                     request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.UpdateUserRequest.FromString,
                     response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.SerializeToString,
+            ),
+            'DeleteUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteUser,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.DeleteUserRequest.FromString,
+                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+            ),
+            'ListUsers': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListUsers,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.ListUsersRequest.FromString,
+                    response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.ListUsersResponse.SerializeToString,
+            ),
+            'SendFriendRequest': grpc.unary_unary_rpc_method_handler(
+                    servicer.SendFriendRequest,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.SendFriendRequestRequest.FromString,
+                    response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.FriendResponse.SerializeToString,
+            ),
+            'RespondFriendRequest': grpc.unary_unary_rpc_method_handler(
+                    servicer.RespondFriendRequest,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.RespondFriendRequestRequest.FromString,
+                    response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.FriendResponse.SerializeToString,
+            ),
+            'GetPendingFriendRequests': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPendingFriendRequests,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.GetUserRequest.FromString,
+                    response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.ListFriendsResponse.SerializeToString,
+            ),
+            'GetFriends': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetFriends,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.ListFriendsRequest.FromString,
+                    response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.ListFriendsResponse.SerializeToString,
+            ),
+            'RemoveFriend': grpc.unary_unary_rpc_method_handler(
+                    servicer.RemoveFriend,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.RemoveFriendRequest.FromString,
+                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+            ),
+            'BlockUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.BlockUser,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.BlockUserRequest.FromString,
+                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+            ),
+            'UnblockUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.UnblockUser,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.UnblockUserRequest.FromString,
+                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+            ),
+            'GetFriendStatus': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetFriendStatus,
+                    request_deserializer=community_dot_user_dot_v1_dot_user__service__pb2.GetFriendStatusRequest.FromString,
+                    response_serializer=community_dot_user_dot_v1_dot_user__service__pb2.GetFriendStatusResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -215,6 +379,276 @@ class UserService(object):
             '/akiora.community.user.UserService/UpdateUser',
             community_dot_user_dot_v1_dot_user__service__pb2.UpdateUserRequest.SerializeToString,
             community_dot_user_dot_v1_dot_user__service__pb2.UserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/DeleteUser',
+            community_dot_user_dot_v1_dot_user__service__pb2.DeleteUserRequest.SerializeToString,
+            common_dot_types__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListUsers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/ListUsers',
+            community_dot_user_dot_v1_dot_user__service__pb2.ListUsersRequest.SerializeToString,
+            community_dot_user_dot_v1_dot_user__service__pb2.ListUsersResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SendFriendRequest(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/SendFriendRequest',
+            community_dot_user_dot_v1_dot_user__service__pb2.SendFriendRequestRequest.SerializeToString,
+            community_dot_user_dot_v1_dot_user__service__pb2.FriendResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RespondFriendRequest(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/RespondFriendRequest',
+            community_dot_user_dot_v1_dot_user__service__pb2.RespondFriendRequestRequest.SerializeToString,
+            community_dot_user_dot_v1_dot_user__service__pb2.FriendResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetPendingFriendRequests(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/GetPendingFriendRequests',
+            community_dot_user_dot_v1_dot_user__service__pb2.GetUserRequest.SerializeToString,
+            community_dot_user_dot_v1_dot_user__service__pb2.ListFriendsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetFriends(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/GetFriends',
+            community_dot_user_dot_v1_dot_user__service__pb2.ListFriendsRequest.SerializeToString,
+            community_dot_user_dot_v1_dot_user__service__pb2.ListFriendsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RemoveFriend(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/RemoveFriend',
+            community_dot_user_dot_v1_dot_user__service__pb2.RemoveFriendRequest.SerializeToString,
+            common_dot_types__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def BlockUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/BlockUser',
+            community_dot_user_dot_v1_dot_user__service__pb2.BlockUserRequest.SerializeToString,
+            common_dot_types__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UnblockUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/UnblockUser',
+            community_dot_user_dot_v1_dot_user__service__pb2.UnblockUserRequest.SerializeToString,
+            common_dot_types__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetFriendStatus(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.user.UserService/GetFriendStatus',
+            community_dot_user_dot_v1_dot_user__service__pb2.GetFriendStatusRequest.SerializeToString,
+            community_dot_user_dot_v1_dot_user__service__pb2.GetFriendStatusResponse.FromString,
             options,
             channel_credentials,
             insecure,

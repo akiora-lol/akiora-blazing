@@ -2,9 +2,22 @@ import grpc.aio as grpc
 from uuid import UUID
 
 from shared.contracts.user import (
+    BlockUserRequest,
     CreateUserRequest,
+    DeleteUserRequest,
+    FriendResponse,
     GetUserRequest,
     GetUserByEmailRequest,
+    GetFriendStatusRequest,
+    GetFriendStatusResponse,
+    ListFriendsRequest,
+    ListFriendsResponse,
+    ListUsersRequest,
+    ListUsersResponse,
+    RemoveFriendRequest,
+    RespondFriendRequestRequest,
+    SendFriendRequestRequest,
+    UnblockUserRequest,
     UpdateUserRequest,
     UserResponse,
     Gender,
@@ -51,6 +64,14 @@ class UserMapper:
         UserType.MODERATOR: 5,
     }
 
+    FRIEND_STATUS_TO_PROTO = {
+        "UNSPECIFIED": 0,
+        "FRIEND_STATUS_UNSPECIFIED": 0,
+        "ACCEPTED": 1,
+        "PENDING": 2,
+        "BLOCKED": 3,
+    }
+
     @classmethod
     def to_pydantic_response(cls, grpc_response) -> UserResponse:
         """Convert gRPC UserResponse to Pydantic UserResponse"""
@@ -79,6 +100,37 @@ class UserMapper:
             socials=socials,
             created_at=grpc_response.created_at,
             last_updated=grpc_response.last_updated,
+        )
+
+    @classmethod
+    def to_pydantic_list_response(cls, grpc_response) -> ListUsersResponse:
+        return ListUsersResponse(
+            users=[cls.to_pydantic_response(user) for user in grpc_response.users],
+            total_count=grpc_response.total_count,
+            page=grpc_response.page,
+            page_size=grpc_response.page_size,
+            has_next=grpc_response.has_next,
+        )
+
+    @classmethod
+    def to_pydantic_friend_response(cls, grpc_response) -> FriendResponse:
+        return FriendResponse(
+            id=UUID(grpc_response.id),
+            user_id_1=UUID(grpc_response.user_id_1),
+            user_id_2=UUID(grpc_response.user_id_2),
+            status=grpc_response.status,
+            created_at=grpc_response.created_at,
+            updated_at=grpc_response.updated_at,
+        )
+
+    @classmethod
+    def to_pydantic_friends_response(cls, grpc_response) -> ListFriendsResponse:
+        return ListFriendsResponse(
+            friends=[
+                cls.to_pydantic_friend_response(friend)
+                for friend in grpc_response.friends
+            ],
+            total_count=grpc_response.total_count,
         )
 
     @classmethod
@@ -128,6 +180,95 @@ class UserMapper:
 
         return grpc_request
 
+    @classmethod
+    def to_grpc_pagination(cls, pagination):
+        return pb2_module.PaginationRequest(
+            page=pagination.page,
+            page_size=pagination.page_size,
+            before_timestamp=pagination.before_timestamp or 0,
+        )
+
+    @classmethod
+    def to_grpc_list_request(cls, request: ListUsersRequest):
+        grpc_filter = pb2_module.UserFilter(has_avatar=request.filter.has_avatar)
+        if request.filter.search:
+            grpc_filter.search = request.filter.search
+        if request.filter.user_type:
+            grpc_filter.user_type = cls.USER_TYPE_TO_PROTO.get(request.filter.user_type, 0)
+        if request.filter.gender:
+            grpc_filter.gender = cls.GENDER_TO_PROTO.get(request.filter.gender, 0)
+        if request.filter.min_created_at:
+            grpc_filter.min_created_at = request.filter.min_created_at
+        if request.filter.max_created_at:
+            grpc_filter.max_created_at = request.filter.max_created_at
+        return pb2_module.ListUsersRequest(
+            filter=grpc_filter,
+            pagination=cls.to_grpc_pagination(request.pagination),
+        )
+
+    @classmethod
+    def to_grpc_delete_request(cls, request: DeleteUserRequest):
+        return pb2_module.DeleteUserRequest(
+            user_id=str(request.user_id),
+            actor_id=str(request.actor_id),
+        )
+
+    @classmethod
+    def to_grpc_send_friend_request(cls, request: SendFriendRequestRequest):
+        return pb2_module.SendFriendRequestRequest(
+            request=pb2_module.FriendRequest(
+                sender_id=str(request.request.sender_id),
+                receiver_id=str(request.request.receiver_id),
+            )
+        )
+
+    @classmethod
+    def to_grpc_respond_friend_request(cls, request: RespondFriendRequestRequest):
+        return pb2_module.RespondFriendRequestRequest(
+            response=pb2_module.RespondFriendRequest(
+                request_id=str(request.response.request_id),
+                responder_id=str(request.response.responder_id),
+                accept=request.response.accept,
+            )
+        )
+
+    @classmethod
+    def to_grpc_list_friends_request(cls, request: ListFriendsRequest):
+        return pb2_module.ListFriendsRequest(
+            user_id=str(request.user_id),
+            pagination=cls.to_grpc_pagination(request.pagination),
+            status=cls.FRIEND_STATUS_TO_PROTO.get(request.status, 0),
+        )
+
+    @classmethod
+    def to_grpc_remove_friend_request(cls, request: RemoveFriendRequest):
+        return pb2_module.RemoveFriendRequest(
+            user_id_1=str(request.user_id_1),
+            user_id_2=str(request.user_id_2),
+            actor_id=str(request.actor_id),
+        )
+
+    @classmethod
+    def to_grpc_block_user_request(cls, request: BlockUserRequest):
+        return pb2_module.BlockUserRequest(
+            blocker_id=str(request.blocker_id),
+            blocked_id=str(request.blocked_id),
+        )
+
+    @classmethod
+    def to_grpc_unblock_user_request(cls, request: UnblockUserRequest):
+        return pb2_module.UnblockUserRequest(
+            blocker_id=str(request.blocker_id),
+            blocked_id=str(request.blocked_id),
+        )
+
+    @classmethod
+    def to_grpc_friend_status_request(cls, request: GetFriendStatusRequest):
+        return pb2_module.GetFriendStatusRequest(
+            user_id_1=str(request.user_id_1),
+            user_id_2=str(request.user_id_2),
+        )
+
 
 class UserStub:
     """Stub for User Service gRPC calls with pydantic mapping"""
@@ -156,6 +297,65 @@ class UserStub:
         grpc_request = self.mapper.to_grpc_update_request(request)
         response = await self.stub.UpdateUser(grpc_request)
         return self.mapper.to_pydantic_response(response)
+
+    async def delete_user(self, request: DeleteUserRequest):
+        grpc_request = self.mapper.to_grpc_delete_request(request)
+        return await self.stub.DeleteUser(grpc_request)
+
+    async def list_users(self, request: ListUsersRequest) -> ListUsersResponse:
+        grpc_request = self.mapper.to_grpc_list_request(request)
+        response = await self.stub.ListUsers(grpc_request)
+        return self.mapper.to_pydantic_list_response(response)
+
+    async def send_friend_request(
+        self, request: SendFriendRequestRequest
+    ) -> FriendResponse:
+        grpc_request = self.mapper.to_grpc_send_friend_request(request)
+        response = await self.stub.SendFriendRequest(grpc_request)
+        return self.mapper.to_pydantic_friend_response(response)
+
+    async def respond_friend_request(
+        self, request: RespondFriendRequestRequest
+    ) -> FriendResponse:
+        grpc_request = self.mapper.to_grpc_respond_friend_request(request)
+        response = await self.stub.RespondFriendRequest(grpc_request)
+        return self.mapper.to_pydantic_friend_response(response)
+
+    async def get_pending_friend_requests(
+        self, request: GetUserRequest
+    ) -> ListFriendsResponse:
+        grpc_request = self.mapper.to_grpc_get_request(request)
+        response = await self.stub.GetPendingFriendRequests(grpc_request)
+        return self.mapper.to_pydantic_friends_response(response)
+
+    async def get_friends(self, request: ListFriendsRequest) -> ListFriendsResponse:
+        grpc_request = self.mapper.to_grpc_list_friends_request(request)
+        response = await self.stub.GetFriends(grpc_request)
+        return self.mapper.to_pydantic_friends_response(response)
+
+    async def remove_friend(self, request: RemoveFriendRequest):
+        grpc_request = self.mapper.to_grpc_remove_friend_request(request)
+        return await self.stub.RemoveFriend(grpc_request)
+
+    async def block_user(self, request: BlockUserRequest) -> FriendResponse:
+        grpc_request = self.mapper.to_grpc_block_user_request(request)
+        response = await self.stub.BlockUser(grpc_request)
+        return self.mapper.to_pydantic_friend_response(response)
+
+    async def unblock_user(self, request: UnblockUserRequest) -> FriendResponse:
+        grpc_request = self.mapper.to_grpc_unblock_user_request(request)
+        response = await self.stub.UnblockUser(grpc_request)
+        return self.mapper.to_pydantic_friend_response(response)
+
+    async def get_friend_status(
+        self, request: GetFriendStatusRequest
+    ) -> GetFriendStatusResponse:
+        grpc_request = self.mapper.to_grpc_friend_status_request(request)
+        response = await self.stub.GetFriendStatus(grpc_request)
+        return GetFriendStatusResponse(
+            status=response.status,
+            request_id=UUID(response.request_id) if response.request_id else None,
+        )
 
     def create_user_sync(self, request: CreateUserRequest) -> UserResponse:
         grpc_request = self.mapper.to_grpc_create_request(request)

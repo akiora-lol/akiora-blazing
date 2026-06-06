@@ -17,7 +17,9 @@ Permission model:
   Example: ["r0", "w1"] means the user can read everything
   but can only write to fields[1].
 """
-from beanie import Document
+
+from beanie import Document, Indexed
+from typing import Annotated
 from pydantic import Field, BaseModel, field_validator
 from uuid import UUID, uuid4
 from datetime import datetime, UTC
@@ -30,12 +32,14 @@ def time_now():
 # Resolved permission for a single user on a single operation
 class ClubPermission(BaseModel):
     """Raw permission tokens stored per user, e.g. ['r0', 'w1', 'r2']."""
+
     tokens: list[str] = Field(default_factory=list)
 
     @field_validator("tokens", mode="before")
     @classmethod
     def validate_tokens(cls, v: list[str]) -> list[str]:
         import re
+
         for t in v:
             if not re.fullmatch(r"[rw]\d+", t):
                 raise ValueError(f"Invalid permission token: {t!r}")
@@ -64,7 +68,7 @@ class ClubPermission(BaseModel):
 
 class Club(Document):
     id: UUID = Field(default_factory=uuid4)
-    owner_id: UUID
+    owner_id: Annotated[UUID, Indexed(unique=True)]
     name: str = Field(min_length=1, max_length=64)
     avatar: str | None = None
     description: str | None = Field(default=None, max_length=500)

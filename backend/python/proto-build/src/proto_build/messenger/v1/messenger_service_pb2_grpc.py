@@ -45,6 +45,21 @@ class ChatServiceStub(object):
                 request_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetChatRequest.SerializeToString,
                 response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.FromString,
                 _registered_method=True)
+        self.UpdateChat = channel.unary_unary(
+                '/akiora.messenger.ChatService/UpdateChat',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.UpdateChatRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.FromString,
+                _registered_method=True)
+        self.DeleteChat = channel.unary_unary(
+                '/akiora.messenger.ChatService/DeleteChat',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.DeleteChatRequest.SerializeToString,
+                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                _registered_method=True)
+        self.ListChats = channel.unary_unary(
+                '/akiora.messenger.ChatService/ListChats',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.ListChatsRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ListChatsResponse.FromString,
+                _registered_method=True)
         self.AddAllowedUser = channel.unary_unary(
                 '/akiora.messenger.ChatService/AddAllowedUser',
                 request_serializer=messenger_dot_v1_dot_messenger__service__pb2.AddAllowedUserRequest.SerializeToString,
@@ -53,12 +68,32 @@ class ChatServiceStub(object):
         self.RemoveAllowedUser = channel.unary_unary(
                 '/akiora.messenger.ChatService/RemoveAllowedUser',
                 request_serializer=messenger_dot_v1_dot_messenger__service__pb2.RemoveAllowedUserRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.FromString,
+                _registered_method=True)
+        self.GetChatMembers = channel.unary_unary(
+                '/akiora.messenger.ChatService/GetChatMembers',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetChatMembersRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetChatMembersResponse.FromString,
+                _registered_method=True)
+        self.IsChatMember = channel.unary_unary(
+                '/akiora.messenger.ChatService/IsChatMember',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.IsChatMemberRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.IsChatMemberResponse.FromString,
                 _registered_method=True)
         self.FreezeChat = channel.unary_unary(
                 '/akiora.messenger.ChatService/FreezeChat',
                 request_serializer=messenger_dot_v1_dot_messenger__service__pb2.FreezeChatRequest.SerializeToString,
                 response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.FromString,
+                _registered_method=True)
+        self.UnfreezeChat = channel.unary_unary(
+                '/akiora.messenger.ChatService/UnfreezeChat',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.UnfreezeChatRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.FromString,
+                _registered_method=True)
+        self.GetUserChats = channel.unary_unary(
+                '/akiora.messenger.ChatService/GetUserChats',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetUserChatsRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ListChatsResponse.FromString,
                 _registered_method=True)
 
 
@@ -66,7 +101,8 @@ class ChatServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def CreateChat(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Basic CRUD
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -77,8 +113,28 @@ class ChatServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def AddAllowedUser(self, request, context):
+    def UpdateChat(self, request, context):
         """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteChat(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListChats(self, request, context):
+        """List with filters and pagination
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AddAllowedUser(self, request, context):
+        """Member management
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -89,8 +145,34 @@ class ChatServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def FreezeChat(self, request, context):
+    def GetChatMembers(self, request, context):
         """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def IsChatMember(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def FreezeChat(self, request, context):
+        """Status management
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UnfreezeChat(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUserChats(self, request, context):
+        """Get user's chats
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -108,6 +190,21 @@ def add_ChatServiceServicer_to_server(servicer, server):
                     request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetChatRequest.FromString,
                     response_serializer=messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.SerializeToString,
             ),
+            'UpdateChat': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateChat,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.UpdateChatRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.SerializeToString,
+            ),
+            'DeleteChat': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteChat,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.DeleteChatRequest.FromString,
+                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+            ),
+            'ListChats': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListChats,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ListChatsRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.ListChatsResponse.SerializeToString,
+            ),
             'AddAllowedUser': grpc.unary_unary_rpc_method_handler(
                     servicer.AddAllowedUser,
                     request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.AddAllowedUserRequest.FromString,
@@ -116,12 +213,32 @@ def add_ChatServiceServicer_to_server(servicer, server):
             'RemoveAllowedUser': grpc.unary_unary_rpc_method_handler(
                     servicer.RemoveAllowedUser,
                     request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.RemoveAllowedUserRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.SerializeToString,
+            ),
+            'GetChatMembers': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetChatMembers,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetChatMembersRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetChatMembersResponse.SerializeToString,
+            ),
+            'IsChatMember': grpc.unary_unary_rpc_method_handler(
+                    servicer.IsChatMember,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.IsChatMemberRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.IsChatMemberResponse.SerializeToString,
             ),
             'FreezeChat': grpc.unary_unary_rpc_method_handler(
                     servicer.FreezeChat,
                     request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.FreezeChatRequest.FromString,
                     response_serializer=messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.SerializeToString,
+            ),
+            'UnfreezeChat': grpc.unary_unary_rpc_method_handler(
+                    servicer.UnfreezeChat,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.UnfreezeChatRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.SerializeToString,
+            ),
+            'GetUserChats': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUserChats,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetUserChatsRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.ListChatsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -189,6 +306,87 @@ class ChatService(object):
             _registered_method=True)
 
     @staticmethod
+    def UpdateChat(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.ChatService/UpdateChat',
+            messenger_dot_v1_dot_messenger__service__pb2.UpdateChatRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteChat(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.ChatService/DeleteChat',
+            messenger_dot_v1_dot_messenger__service__pb2.DeleteChatRequest.SerializeToString,
+            common_dot_types__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListChats(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.ChatService/ListChats',
+            messenger_dot_v1_dot_messenger__service__pb2.ListChatsRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.ListChatsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
     def AddAllowedUser(request,
             target,
             options=(),
@@ -231,7 +429,61 @@ class ChatService(object):
             target,
             '/akiora.messenger.ChatService/RemoveAllowedUser',
             messenger_dot_v1_dot_messenger__service__pb2.RemoveAllowedUserRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
+            messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetChatMembers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.ChatService/GetChatMembers',
+            messenger_dot_v1_dot_messenger__service__pb2.GetChatMembersRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.GetChatMembersResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def IsChatMember(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.ChatService/IsChatMember',
+            messenger_dot_v1_dot_messenger__service__pb2.IsChatMemberRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.IsChatMemberResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -269,6 +521,60 @@ class ChatService(object):
             metadata,
             _registered_method=True)
 
+    @staticmethod
+    def UnfreezeChat(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.ChatService/UnfreezeChat',
+            messenger_dot_v1_dot_messenger__service__pb2.UnfreezeChatRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.ChatResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetUserChats(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.ChatService/GetUserChats',
+            messenger_dot_v1_dot_messenger__service__pb2.GetUserChatsRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.ListChatsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
 
 class MessageServiceStub(object):
     """Missing associated documentation comment in .proto file."""
@@ -284,10 +590,10 @@ class MessageServiceStub(object):
                 request_serializer=messenger_dot_v1_dot_messenger__service__pb2.SendMessageRequest.SerializeToString,
                 response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.FromString,
                 _registered_method=True)
-        self.GetMessages = channel.unary_unary(
-                '/akiora.messenger.MessageService/GetMessages',
-                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetMessagesRequest.SerializeToString,
-                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetMessagesResponse.FromString,
+        self.GetMessage = channel.unary_unary(
+                '/akiora.messenger.MessageService/GetMessage',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetMessageRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.FromString,
                 _registered_method=True)
         self.UpdateMessage = channel.unary_unary(
                 '/akiora.messenger.MessageService/UpdateMessage',
@@ -299,10 +605,20 @@ class MessageServiceStub(object):
                 request_serializer=messenger_dot_v1_dot_messenger__service__pb2.DeleteMessageRequest.SerializeToString,
                 response_deserializer=common_dot_types__pb2.Empty.FromString,
                 _registered_method=True)
+        self.ListMessages = channel.unary_unary(
+                '/akiora.messenger.MessageService/ListMessages',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.ListMessagesRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ListMessagesResponse.FromString,
+                _registered_method=True)
         self.MarkAsRead = channel.unary_unary(
                 '/akiora.messenger.MessageService/MarkAsRead',
                 request_serializer=messenger_dot_v1_dot_messenger__service__pb2.MarkAsReadRequest.SerializeToString,
                 response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.FromString,
+                _registered_method=True)
+        self.GetUnreadCount = channel.unary_unary(
+                '/akiora.messenger.MessageService/GetUnreadCount',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetUnreadCountRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetUnreadCountResponse.FromString,
                 _registered_method=True)
         self.AddReaction = channel.unary_unary(
                 '/akiora.messenger.MessageService/AddReaction',
@@ -312,7 +628,22 @@ class MessageServiceStub(object):
         self.RemoveReaction = channel.unary_unary(
                 '/akiora.messenger.MessageService/RemoveReaction',
                 request_serializer=messenger_dot_v1_dot_messenger__service__pb2.RemoveReactionRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.FromString,
+                _registered_method=True)
+        self.GetReactions = channel.unary_unary(
+                '/akiora.messenger.MessageService/GetReactions',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetReactionsRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetReactionsResponse.FromString,
+                _registered_method=True)
+        self.GetMessageHistory = channel.unary_unary(
+                '/akiora.messenger.MessageService/GetMessageHistory',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetMessageHistoryRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ListMessagesResponse.FromString,
+                _registered_method=True)
+        self.GetUserMessages = channel.unary_unary(
+                '/akiora.messenger.MessageService/GetUserMessages',
+                request_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetUserMessagesRequest.SerializeToString,
+                response_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ListMessagesResponse.FromString,
                 _registered_method=True)
 
 
@@ -320,12 +651,13 @@ class MessageServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def SendMessage(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Basic CRUD
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetMessages(self, request, context):
+    def GetMessage(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -343,20 +675,55 @@ class MessageServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ListMessages(self, request, context):
+        """List with filters and pagination
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def MarkAsRead(self, request, context):
+        """Read status
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUnreadCount(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def AddReaction(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Reactions
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def RemoveReaction(self, request, context):
         """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetReactions(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMessageHistory(self, request, context):
+        """Message history
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUserMessages(self, request, context):
+        """Get user's messages
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -369,10 +736,10 @@ def add_MessageServiceServicer_to_server(servicer, server):
                     request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.SendMessageRequest.FromString,
                     response_serializer=messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.SerializeToString,
             ),
-            'GetMessages': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetMessages,
-                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetMessagesRequest.FromString,
-                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetMessagesResponse.SerializeToString,
+            'GetMessage': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMessage,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetMessageRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.SerializeToString,
             ),
             'UpdateMessage': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateMessage,
@@ -384,10 +751,20 @@ def add_MessageServiceServicer_to_server(servicer, server):
                     request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.DeleteMessageRequest.FromString,
                     response_serializer=common_dot_types__pb2.Empty.SerializeToString,
             ),
+            'ListMessages': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListMessages,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.ListMessagesRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.ListMessagesResponse.SerializeToString,
+            ),
             'MarkAsRead': grpc.unary_unary_rpc_method_handler(
                     servicer.MarkAsRead,
                     request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.MarkAsReadRequest.FromString,
                     response_serializer=messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.SerializeToString,
+            ),
+            'GetUnreadCount': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUnreadCount,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetUnreadCountRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetUnreadCountResponse.SerializeToString,
             ),
             'AddReaction': grpc.unary_unary_rpc_method_handler(
                     servicer.AddReaction,
@@ -397,7 +774,22 @@ def add_MessageServiceServicer_to_server(servicer, server):
             'RemoveReaction': grpc.unary_unary_rpc_method_handler(
                     servicer.RemoveReaction,
                     request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.RemoveReactionRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.SerializeToString,
+            ),
+            'GetReactions': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetReactions,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetReactionsRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.GetReactionsResponse.SerializeToString,
+            ),
+            'GetMessageHistory': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMessageHistory,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetMessageHistoryRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.ListMessagesResponse.SerializeToString,
+            ),
+            'GetUserMessages': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUserMessages,
+                    request_deserializer=messenger_dot_v1_dot_messenger__service__pb2.GetUserMessagesRequest.FromString,
+                    response_serializer=messenger_dot_v1_dot_messenger__service__pb2.ListMessagesResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -438,7 +830,7 @@ class MessageService(object):
             _registered_method=True)
 
     @staticmethod
-    def GetMessages(request,
+    def GetMessage(request,
             target,
             options=(),
             channel_credentials=None,
@@ -451,9 +843,9 @@ class MessageService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/akiora.messenger.MessageService/GetMessages',
-            messenger_dot_v1_dot_messenger__service__pb2.GetMessagesRequest.SerializeToString,
-            messenger_dot_v1_dot_messenger__service__pb2.GetMessagesResponse.FromString,
+            '/akiora.messenger.MessageService/GetMessage',
+            messenger_dot_v1_dot_messenger__service__pb2.GetMessageRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -519,6 +911,33 @@ class MessageService(object):
             _registered_method=True)
 
     @staticmethod
+    def ListMessages(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.MessageService/ListMessages',
+            messenger_dot_v1_dot_messenger__service__pb2.ListMessagesRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.ListMessagesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
     def MarkAsRead(request,
             target,
             options=(),
@@ -535,6 +954,33 @@ class MessageService(object):
             '/akiora.messenger.MessageService/MarkAsRead',
             messenger_dot_v1_dot_messenger__service__pb2.MarkAsReadRequest.SerializeToString,
             messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetUnreadCount(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.MessageService/GetUnreadCount',
+            messenger_dot_v1_dot_messenger__service__pb2.GetUnreadCountRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.GetUnreadCountResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -588,7 +1034,88 @@ class MessageService(object):
             target,
             '/akiora.messenger.MessageService/RemoveReaction',
             messenger_dot_v1_dot_messenger__service__pb2.RemoveReactionRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
+            messenger_dot_v1_dot_messenger__service__pb2.MessageResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetReactions(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.MessageService/GetReactions',
+            messenger_dot_v1_dot_messenger__service__pb2.GetReactionsRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.GetReactionsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMessageHistory(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.MessageService/GetMessageHistory',
+            messenger_dot_v1_dot_messenger__service__pb2.GetMessageHistoryRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.ListMessagesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetUserMessages(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.messenger.MessageService/GetUserMessages',
+            messenger_dot_v1_dot_messenger__service__pb2.GetUserMessagesRequest.SerializeToString,
+            messenger_dot_v1_dot_messenger__service__pb2.ListMessagesResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -47,6 +47,79 @@ message UserResponse {
   int64 last_updated = 11;
 }
 
+// Pagination request
+message PaginationRequest {
+  optional int32 page = 1;
+  optional int32 page_size = 2;
+  optional int64 before_timestamp = 3;
+}
+
+// Filter request
+message UserFilter {
+  optional string search = 1;
+  optional UserType user_type = 2;
+  optional Gender gender = 3;
+  optional bool has_avatar = 4;
+  optional int64 min_created_at = 5;
+  optional int64 max_created_at = 6;
+}
+
+// Request with filters and pagination
+message ListUsersRequest {
+  optional UserFilter filter = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+// List response
+message ListUsersResponse {
+  repeated UserResponse users = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  bool has_next = 5;
+}
+
+
+
+// Friend request messages
+message FriendRequest {
+  string sender_id = 1;
+  string receiver_id = 2;
+}
+
+message RespondFriendRequest {
+  string request_id = 1;
+  string responder_id = 2;
+  bool accept = 3;
+}
+
+message FriendResponse {
+  string id = 1;
+  string user_id_1 = 2;
+  string user_id_2 = 3;
+  string status = 4; // PENDING, ACCEPTED, REJECTED, BLOCKED
+  int64 created_at = 5;
+  int64 updated_at = 6;
+}
+
+message ListFriendsRequest {
+  string user_id = 1;
+  optional PaginationRequest pagination = 2;
+  enum FriendStatus {
+    FRIEND_STATUS_UNSPECIFIED = 0;
+    ACCEPTED = 1;
+    PENDING = 2;
+    BLOCKED = 3;
+  }
+  optional FriendStatus status = 3;
+}
+
+message ListFriendsResponse {
+  repeated FriendResponse friends = 1;
+  int32 total_count = 2;
+}
+
+// CRUD operations
 message CreateUserRequest {
   string email = 1;
   optional string nickname = 2;
@@ -71,7 +144,48 @@ message UpdateUserRequest {
   map<string, Social> socials = 8;
 }
 
+message DeleteUserRequest {
+  string user_id = 1;
+  string actor_id = 2;
+}
+
+// Friend operations
+message SendFriendRequestRequest {
+  FriendRequest request = 1;
+}
+
+message RespondFriendRequestRequest {
+  RespondFriendRequest response = 1;
+}
+
+message RemoveFriendRequest {
+  string user_id_1 = 1;
+  string user_id_2 = 2;
+  string actor_id = 3;
+}
+
+message BlockUserRequest {
+  string blocker_id = 1;
+  string blocked_id = 2;
+}
+
+message UnblockUserRequest {
+  string blocker_id = 1;
+  string blocked_id = 2;
+}
+
+message GetFriendStatusRequest {
+  string user_id_1 = 1;
+  string user_id_2 = 2;
+}
+
+message GetFriendStatusResponse {
+  string status = 1;
+  optional string request_id = 2;
+}
+
 service UserService {
+  // Basic CRUD
   rpc CreateUser(CreateUserRequest) returns (UserResponse) {
     option (google.api.http) = {
       post: "/v1/users"
@@ -95,6 +209,70 @@ service UserService {
     option (google.api.http) = {
       patch: "/v1/users/{user_id}"
       body: "*"
+    };
+  }
+
+  rpc DeleteUser(DeleteUserRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/users/{user_id}"
+    };
+  }
+
+  // List with filters and pagination
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {
+      get: "/v1/users"
+    };
+  }
+
+  // Friend management
+  rpc SendFriendRequest(SendFriendRequestRequest) returns (FriendResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/{sender_id}/friends"
+      body: "*"
+    };
+  }
+
+  rpc RespondFriendRequest(RespondFriendRequestRequest) returns (FriendResponse) {
+    option (google.api.http) = {
+      patch: "/v1/users/{response.responder_id}/friend-requests/{response.request_id}"
+      body: "*"
+    };
+  }
+
+  rpc GetPendingFriendRequests(GetUserRequest) returns (ListFriendsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{id}/friend-requests/pending"
+    };
+  }
+
+  rpc GetFriends(ListFriendsRequest) returns (ListFriendsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}/friends"
+    };
+  }
+
+  rpc RemoveFriend(RemoveFriendRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/users/{user_id_1}/friends/{user_id_2}"
+    };
+  }
+
+  rpc BlockUser(BlockUserRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      post: "/v1/users/{blocker_id}/blocked-users/{blocked_id}"
+    };
+  }
+
+  rpc UnblockUser(UnblockUserRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/users/{blocker_id}/blocked-users/{blocked_id}"
+    };
+  }
+
+  rpc GetFriendStatus(GetFriendStatusRequest) returns (GetFriendStatusResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id_1}/friend-status/{user_id_2}"
     };
   }
 }

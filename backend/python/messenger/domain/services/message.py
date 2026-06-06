@@ -119,7 +119,7 @@ class MessageService:
 
         reaction = Reaction(emote_id=emote_id, user_id=str(user_id))
         update_query = {
-            "$push": {"history": reaction.model_dump()},
+            "$push": {"reactions": reaction.model_dump()},
         }
         await message.update(update_query)
 

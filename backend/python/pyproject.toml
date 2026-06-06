@@ -33,6 +33,7 @@ members = [
     "draft",
     "game",
     "gateway",
+    "socketgw",
     "messenger",
     "auth",
     "search",

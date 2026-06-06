@@ -1,7 +1,5 @@
 from google.api import annotations_pb2 as _annotations_pb2
-from google.api import http_pb2 as _http_pb2
 from common import game_actors_pb2 as _game_actors_pb2
-from common import game_settings_pb2 as _game_settings_pb2
 from common import game_draft_pb2 as _game_draft_pb2
 from common import types_pb2 as _types_pb2
 from google.protobuf import descriptor as _descriptor

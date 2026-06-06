@@ -27,7 +27,8 @@ if _version_not_supported:
 
 
 class TournamentServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """============= SERVICE =============
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -38,137 +39,225 @@ class TournamentServiceStub(object):
         self.CreateTournament = channel.unary_unary(
                 '/akiora.game.tournament.TournamentService/CreateTournament',
                 request_serializer=game_dot_v1_dot_tournament__service__pb2.CreateTournamentRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
                 _registered_method=True)
         self.GetTournament = channel.unary_unary(
                 '/akiora.game.tournament.TournamentService/GetTournament',
                 request_serializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.SerializeToString,
                 response_deserializer=game_dot_v1_dot_tournament__service__pb2.ManyTournamentsResponse.FromString,
                 _registered_method=True)
-        self.GetTournaments = channel.unary_unary(
-                '/akiora.game.tournament.TournamentService/GetTournaments',
-                request_serializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.SerializeToString,
-                response_deserializer=game_dot_v1_dot_tournament__service__pb2.ManyTournamentsResponse.FromString,
+        self.UpdateTournament = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/UpdateTournament',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.UpdateTournamentRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+                _registered_method=True)
+        self.DeleteTournament = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/DeleteTournament',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.DeleteTournamentRequest.SerializeToString,
+                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                _registered_method=True)
+        self.ListTournaments = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/ListTournaments',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.ListTournamentsRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.ListTournamentsResponse.FromString,
                 _registered_method=True)
         self.StartTournament = channel.unary_unary(
                 '/akiora.game.tournament.TournamentService/StartTournament',
-                request_serializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
-                _registered_method=True)
-        self.PreBuildBracket = channel.unary_unary(
-                '/akiora.game.tournament.TournamentService/PreBuildBracket',
-                request_serializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.StartTournamentRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
                 _registered_method=True)
         self.FinishTournament = channel.unary_unary(
                 '/akiora.game.tournament.TournamentService/FinishTournament',
-                request_serializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.FinishTournamentRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+                _registered_method=True)
+        self.PreBuildBracket = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/PreBuildBracket',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.PreBuildBracketRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
                 _registered_method=True)
         self.AddParticipant = channel.unary_unary(
                 '/akiora.game.tournament.TournamentService/AddParticipant',
                 request_serializer=game_dot_v1_dot_tournament__service__pb2.AddParticipantRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
                 _registered_method=True)
         self.AddTeam = channel.unary_unary(
                 '/akiora.game.tournament.TournamentService/AddTeam',
                 request_serializer=game_dot_v1_dot_tournament__service__pb2.AddTeamParticipantRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
-                _registered_method=True)
-        self.AddParticipantToWaitList = channel.unary_unary(
-                '/akiora.game.tournament.TournamentService/AddParticipantToWaitList',
-                request_serializer=game_dot_v1_dot_tournament__service__pb2.AddParticipantRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
-                _registered_method=True)
-        self.ChangeBracket = channel.unary_unary(
-                '/akiora.game.tournament.TournamentService/ChangeBracket',
-                request_serializer=game_dot_v1_dot_tournament__service__pb2.ChangeBracketRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
                 _registered_method=True)
         self.RemoveParticipant = channel.unary_unary(
                 '/akiora.game.tournament.TournamentService/RemoveParticipant',
                 request_serializer=game_dot_v1_dot_tournament__service__pb2.RemoveParticipantRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+                _registered_method=True)
+        self.UpdateParticipant = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/UpdateParticipant',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.UpdateParticipantRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+                _registered_method=True)
+        self.AddParticipantToWaitList = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/AddParticipantToWaitList',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.AddParticipantToWaitListRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+                _registered_method=True)
+        self.RemoveFromWaitList = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/RemoveFromWaitList',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.RemoveFromWaitListRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+                _registered_method=True)
+        self.ChangeBracket = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/ChangeBracket',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.ChangeBracketRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+                _registered_method=True)
+        self.GetBracket = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/GetBracket',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.GetBracketRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.GetBracketResponse.FromString,
+                _registered_method=True)
+        self.GetParticipants = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/GetParticipants',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.GetParticipantsRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.GetParticipantsResponse.FromString,
+                _registered_method=True)
+        self.GetWaitlist = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/GetWaitlist',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.GetWaitlistRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.GetWaitlistResponse.FromString,
+                _registered_method=True)
+        self.IsParticipant = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/IsParticipant',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.IsParticipantRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.IsParticipantResponse.FromString,
+                _registered_method=True)
+        self.GetTournamentStats = channel.unary_unary(
+                '/akiora.game.tournament.TournamentService/GetTournamentStats',
+                request_serializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentStatsRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_tournament__service__pb2.TournamentStatsResponse.FromString,
                 _registered_method=True)
 
 
 class TournamentServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """============= SERVICE =============
+    """
 
     def CreateTournament(self, request, context):
-        """Создание турнира
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetTournament(self, request, context):
-        """Получение одного или нескольких турниров по ID
-        лучше возвращать ManyTournamentsResponse
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetTournaments(self, request, context):
-        """Получение списка турниров (с фильтром по game_type)
-        """
+    def UpdateTournament(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteTournament(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListTournaments(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def StartTournament(self, request, context):
-        """Запуск турнира
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def PreBuildBracket(self, request, context):
-        """Предварительная сборка брекета
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def FinishTournament(self, request, context):
-        """Завершение турнира
-        """
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def PreBuildBracket(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def AddParticipant(self, request, context):
-        """Добавление участника (одиночного)
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def AddTeam(self, request, context):
-        """Добавление команды
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def AddParticipantToWaitList(self, request, context):
-        """Добавление в лист ожидания
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ChangeBracket(self, request, context):
-        """Смена мест в брекете
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def RemoveParticipant(self, request, context):
-        """Удаление участника
-        """
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateParticipant(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AddParticipantToWaitList(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RemoveFromWaitList(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ChangeBracket(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetBracket(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetParticipants(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetWaitlist(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def IsParticipant(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetTournamentStats(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -179,57 +268,102 @@ def add_TournamentServiceServicer_to_server(servicer, server):
             'CreateTournament': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateTournament,
                     request_deserializer=game_dot_v1_dot_tournament__service__pb2.CreateTournamentRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
             ),
             'GetTournament': grpc.unary_unary_rpc_method_handler(
                     servicer.GetTournament,
                     request_deserializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.FromString,
                     response_serializer=game_dot_v1_dot_tournament__service__pb2.ManyTournamentsResponse.SerializeToString,
             ),
-            'GetTournaments': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetTournaments,
-                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.FromString,
-                    response_serializer=game_dot_v1_dot_tournament__service__pb2.ManyTournamentsResponse.SerializeToString,
+            'UpdateTournament': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateTournament,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.UpdateTournamentRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
+            ),
+            'DeleteTournament': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteTournament,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.DeleteTournamentRequest.FromString,
+                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+            ),
+            'ListTournaments': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListTournaments,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.ListTournamentsRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.ListTournamentsResponse.SerializeToString,
             ),
             'StartTournament': grpc.unary_unary_rpc_method_handler(
                     servicer.StartTournament,
-                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
-            ),
-            'PreBuildBracket': grpc.unary_unary_rpc_method_handler(
-                    servicer.PreBuildBracket,
-                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.StartTournamentRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
             ),
             'FinishTournament': grpc.unary_unary_rpc_method_handler(
                     servicer.FinishTournament,
-                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.FinishTournamentRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
+            ),
+            'PreBuildBracket': grpc.unary_unary_rpc_method_handler(
+                    servicer.PreBuildBracket,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.PreBuildBracketRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
             ),
             'AddParticipant': grpc.unary_unary_rpc_method_handler(
                     servicer.AddParticipant,
                     request_deserializer=game_dot_v1_dot_tournament__service__pb2.AddParticipantRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
             ),
             'AddTeam': grpc.unary_unary_rpc_method_handler(
                     servicer.AddTeam,
                     request_deserializer=game_dot_v1_dot_tournament__service__pb2.AddTeamParticipantRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
-            ),
-            'AddParticipantToWaitList': grpc.unary_unary_rpc_method_handler(
-                    servicer.AddParticipantToWaitList,
-                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.AddParticipantRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
-            ),
-            'ChangeBracket': grpc.unary_unary_rpc_method_handler(
-                    servicer.ChangeBracket,
-                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.ChangeBracketRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
             ),
             'RemoveParticipant': grpc.unary_unary_rpc_method_handler(
                     servicer.RemoveParticipant,
                     request_deserializer=game_dot_v1_dot_tournament__service__pb2.RemoveParticipantRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
+            ),
+            'UpdateParticipant': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateParticipant,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.UpdateParticipantRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
+            ),
+            'AddParticipantToWaitList': grpc.unary_unary_rpc_method_handler(
+                    servicer.AddParticipantToWaitList,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.AddParticipantToWaitListRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
+            ),
+            'RemoveFromWaitList': grpc.unary_unary_rpc_method_handler(
+                    servicer.RemoveFromWaitList,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.RemoveFromWaitListRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
+            ),
+            'ChangeBracket': grpc.unary_unary_rpc_method_handler(
+                    servicer.ChangeBracket,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.ChangeBracketRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentResponse.SerializeToString,
+            ),
+            'GetBracket': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetBracket,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.GetBracketRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.GetBracketResponse.SerializeToString,
+            ),
+            'GetParticipants': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetParticipants,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.GetParticipantsRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.GetParticipantsResponse.SerializeToString,
+            ),
+            'GetWaitlist': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetWaitlist,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.GetWaitlistRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.GetWaitlistResponse.SerializeToString,
+            ),
+            'IsParticipant': grpc.unary_unary_rpc_method_handler(
+                    servicer.IsParticipant,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.IsParticipantRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.IsParticipantResponse.SerializeToString,
+            ),
+            'GetTournamentStats': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetTournamentStats,
+                    request_deserializer=game_dot_v1_dot_tournament__service__pb2.GetTournamentStatsRequest.FromString,
+                    response_serializer=game_dot_v1_dot_tournament__service__pb2.TournamentStatsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -240,7 +374,8 @@ def add_TournamentServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class TournamentService(object):
-    """Missing associated documentation comment in .proto file."""
+    """============= SERVICE =============
+    """
 
     @staticmethod
     def CreateTournament(request,
@@ -258,7 +393,7 @@ class TournamentService(object):
             target,
             '/akiora.game.tournament.TournamentService/CreateTournament',
             game_dot_v1_dot_tournament__service__pb2.CreateTournamentRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -297,7 +432,7 @@ class TournamentService(object):
             _registered_method=True)
 
     @staticmethod
-    def GetTournaments(request,
+    def UpdateTournament(request,
             target,
             options=(),
             channel_credentials=None,
@@ -310,9 +445,63 @@ class TournamentService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/akiora.game.tournament.TournamentService/GetTournaments',
-            game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.SerializeToString,
-            game_dot_v1_dot_tournament__service__pb2.ManyTournamentsResponse.FromString,
+            '/akiora.game.tournament.TournamentService/UpdateTournament',
+            game_dot_v1_dot_tournament__service__pb2.UpdateTournamentRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteTournament(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/DeleteTournament',
+            game_dot_v1_dot_tournament__service__pb2.DeleteTournamentRequest.SerializeToString,
+            common_dot_types__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListTournaments(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/ListTournaments',
+            game_dot_v1_dot_tournament__service__pb2.ListTournamentsRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.ListTournamentsResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -338,35 +527,8 @@ class TournamentService(object):
             request,
             target,
             '/akiora.game.tournament.TournamentService/StartTournament',
-            game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def PreBuildBracket(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/akiora.game.tournament.TournamentService/PreBuildBracket',
-            game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
+            game_dot_v1_dot_tournament__service__pb2.StartTournamentRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -392,8 +554,35 @@ class TournamentService(object):
             request,
             target,
             '/akiora.game.tournament.TournamentService/FinishTournament',
-            game_dot_v1_dot_tournament__service__pb2.GetTournamentRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
+            game_dot_v1_dot_tournament__service__pb2.FinishTournamentRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def PreBuildBracket(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/PreBuildBracket',
+            game_dot_v1_dot_tournament__service__pb2.PreBuildBracketRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -420,7 +609,7 @@ class TournamentService(object):
             target,
             '/akiora.game.tournament.TournamentService/AddParticipant',
             game_dot_v1_dot_tournament__service__pb2.AddParticipantRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -447,61 +636,7 @@ class TournamentService(object):
             target,
             '/akiora.game.tournament.TournamentService/AddTeam',
             game_dot_v1_dot_tournament__service__pb2.AddTeamParticipantRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def AddParticipantToWaitList(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/akiora.game.tournament.TournamentService/AddParticipantToWaitList',
-            game_dot_v1_dot_tournament__service__pb2.AddParticipantRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ChangeBracket(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/akiora.game.tournament.TournamentService/ChangeBracket',
-            game_dot_v1_dot_tournament__service__pb2.ChangeBracketRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -528,7 +663,250 @@ class TournamentService(object):
             target,
             '/akiora.game.tournament.TournamentService/RemoveParticipant',
             game_dot_v1_dot_tournament__service__pb2.RemoveParticipantRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateParticipant(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/UpdateParticipant',
+            game_dot_v1_dot_tournament__service__pb2.UpdateParticipantRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AddParticipantToWaitList(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/AddParticipantToWaitList',
+            game_dot_v1_dot_tournament__service__pb2.AddParticipantToWaitListRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RemoveFromWaitList(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/RemoveFromWaitList',
+            game_dot_v1_dot_tournament__service__pb2.RemoveFromWaitListRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ChangeBracket(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/ChangeBracket',
+            game_dot_v1_dot_tournament__service__pb2.ChangeBracketRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetBracket(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/GetBracket',
+            game_dot_v1_dot_tournament__service__pb2.GetBracketRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.GetBracketResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetParticipants(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/GetParticipants',
+            game_dot_v1_dot_tournament__service__pb2.GetParticipantsRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.GetParticipantsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetWaitlist(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/GetWaitlist',
+            game_dot_v1_dot_tournament__service__pb2.GetWaitlistRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.GetWaitlistResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def IsParticipant(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/IsParticipant',
+            game_dot_v1_dot_tournament__service__pb2.IsParticipantRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.IsParticipantResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetTournamentStats(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.tournament.TournamentService/GetTournamentStats',
+            game_dot_v1_dot_tournament__service__pb2.GetTournamentStatsRequest.SerializeToString,
+            game_dot_v1_dot_tournament__service__pb2.TournamentStatsResponse.FromString,
             options,
             channel_credentials,
             insecure,

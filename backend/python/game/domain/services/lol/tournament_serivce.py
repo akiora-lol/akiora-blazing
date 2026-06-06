@@ -56,25 +56,28 @@ class TournamentService:
 
         return t
 
-    async def add_to_waitlist(self, id: UUID, p: Actor, team: list[UUID]) -> None:
+    async def add_to_waitlist(self, id: UUID, p: Actor, team: list[UUID]) -> Tournament:
         t = await Tournament.get(id)
         t.add_to_waitlist(p, team)
         await t.save()
+        return t
 
-    async def add_participant(self, id: UUID, p: Actor, team: list[UUID]) -> None:
+    async def add_participant(self, id: UUID, p: Actor, team: list[UUID]) -> Tournament:
         t = await Tournament.get(id)
         t.add_participant(p, team)
         await t.save()
+        return t
 
-    async def start_tournament(self, id: UUID) -> None:
+    async def start_tournament(self, id: UUID) -> Tournament:
         t = await Tournament.get(id)
         gss = await self.game_series_service.get_by_tournament_id(id)
         for gs in gss:
             await self.game_series_service.start(gs.id)
         t.start()
         await t.save()
+        return t
 
-    async def swap_teams(self, id: UUID, t1: Actor, t2: Actor) -> None:
+    async def swap_teams(self, id: UUID, t1: Actor, t2: Actor) -> Tournament:
         t = await Tournament.get(id)
         if t.status != TournamentStatus.SCHEDULED:
             raise Exception("Cannot swap teams in active tournament")
@@ -84,18 +87,19 @@ class TournamentService:
         tp1, tp2 = (
             TeamParticipant(
                 actor=t1,
-                team=next((x.players for x in t.participant_pool if x.actor == t1), []),
+                players=next((x.players for x in t.participant_pool if x.actor == t1), []),
             ),
             TeamParticipant(
                 actor=t2,
-                team=next((x.players for x in t.participant_pool if x.actor == t2), []),
+                players=next((x.players for x in t.participant_pool if x.actor == t2), []),
             ),
         )
         await self.game_series_service.swap_teams(gs_id1, tp1, tp2)
         await self.game_series_service.swap_teams(gs_id2, tp2, tp1)
         await t.save()
+        return t
 
-    async def prebuild_bracket(self, id: UUID) -> None:
+    async def prebuild_bracket(self, id: UUID) -> Tournament:
         t = await Tournament.get(id)
         if t.settings.bracket_type == BracketType.SINGLE_ELIMINATION:
             actors = list(map(lambda x: x.actor, t.participant_pool))
@@ -107,7 +111,7 @@ class TournamentService:
                         participants=[
                             TeamParticipant(
                                 actor=match.team1,
-                                team=next(
+                                players=next(
                                     (
                                         x.players
                                         for x in t.participant_pool
@@ -118,7 +122,7 @@ class TournamentService:
                             ),
                             TeamParticipant(
                                 actor=match.team2,
-                                team=next(
+                                players=next(
                                     (
                                         x.players
                                         for x in t.participant_pool
@@ -134,3 +138,33 @@ class TournamentService:
             raise Exception("not implemented yet")
         t.bracket = bracket
         await t.save()
+        return t
+
+    async def finish_tournament(self, id: UUID) -> Tournament:
+        from datetime import datetime, UTC
+
+        t = await Tournament.get(id)
+        t.status = TournamentStatus.FINISHED
+        t.end = datetime.now(UTC)
+        await t.save()
+        return t
+
+    async def remove_participant(self, id: UUID, participant_id: UUID) -> Tournament:
+        t = await Tournament.get(id)
+        t.participant_pool = [
+            participant
+            for participant in t.participant_pool
+            if participant.actor and participant.actor.id != participant_id
+        ]
+        await t.save()
+        return t
+
+    async def remove_from_waitlist(self, id: UUID, participant_id: UUID) -> Tournament:
+        t = await Tournament.get(id)
+        t.wait_list = [
+            participant
+            for participant in t.wait_list
+            if participant.actor and participant.actor.id != participant_id
+        ]
+        await t.save()
+        return t

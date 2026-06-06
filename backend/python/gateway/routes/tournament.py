@@ -5,8 +5,30 @@ import grpc
 from loguru import logger
 
 from shared.contracts.tournament import (
+    AddParticipantToWaitListRequest,
     CreateTournamentRequest,
+    DeleteTournamentRequest,
+    FinishTournamentRequest,
+    GetBracketRequest,
+    GetBracketResponse,
+    GetParticipantsRequest,
+    GetParticipantsResponse,
     GetTournamentRequest,
+    GetTournamentStatsRequest,
+    GetWaitlistRequest,
+    GetWaitlistResponse,
+    IsParticipantRequest,
+    IsParticipantResponse,
+    ListTournamentsRequest,
+    ListTournamentsResponse,
+    PaginationRequest,
+    PreBuildBracketRequest,
+    RemoveFromWaitListRequest,
+    StartTournamentRequest,
+    TournamentFilter,
+    TournamentStatsResponse,
+    UpdateParticipantRequest,
+    UpdateTournamentRequest,
     ChangeBracketRequest,
     AddParticipantRequest,
     AddTeamParticipantRequest,
@@ -38,6 +60,36 @@ async def create_tournament(request: CreateTournamentRequest):
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
+@router.get(path="/search", response_model=ListTournamentsResponse)
+async def list_tournaments(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+    game_type: Optional[GameType] = None,
+    host_id: Optional[UUID] = None,
+    is_participant: bool = False,
+    min_start_time: Optional[int] = None,
+    max_start_time: Optional[int] = None,
+    is_open: bool = False,
+):
+    try:
+        return await _get_stub().list_tournaments(
+            ListTournamentsRequest(
+                filter=TournamentFilter(
+                    game_type=game_type,
+                    host_id=host_id,
+                    is_participant=is_participant,
+                    min_start_time=min_start_time,
+                    max_start_time=max_start_time,
+                    is_open=is_open,
+                ),
+                pagination=PaginationRequest(page=page, page_size=page_size),
+            )
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in list_tournaments: {} {}", e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
 @router.get(path="/{tournament_id}", response_model=ManyTournamentsResponse)
 async def get_tournament(tournament_id: str):
     try:
@@ -61,72 +113,247 @@ async def get_tournaments(
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
-@router.post(path="/{tournament_id}/start", status_code=status.HTTP_204_NO_CONTENT)
-async def start_tournament(tournament_id: str):
-    # TODO: implement start_tournament in stub
-    raise HTTPException(status_code=501, detail="Not implemented")
+@router.patch(path="/{tournament_id}", response_model=TournamentResponse)
+async def update_tournament(tournament_id: str, request: UpdateTournamentRequest):
+    if str(request.tournament_id) != tournament_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tournament ID in path does not match request body",
+        )
+    try:
+        return await _get_stub().update_tournament(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in update_tournament({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
-@router.post(path="/{tournament_id}/prebuild-bracket", status_code=status.HTTP_204_NO_CONTENT)
-async def prebuild_bracket(tournament_id: str):
-    # TODO: implement prebuild_bracket in stub
-    raise HTTPException(status_code=501, detail="Not implemented")
+@router.delete(path="/{tournament_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_tournament(tournament_id: str, actor_id: UUID):
+    try:
+        await _get_stub().delete_tournament(
+            DeleteTournamentRequest(tournament_id=tournament_id, actor_id=actor_id)
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in delete_tournament({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
-@router.post(path="/{tournament_id}/finish", status_code=status.HTTP_204_NO_CONTENT)
-async def finish_tournament(tournament_id: str):
-    # TODO: implement finish_tournament in stub
-    raise HTTPException(status_code=501, detail="Not implemented")
+@router.post(path="/{tournament_id}/start", response_model=TournamentResponse)
+async def start_tournament(tournament_id: str, actor_id: Optional[UUID] = None):
+    try:
+        return await _get_stub().start_tournament(
+            StartTournamentRequest(tournament_id=tournament_id, actor_id=actor_id)
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in start_tournament({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
-@router.post(path="/{tournament_id}/participants", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(path="/{tournament_id}/prebuild-bracket", response_model=TournamentResponse)
+async def prebuild_bracket(tournament_id: str, actor_id: Optional[UUID] = None):
+    try:
+        return await _get_stub().prebuild_bracket(
+            PreBuildBracketRequest(tournament_id=tournament_id, actor_id=actor_id)
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in prebuild_bracket({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/{tournament_id}/finish", response_model=TournamentResponse)
+async def finish_tournament(
+    tournament_id: str,
+    actor_id: Optional[UUID] = None,
+    winner_id: Optional[str] = None,
+):
+    try:
+        return await _get_stub().finish_tournament(
+            FinishTournamentRequest(
+                tournament_id=tournament_id,
+                actor_id=actor_id,
+                winner_id=winner_id,
+            )
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in finish_tournament({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/{tournament_id}/participants", response_model=TournamentResponse)
 async def add_participant(tournament_id: str, request: AddParticipantRequest):
     if str(request.tournament_id) != tournament_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Tournament ID in path does not match request body",
         )
-    # TODO: implement add_participant in stub
-    raise HTTPException(status_code=501, detail="Not implemented")
+    try:
+        return await _get_stub().add_participant(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in add_participant({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
-@router.post(path="/{tournament_id}/teams", status_code=status.HTTP_204_NO_CONTENT)
+@router.get(path="/{tournament_id}/participants", response_model=GetParticipantsResponse)
+async def get_participants(
+    tournament_id: str,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+):
+    try:
+        return await _get_stub().get_participants(
+            GetParticipantsRequest(
+                tournament_id=tournament_id,
+                pagination=PaginationRequest(page=page, page_size=page_size),
+            )
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in get_participants({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/{tournament_id}/teams", response_model=TournamentResponse)
 async def add_team(tournament_id: str, request: AddTeamParticipantRequest):
     if str(request.tournament_id) != tournament_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Tournament ID in path does not match request body",
         )
-    # TODO: implement add_team in stub
-    raise HTTPException(status_code=501, detail="Not implemented")
+    try:
+        return await _get_stub().add_team(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in add_team({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
-@router.post(path="/{tournament_id}/waitlist", status_code=status.HTTP_204_NO_CONTENT)
-async def add_to_waitlist(tournament_id: str, request: AddParticipantRequest):
+@router.post(path="/{tournament_id}/waitlist", response_model=TournamentResponse)
+async def add_to_waitlist(tournament_id: str, request: AddParticipantToWaitListRequest):
     if str(request.tournament_id) != tournament_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Tournament ID in path does not match request body",
         )
-    # TODO: implement add_to_waitlist in stub
-    raise HTTPException(status_code=501, detail="Not implemented")
+    try:
+        return await _get_stub().add_to_waitlist(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in add_to_waitlist({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
-@router.post(path="/{tournament_id}/bracket/swap", status_code=status.HTTP_204_NO_CONTENT)
+@router.get(path="/{tournament_id}/waitlist", response_model=GetWaitlistResponse)
+async def get_waitlist(
+    tournament_id: str,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+):
+    try:
+        return await _get_stub().get_waitlist(
+            GetWaitlistRequest(
+                tournament_id=tournament_id,
+                pagination=PaginationRequest(page=page, page_size=page_size),
+            )
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in get_waitlist({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.delete(path="/{tournament_id}/waitlist/{participant_id}", response_model=TournamentResponse)
+async def remove_from_waitlist(tournament_id: str, participant_id: str):
+    try:
+        return await _get_stub().remove_from_waitlist(
+            RemoveFromWaitListRequest(
+                tournament_id=tournament_id,
+                participant_id=participant_id,
+            )
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in remove_from_waitlist({}, {}): {} {}", tournament_id, participant_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/{tournament_id}/bracket/swap", response_model=TournamentResponse)
 async def change_bracket(tournament_id: str, request: ChangeBracketRequest):
     if str(request.tournament_id) != tournament_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Tournament ID in path does not match request body",
         )
-    # TODO: implement change_bracket in stub
-    raise HTTPException(status_code=501, detail="Not implemented")
+    try:
+        return await _get_stub().change_bracket(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in change_bracket({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
-@router.delete(path="/{tournament_id}/participants/{participant_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def remove_participant(tournament_id: str, participant_id: str):
-    # TODO: implement remove_participant in stub
-    raise HTTPException(status_code=501, detail="Not implemented")
+@router.get(path="/{tournament_id}/bracket", response_model=GetBracketResponse)
+async def get_bracket(tournament_id: str):
+    try:
+        return await _get_stub().get_bracket(GetBracketRequest(tournament_id=tournament_id))
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in get_bracket({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.delete(path="/{tournament_id}/participants/{participant_id}", response_model=TournamentResponse)
+async def remove_participant(
+    tournament_id: str,
+    participant_id: str,
+    actor_id: Optional[UUID] = None,
+):
+    try:
+        return await _get_stub().remove_participant(
+            RemoveParticipantRequest(
+                tournament_id=tournament_id,
+                participant_id=participant_id,
+                actor_id=actor_id,
+            )
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in remove_participant({}, {}): {} {}", tournament_id, participant_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.patch(path="/{tournament_id}/participants/{participant_id}", response_model=TournamentResponse)
+async def update_participant(
+    tournament_id: str,
+    participant_id: str,
+    request: UpdateParticipantRequest,
+):
+    if str(request.tournament_id) != tournament_id or request.participant_id != participant_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="IDs in path do not match request body",
+        )
+    try:
+        return await _get_stub().update_participant(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in update_participant({}, {}): {} {}", tournament_id, participant_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.get(path="/{tournament_id}/participants/{participant_id}", response_model=IsParticipantResponse)
+async def is_participant(tournament_id: str, participant_id: str):
+    try:
+        return await _get_stub().is_participant(
+            IsParticipantRequest(
+                tournament_id=tournament_id,
+                participant_id=participant_id,
+            )
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in is_participant({}, {}): {} {}", tournament_id, participant_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.get(path="/{tournament_id}/stats", response_model=TournamentStatsResponse)
+async def get_tournament_stats(tournament_id: str):
+    try:
+        return await _get_stub().get_tournament_stats(
+            GetTournamentStatsRequest(tournament_id=tournament_id)
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in get_tournament_stats({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
 def _grpc_to_http(code: grpc.StatusCode) -> int:

@@ -2,6 +2,7 @@ import grpc
 from uuid import UUID
 
 from shared.contracts.gameseries import (
+    DraftActionRequest,
     ToggleReadyRequest,
     GameSeriesResponse,
 )
@@ -10,6 +11,7 @@ from shared.contracts.tournament import Actor, ActorType, GameType, GameSettings
 import game.v1.gameseries_service_pb2 as pb2_module
 import game.v1.gameseries_service_pb2_grpc as pb2_grpc_module
 import common.game_actors_pb2 as actors_pb2_module
+import common.game_draft_pb2 as draft_pb2_module
 
 
 class GameSeriesMapper:
@@ -47,6 +49,21 @@ class GameSeriesMapper:
             actor=cls._to_grpc_actor(request.actor),
         )
 
+    @classmethod
+    def to_grpc_draft_action_request(cls, request: DraftActionRequest):
+        action = draft_pb2_module.Action()
+        if request.command.action.pick is not None:
+            action.pick = request.command.action.pick
+        if request.command.action.ban is not None:
+            action.ban = request.command.action.ban
+        return pb2_module.DraftActionRequest(
+            series_id=str(request.series_id),
+            command=draft_pb2_module.Command(
+                actor=cls._to_grpc_actor(request.command.actor),
+                action=action,
+            ),
+        )
+
 
 class GameSeriesStub:
     """Stub for GameSeries Service gRPC calls with pydantic mapping"""
@@ -59,6 +76,10 @@ class GameSeriesStub:
     async def toggle_ready(self, request: ToggleReadyRequest):
         grpc_request = self.mapper.to_grpc_toggle_ready_request(request)
         return await self.stub.ToggleReady(grpc_request)
+
+    async def draft_action(self, request: DraftActionRequest):
+        grpc_request = self.mapper.to_grpc_draft_action_request(request)
+        return await self.stub.DraftAction(grpc_request)
 
     def toggle_ready_sync(self, request: ToggleReadyRequest):
         grpc_request = self.mapper.to_grpc_toggle_ready_request(request)

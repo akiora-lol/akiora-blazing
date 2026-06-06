@@ -1,4 +1,5 @@
 from uuid import UUID
+from uuid import uuid4
 from domain.value_objects.actors import TeamParticipant
 from domain.entities.lol.game_series import GameSeries
 from domain.value_objects.settings import LolGameSeriesSettings, DraftType
@@ -20,6 +21,7 @@ class GameSeriesService:
         settings: LolGameSeriesSettings,
     ) -> GameSeries:
         gs = GameSeries.domain_create(
+            id=uuid4(),
             tournament_id=id,
             teams=participants,
             settings=settings,

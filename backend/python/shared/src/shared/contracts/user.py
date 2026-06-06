@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field, EmailStr, field_validator
@@ -78,3 +78,101 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PaginationRequest(BaseModel):
+    page: int = 1
+    page_size: int = 50
+    before_timestamp: Optional[int] = None
+
+
+class UserFilter(BaseModel):
+    search: Optional[str] = None
+    user_type: Optional[UserType] = None
+    gender: Optional[Gender] = None
+    has_avatar: bool = False
+    min_created_at: Optional[int] = None
+    max_created_at: Optional[int] = None
+
+
+class ListUsersRequest(BaseModel):
+    filter: UserFilter = Field(default_factory=UserFilter)
+    pagination: PaginationRequest = Field(default_factory=PaginationRequest)
+
+
+class ListUsersResponse(BaseModel):
+    users: List[UserResponse] = Field(default_factory=list)
+    total_count: int = 0
+    page: int = 1
+    page_size: int = 50
+    has_next: bool = False
+
+
+class DeleteUserRequest(BaseModel):
+    user_id: UUID
+    actor_id: UUID
+
+
+class FriendRequest(BaseModel):
+    sender_id: UUID
+    receiver_id: UUID
+
+
+class RespondFriendRequest(BaseModel):
+    request_id: UUID
+    responder_id: UUID
+    accept: bool = False
+
+
+class FriendResponse(BaseModel):
+    id: UUID
+    user_id_1: UUID
+    user_id_2: UUID
+    status: str
+    created_at: int
+    updated_at: int
+
+
+class SendFriendRequestRequest(BaseModel):
+    request: FriendRequest
+
+
+class RespondFriendRequestRequest(BaseModel):
+    response: RespondFriendRequest
+
+
+class ListFriendsRequest(BaseModel):
+    user_id: UUID
+    pagination: PaginationRequest = Field(default_factory=PaginationRequest)
+    status: str = "ALL"
+
+
+class ListFriendsResponse(BaseModel):
+    friends: List[FriendResponse] = Field(default_factory=list)
+    total_count: int = 0
+
+
+class RemoveFriendRequest(BaseModel):
+    user_id_1: UUID
+    user_id_2: UUID
+    actor_id: UUID
+
+
+class BlockUserRequest(BaseModel):
+    blocker_id: UUID
+    blocked_id: UUID
+
+
+class UnblockUserRequest(BaseModel):
+    blocker_id: UUID
+    blocked_id: UUID
+
+
+class GetFriendStatusRequest(BaseModel):
+    user_id_1: UUID
+    user_id_2: UUID
+
+
+class GetFriendStatusResponse(BaseModel):
+    status: str
+    request_id: Optional[UUID] = None

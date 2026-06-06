@@ -18,10 +18,52 @@ message TeamResponse {
   int64 created_at = 7;
 }
 
+message MemberInfo {
+  string user_id = 1;
+  string nickname = 2;
+  string avatar = 3;
+}
+
+// Pagination request
+message PaginationRequest {
+  optional int32 page = 1;
+  optional int32 page_size = 2;
+}
+
+// Filter request
+message TeamFilter {
+  optional string search = 1;
+  optional string owner_id = 2;
+  optional bool is_member = 3;
+}
+
+// Request with filters and pagination
+message ListTeamsRequest {
+  optional TeamFilter filter = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+// List response
+message ListTeamsResponse {
+  repeated TeamResponse teams = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  bool has_next = 5;
+}
+
+// Full member list response with details
+message TeamMembersResponse {
+  repeated MemberInfo members = 1;
+  int32 total_count = 2;
+}
+
+// CRUD operations
 message CreateTeamRequest {
   string owner_id = 1;
   string name = 2;
-  optional string tag = 3;
+  optional string avatar = 3;
+  optional string tag = 4;
 }
 
 message GetTeamRequest {
@@ -36,6 +78,12 @@ message UpdateTeamRequest {
   optional string tag = 5;
 }
 
+message DeleteTeamRequest {
+  string team_id = 1;
+  string actor_id = 2;
+}
+
+// Member operations
 message AddTeamMemberRequest {
   string team_id = 1;
   string actor_id = 2;
@@ -48,7 +96,31 @@ message RemoveTeamMemberRequest {
   string user_id = 3;
 }
 
+message GetMembersRequest {
+  string team_id = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+// Search members
+message SearchMembersRequest {
+  string team_id = 1;
+  optional string search = 2;
+  optional PaginationRequest pagination = 3;
+}
+
+// Check team capacity
+message CheckCapacityRequest {
+  string team_id = 1;
+}
+
+message CheckCapacityResponse {
+  bool can_add = 1;
+  int32 current_members = 2;
+  int32 max_members = 3;
+}
+
 service TeamService {
+  // Basic CRUD
   rpc CreateTeam(CreateTeamRequest) returns (TeamResponse) {
     option (google.api.http) = {
       post: "/v1/teams"
@@ -69,6 +141,20 @@ service TeamService {
     };
   }
 
+  rpc DeleteTeam(DeleteTeamRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/teams/{team_id}"
+    };
+  }
+
+  // List with filters and pagination
+  rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse) {
+    option (google.api.http) = {
+      get: "/v1/teams"
+    };
+  }
+
+  // Member management
   rpc AddMember(AddTeamMemberRequest) returns (TeamResponse) {
     option (google.api.http) = {
       post: "/v1/teams/{team_id}/members"
@@ -76,9 +162,46 @@ service TeamService {
     };
   }
 
-  rpc RemoveMember(RemoveTeamMemberRequest) returns (common.Empty) {
+  rpc RemoveMember(RemoveTeamMemberRequest) returns (TeamResponse) {
     option (google.api.http) = {
       delete: "/v1/teams/{team_id}/members/{user_id}"
     };
   }
+
+  rpc GetMembers(GetMembersRequest) returns (TeamMembersResponse) {
+    option (google.api.http) = {
+      get: "/v1/teams/{team_id}/members"
+    };
+  }
+
+  rpc SearchMembers(SearchMembersRequest) returns (TeamMembersResponse) {
+    option (google.api.http) = {
+      get: "/v1/teams/{team_id}/members/search"
+    };
+  }
+
+  // Check capacity
+  rpc CheckCapacity(CheckCapacityRequest) returns (CheckCapacityResponse) {
+    option (google.api.http) = {
+      get: "/v1/teams/{team_id}/capacity"
+    };
+  }
+
+  // Check membership
+  rpc IsMember(IsMemberRequest) returns (IsMemberResponse) {
+    option (google.api.http) = {
+      get: "/v1/teams/{team_id}/members/{user_id}/is-member"
+    };
+  }
+}
+
+// Additional messages
+message IsMemberRequest {
+  string team_id = 1;
+  string user_id = 2;
+}
+
+message IsMemberResponse {
+  bool is_member = 1;
+  optional string role = 2; // owner, member
 }

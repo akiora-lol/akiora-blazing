@@ -27,7 +27,7 @@ from google.api import http_pb2 as google_dot_api_dot_http__pb2
 from common import types_pb2 as common_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$community/club/v1/club_service.proto\x12\x15\x61kiora.community.club\x1a\x1cgoogle/api/annotations.proto\x1a\x15google/api/http.proto\x1a\x12\x63ommon/types.proto\" \n\x0e\x43lubPermission\x12\x0e\n\x06tokens\x18\x01 \x03(\t\"\x1c\n\nFieldGroup\x12\x0e\n\x06\x66ields\x18\x01 \x03(\t\"\x82\x03\n\x0c\x43lubResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\x10\n\x08owner_id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x13\n\x06\x61vatar\x18\x04 \x01(\tH\x00\x88\x01\x01\x12\x18\n\x0b\x64\x65scription\x18\x05 \x01(\tH\x01\x88\x01\x01\x12\x0f\n\x07members\x18\x06 \x03(\t\x12\x31\n\x06\x66ields\x18\x07 \x03(\x0b\x32!.akiora.community.club.FieldGroup\x12I\n\x0bpermissions\x18\x08 \x03(\x0b\x32\x34.akiora.community.club.ClubResponse.PermissionsEntry\x12\x12\n\ncreated_at\x18\t \x01(\x03\x1aY\n\x10PermissionsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x34\n\x05value\x18\x02 \x01(\x0b\x32%.akiora.community.club.ClubPermission:\x02\x38\x01\x42\t\n\x07_avatarB\x0e\n\x0c_description\"f\n\x11\x43reateClubRequest\x12\x10\n\x08owner_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x31\n\x06\x66ields\x18\x03 \x03(\x0b\x32!.akiora.community.club.FieldGroup\"!\n\x0eGetClubRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\"\xcf\x01\n\x11UpdateClubRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\x12\x11\n\x04name\x18\x03 \x01(\tH\x00\x88\x01\x01\x12\x13\n\x06\x61vatar\x18\x04 \x01(\tH\x01\x88\x01\x01\x12\x18\n\x0b\x64\x65scription\x18\x05 \x01(\tH\x02\x88\x01\x01\x12\x31\n\x06\x66ields\x18\x06 \x03(\x0b\x32!.akiora.community.club.FieldGroupB\x07\n\x05_nameB\t\n\x07_avatarB\x0e\n\x0c_description\"D\n\x10\x41\x64\x64MemberRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\x0e\n\x06tokens\x18\x03 \x03(\t\"7\n\x13RemoveMemberRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\"a\n\x14SetPermissionRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\x12\x16\n\x0etarget_user_id\x18\x03 \x01(\t\x12\x0e\n\x06tokens\x18\x04 \x03(\t2\x9f\x06\n\x0b\x43lubService\x12q\n\nCreateClub\x12(.akiora.community.club.CreateClubRequest\x1a#.akiora.community.club.ClubResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/clubs:\x01*\x12r\n\x07GetClub\x12%.akiora.community.club.GetClubRequest\x1a#.akiora.community.club.ClubResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/clubs/{club_id}\x12{\n\nUpdateClub\x12(.akiora.community.club.UpdateClubRequest\x1a#.akiora.community.club.ClubResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x32\x13/v1/clubs/{club_id}:\x01*\x12\x81\x01\n\tAddMember\x12\'.akiora.community.club.AddMemberRequest\x1a#.akiora.community.club.ClubResponse\"&\x82\xd3\xe4\x93\x02 \"\x1b/v1/clubs/{club_id}/members:\x01*\x12\x7f\n\x0cRemoveMember\x12*.akiora.community.club.RemoveMemberRequest\x1a\x14.akiora.common.Empty\"-\x82\xd3\xe4\x93\x02\'*%/v1/clubs/{club_id}/members/{user_id}\x12\xa6\x01\n\rSetPermission\x12+.akiora.community.club.SetPermissionRequest\x1a#.akiora.community.club.ClubResponse\"C\x82\xd3\xe4\x93\x02=\x1a\x38/v1/clubs/{club_id}/members/{target_user_id}/permissions:\x01*B\x17Z\x15\x61kiora/community/clubb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$community/club/v1/club_service.proto\x12\x15\x61kiora.community.club\x1a\x1cgoogle/api/annotations.proto\x1a\x15google/api/http.proto\x1a\x12\x63ommon/types.proto\" \n\x0e\x43lubPermission\x12\x0e\n\x06tokens\x18\x01 \x03(\t\"\x1c\n\nFieldGroup\x12\x0e\n\x06\x66ields\x18\x01 \x03(\t\"\x82\x03\n\x0c\x43lubResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\x10\n\x08owner_id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x13\n\x06\x61vatar\x18\x04 \x01(\tH\x00\x88\x01\x01\x12\x18\n\x0b\x64\x65scription\x18\x05 \x01(\tH\x01\x88\x01\x01\x12\x0f\n\x07members\x18\x06 \x03(\t\x12\x31\n\x06\x66ields\x18\x07 \x03(\x0b\x32!.akiora.community.club.FieldGroup\x12I\n\x0bpermissions\x18\x08 \x03(\x0b\x32\x34.akiora.community.club.ClubResponse.PermissionsEntry\x12\x12\n\ncreated_at\x18\t \x01(\x03\x1aY\n\x10PermissionsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x34\n\x05value\x18\x02 \x01(\x0b\x32%.akiora.community.club.ClubPermission:\x02\x38\x01\x42\t\n\x07_avatarB\x0e\n\x0c_description\"{\n\nMemberInfo\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\x12\x0e\n\x06\x61vatar\x18\x03 \x01(\t\x12:\n\x0bpermissions\x18\x04 \x01(\x0b\x32%.akiora.community.club.ClubPermission\"U\n\x11PaginationRequest\x12\x11\n\x04page\x18\x01 \x01(\x05H\x00\x88\x01\x01\x12\x16\n\tpage_size\x18\x02 \x01(\x05H\x01\x88\x01\x01\x42\x07\n\x05_pageB\x0c\n\n_page_size\"v\n\nClubFilter\x12\x13\n\x06search\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x15\n\x08owner_id\x18\x02 \x01(\tH\x01\x88\x01\x01\x12\x16\n\tis_member\x18\x03 \x01(\x08H\x02\x88\x01\x01\x42\t\n\x07_searchB\x0b\n\t_owner_idB\x0c\n\n_is_member\"\xa7\x01\n\x10ListClubsRequest\x12\x36\n\x06\x66ilter\x18\x01 \x01(\x0b\x32!.akiora.community.club.ClubFilterH\x00\x88\x01\x01\x12\x41\n\npagination\x18\x02 \x01(\x0b\x32(.akiora.community.club.PaginationRequestH\x01\x88\x01\x01\x42\t\n\x07_filterB\r\n\x0b_pagination\"\x8f\x01\n\x11ListClubsResponse\x12\x32\n\x05\x63lubs\x18\x01 \x03(\x0b\x32#.akiora.community.club.ClubResponse\x12\x13\n\x0btotal_count\x18\x02 \x01(\x05\x12\x0c\n\x04page\x18\x03 \x01(\x05\x12\x11\n\tpage_size\x18\x04 \x01(\x05\x12\x10\n\x08has_next\x18\x05 \x01(\x08\"^\n\x13\x43lubMembersResponse\x12\x32\n\x07members\x18\x01 \x03(\x0b\x32!.akiora.community.club.MemberInfo\x12\x13\n\x0btotal_count\x18\x02 \x01(\x05\"\xb0\x01\n\x11\x43reateClubRequest\x12\x10\n\x08owner_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x13\n\x06\x61vatar\x18\x03 \x01(\tH\x00\x88\x01\x01\x12\x18\n\x0b\x64\x65scription\x18\x04 \x01(\tH\x01\x88\x01\x01\x12\x31\n\x06\x66ields\x18\x05 \x03(\x0b\x32!.akiora.community.club.FieldGroupB\t\n\x07_avatarB\x0e\n\x0c_description\"!\n\x0eGetClubRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\"\xcf\x01\n\x11UpdateClubRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\x12\x11\n\x04name\x18\x03 \x01(\tH\x00\x88\x01\x01\x12\x13\n\x06\x61vatar\x18\x04 \x01(\tH\x01\x88\x01\x01\x12\x18\n\x0b\x64\x65scription\x18\x05 \x01(\tH\x02\x88\x01\x01\x12\x31\n\x06\x66ields\x18\x06 \x03(\x0b\x32!.akiora.community.club.FieldGroupB\x07\n\x05_nameB\t\n\x07_avatarB\x0e\n\x0c_description\"6\n\x11\x44\x65leteClubRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\"V\n\x10\x41\x64\x64MemberRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\x12\x0e\n\x06tokens\x18\x04 \x03(\t\"I\n\x13RemoveMemberRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\"a\n\x14SetPermissionRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\x12\x16\n\x0etarget_user_id\x18\x03 \x01(\t\x12\x0e\n\x06tokens\x18\x04 \x03(\t\"v\n\x11GetMembersRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x41\n\npagination\x18\x02 \x01(\x0b\x32(.akiora.community.club.PaginationRequestH\x00\x88\x01\x01\x42\r\n\x0b_pagination\"?\n\x1bGetMemberPermissionsRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\";\n\x18MemberPermissionResponse\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x0e\n\x06tokens\x18\x02 \x03(\t\"\x99\x01\n\x14SearchMembersRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x13\n\x06search\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\x41\n\npagination\x18\x03 \x01(\x0b\x32(.akiora.community.club.PaginationRequestH\x01\x88\x01\x01\x42\t\n\x07_searchB\r\n\x0b_pagination\"3\n\x0fIsMemberRequest\x12\x0f\n\x07\x63lub_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\"\x92\x01\n\x10IsMemberResponse\x12\x11\n\tis_member\x18\x01 \x01(\x08\x12\x11\n\x04role\x18\x02 \x01(\tH\x00\x88\x01\x01\x12?\n\x0bpermissions\x18\x03 \x01(\x0b\x32%.akiora.community.club.ClubPermissionH\x01\x88\x01\x01\x42\x07\n\x05_roleB\x0e\n\x0c_permissions2\xfe\x0c\n\x0b\x43lubService\x12q\n\nCreateClub\x12(.akiora.community.club.CreateClubRequest\x1a#.akiora.community.club.ClubResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/clubs:\x01*\x12r\n\x07GetClub\x12%.akiora.community.club.GetClubRequest\x1a#.akiora.community.club.ClubResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/clubs/{club_id}\x12{\n\nUpdateClub\x12(.akiora.community.club.UpdateClubRequest\x1a#.akiora.community.club.ClubResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x32\x13/v1/clubs/{club_id}:\x01*\x12i\n\nDeleteClub\x12(.akiora.community.club.DeleteClubRequest\x1a\x14.akiora.common.Empty\"\x1b\x82\xd3\xe4\x93\x02\x15*\x13/v1/clubs/{club_id}\x12q\n\tListClubs\x12\'.akiora.community.club.ListClubsRequest\x1a(.akiora.community.club.ListClubsResponse\"\x11\x82\xd3\xe4\x93\x02\x0b\x12\t/v1/clubs\x12\x81\x01\n\tAddMember\x12\'.akiora.community.club.AddMemberRequest\x1a#.akiora.community.club.ClubResponse\"&\x82\xd3\xe4\x93\x02 \"\x1b/v1/clubs/{club_id}/members:\x01*\x12\x8e\x01\n\x0cRemoveMember\x12*.akiora.community.club.RemoveMemberRequest\x1a#.akiora.community.club.ClubResponse\"-\x82\xd3\xe4\x93\x02\'*%/v1/clubs/{club_id}/members/{user_id}\x12\xa6\x01\n\rSetPermission\x12+.akiora.community.club.SetPermissionRequest\x1a#.akiora.community.club.ClubResponse\"C\x82\xd3\xe4\x93\x02=\x1a\x38/v1/clubs/{club_id}/members/{target_user_id}/permissions:\x01*\x12\x87\x01\n\nGetMembers\x12(.akiora.community.club.GetMembersRequest\x1a*.akiora.community.club.ClubMembersResponse\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/v1/clubs/{club_id}/members\x12\xb6\x01\n\x14GetMemberPermissions\x12\x32.akiora.community.club.GetMemberPermissionsRequest\x1a/.akiora.community.club.MemberPermissionResponse\"9\x82\xd3\xe4\x93\x02\x33\x12\x31/v1/clubs/{club_id}/members/{user_id}/permissions\x12\x94\x01\n\rSearchMembers\x12+.akiora.community.club.SearchMembersRequest\x1a*.akiora.community.club.ClubMembersResponse\"*\x82\xd3\xe4\x93\x02$\x12\"/v1/clubs/{club_id}/members/search\x12\x94\x01\n\x08IsMember\x12&.akiora.community.club.IsMemberRequest\x1a\'.akiora.community.club.IsMemberResponse\"7\x82\xd3\xe4\x93\x02\x31\x12//v1/clubs/{club_id}/members/{user_id}/is-memberB\x17Z\x15\x61kiora/community/clubb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -43,12 +43,24 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_CLUBSERVICE'].methods_by_name['GetClub']._serialized_options = b'\202\323\344\223\002\025\022\023/v1/clubs/{club_id}'
   _globals['_CLUBSERVICE'].methods_by_name['UpdateClub']._loaded_options = None
   _globals['_CLUBSERVICE'].methods_by_name['UpdateClub']._serialized_options = b'\202\323\344\223\002\0302\023/v1/clubs/{club_id}:\001*'
+  _globals['_CLUBSERVICE'].methods_by_name['DeleteClub']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['DeleteClub']._serialized_options = b'\202\323\344\223\002\025*\023/v1/clubs/{club_id}'
+  _globals['_CLUBSERVICE'].methods_by_name['ListClubs']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['ListClubs']._serialized_options = b'\202\323\344\223\002\013\022\t/v1/clubs'
   _globals['_CLUBSERVICE'].methods_by_name['AddMember']._loaded_options = None
   _globals['_CLUBSERVICE'].methods_by_name['AddMember']._serialized_options = b'\202\323\344\223\002 \"\033/v1/clubs/{club_id}/members:\001*'
   _globals['_CLUBSERVICE'].methods_by_name['RemoveMember']._loaded_options = None
   _globals['_CLUBSERVICE'].methods_by_name['RemoveMember']._serialized_options = b'\202\323\344\223\002\'*%/v1/clubs/{club_id}/members/{user_id}'
   _globals['_CLUBSERVICE'].methods_by_name['SetPermission']._loaded_options = None
   _globals['_CLUBSERVICE'].methods_by_name['SetPermission']._serialized_options = b'\202\323\344\223\002=\0328/v1/clubs/{club_id}/members/{target_user_id}/permissions:\001*'
+  _globals['_CLUBSERVICE'].methods_by_name['GetMembers']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['GetMembers']._serialized_options = b'\202\323\344\223\002\035\022\033/v1/clubs/{club_id}/members'
+  _globals['_CLUBSERVICE'].methods_by_name['GetMemberPermissions']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['GetMemberPermissions']._serialized_options = b'\202\323\344\223\0023\0221/v1/clubs/{club_id}/members/{user_id}/permissions'
+  _globals['_CLUBSERVICE'].methods_by_name['SearchMembers']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['SearchMembers']._serialized_options = b'\202\323\344\223\002$\022\"/v1/clubs/{club_id}/members/search'
+  _globals['_CLUBSERVICE'].methods_by_name['IsMember']._loaded_options = None
+  _globals['_CLUBSERVICE'].methods_by_name['IsMember']._serialized_options = b'\202\323\344\223\0021\022//v1/clubs/{club_id}/members/{user_id}/is-member'
   _globals['_CLUBPERMISSION']._serialized_start=136
   _globals['_CLUBPERMISSION']._serialized_end=168
   _globals['_FIELDGROUP']._serialized_start=170
@@ -57,18 +69,44 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_CLUBRESPONSE']._serialized_end=587
   _globals['_CLUBRESPONSE_PERMISSIONSENTRY']._serialized_start=471
   _globals['_CLUBRESPONSE_PERMISSIONSENTRY']._serialized_end=560
-  _globals['_CREATECLUBREQUEST']._serialized_start=589
-  _globals['_CREATECLUBREQUEST']._serialized_end=691
-  _globals['_GETCLUBREQUEST']._serialized_start=693
-  _globals['_GETCLUBREQUEST']._serialized_end=726
-  _globals['_UPDATECLUBREQUEST']._serialized_start=729
-  _globals['_UPDATECLUBREQUEST']._serialized_end=936
-  _globals['_ADDMEMBERREQUEST']._serialized_start=938
-  _globals['_ADDMEMBERREQUEST']._serialized_end=1006
-  _globals['_REMOVEMEMBERREQUEST']._serialized_start=1008
-  _globals['_REMOVEMEMBERREQUEST']._serialized_end=1063
-  _globals['_SETPERMISSIONREQUEST']._serialized_start=1065
-  _globals['_SETPERMISSIONREQUEST']._serialized_end=1162
-  _globals['_CLUBSERVICE']._serialized_start=1165
-  _globals['_CLUBSERVICE']._serialized_end=1964
+  _globals['_MEMBERINFO']._serialized_start=589
+  _globals['_MEMBERINFO']._serialized_end=712
+  _globals['_PAGINATIONREQUEST']._serialized_start=714
+  _globals['_PAGINATIONREQUEST']._serialized_end=799
+  _globals['_CLUBFILTER']._serialized_start=801
+  _globals['_CLUBFILTER']._serialized_end=919
+  _globals['_LISTCLUBSREQUEST']._serialized_start=922
+  _globals['_LISTCLUBSREQUEST']._serialized_end=1089
+  _globals['_LISTCLUBSRESPONSE']._serialized_start=1092
+  _globals['_LISTCLUBSRESPONSE']._serialized_end=1235
+  _globals['_CLUBMEMBERSRESPONSE']._serialized_start=1237
+  _globals['_CLUBMEMBERSRESPONSE']._serialized_end=1331
+  _globals['_CREATECLUBREQUEST']._serialized_start=1334
+  _globals['_CREATECLUBREQUEST']._serialized_end=1510
+  _globals['_GETCLUBREQUEST']._serialized_start=1512
+  _globals['_GETCLUBREQUEST']._serialized_end=1545
+  _globals['_UPDATECLUBREQUEST']._serialized_start=1548
+  _globals['_UPDATECLUBREQUEST']._serialized_end=1755
+  _globals['_DELETECLUBREQUEST']._serialized_start=1757
+  _globals['_DELETECLUBREQUEST']._serialized_end=1811
+  _globals['_ADDMEMBERREQUEST']._serialized_start=1813
+  _globals['_ADDMEMBERREQUEST']._serialized_end=1899
+  _globals['_REMOVEMEMBERREQUEST']._serialized_start=1901
+  _globals['_REMOVEMEMBERREQUEST']._serialized_end=1974
+  _globals['_SETPERMISSIONREQUEST']._serialized_start=1976
+  _globals['_SETPERMISSIONREQUEST']._serialized_end=2073
+  _globals['_GETMEMBERSREQUEST']._serialized_start=2075
+  _globals['_GETMEMBERSREQUEST']._serialized_end=2193
+  _globals['_GETMEMBERPERMISSIONSREQUEST']._serialized_start=2195
+  _globals['_GETMEMBERPERMISSIONSREQUEST']._serialized_end=2258
+  _globals['_MEMBERPERMISSIONRESPONSE']._serialized_start=2260
+  _globals['_MEMBERPERMISSIONRESPONSE']._serialized_end=2319
+  _globals['_SEARCHMEMBERSREQUEST']._serialized_start=2322
+  _globals['_SEARCHMEMBERSREQUEST']._serialized_end=2475
+  _globals['_ISMEMBERREQUEST']._serialized_start=2477
+  _globals['_ISMEMBERREQUEST']._serialized_end=2528
+  _globals['_ISMEMBERRESPONSE']._serialized_start=2531
+  _globals['_ISMEMBERRESPONSE']._serialized_end=2677
+  _globals['_CLUBSERVICE']._serialized_start=2680
+  _globals['_CLUBSERVICE']._serialized_end=4342
 # @@protoc_insertion_point(module_scope)

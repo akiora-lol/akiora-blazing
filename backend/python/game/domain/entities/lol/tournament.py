@@ -39,13 +39,13 @@ class Tournament(Document):
             host=host,
             prizepool=prizepool,
             is_open=is_open,
-            participant_pool={},
+            participant_pool=[],
             start=datetime.fromtimestamp(start, UTC),
             end=None,
             status=TournamentStatus.SCHEDULED,
             settings=settings,
             bracket=None,
-            wait_list=dict(),
+            wait_list=[],
         )
 
     def add_to_waitlist(self, p: Actor, team: list[UUID]) -> "Tournament":

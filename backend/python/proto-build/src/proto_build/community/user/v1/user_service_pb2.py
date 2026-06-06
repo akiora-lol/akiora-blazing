@@ -27,7 +27,7 @@ from google.api import http_pb2 as google_dot_api_dot_http__pb2
 from common import types_pb2 as common_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$community/user/v1/user_service.proto\x12\x15\x61kiora.community.user\x1a\x1cgoogle/api/annotations.proto\x1a\x15google/api/http.proto\x1a\x12\x63ommon/types.proto\"&\n\x06Social\x12\x0c\n\x04link\x18\x01 \x01(\t\x12\x0e\n\x06hidden\x18\x02 \x01(\x08\"\'\n\x08\x42irthday\x12\x0b\n\x03\x64\x61y\x18\x01 \x01(\t\x12\x0e\n\x06hidden\x18\x02 \x01(\x08\"\xdd\x03\n\x0cUserResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05\x65mail\x18\x02 \x01(\t\x12\x10\n\x08nickname\x18\x03 \x01(\t\x12\x32\n\tuser_type\x18\x04 \x01(\x0e\x32\x1f.akiora.community.user.UserType\x12\x13\n\x06\x61vatar\x18\x05 \x01(\tH\x00\x88\x01\x01\x12\x10\n\x03\x62io\x18\x06 \x01(\tH\x01\x88\x01\x01\x12-\n\x06gender\x18\x07 \x01(\x0e\x32\x1d.akiora.community.user.Gender\x12\x38\n\nbirth_date\x18\x08 \x01(\x0b\x32\x1f.akiora.community.user.BirthdayH\x02\x88\x01\x01\x12\x41\n\x07socials\x18\t \x03(\x0b\x32\x30.akiora.community.user.UserResponse.SocialsEntry\x12\x12\n\ncreated_at\x18\n \x01(\x03\x12\x14\n\x0clast_updated\x18\x0b \x01(\x03\x1aM\n\x0cSocialsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12,\n\x05value\x18\x02 \x01(\x0b\x32\x1d.akiora.community.user.Social:\x02\x38\x01\x42\t\n\x07_avatarB\x06\n\x04_bioB\r\n\x0b_birth_date\"F\n\x11\x43reateUserRequest\x12\r\n\x05\x65mail\x18\x01 \x01(\t\x12\x15\n\x08nickname\x18\x02 \x01(\tH\x00\x88\x01\x01\x42\x0b\n\t_nickname\"\x1c\n\x0eGetUserRequest\x12\n\n\x02id\x18\x01 \x01(\t\"&\n\x15GetUserByEmailRequest\x12\r\n\x05\x65mail\x18\x01 \x01(\t\"\xc5\x03\n\x11UpdateUserRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x15\n\x08nickname\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\x10\n\x03\x62io\x18\x03 \x01(\tH\x01\x88\x01\x01\x12\x13\n\x06\x61vatar\x18\x04 \x01(\tH\x02\x88\x01\x01\x12-\n\x06gender\x18\x05 \x01(\x0e\x32\x1d.akiora.community.user.Gender\x12\x32\n\tuser_type\x18\x06 \x01(\x0e\x32\x1f.akiora.community.user.UserType\x12\x38\n\nbirth_date\x18\x07 \x01(\x0b\x32\x1f.akiora.community.user.BirthdayH\x03\x88\x01\x01\x12\x46\n\x07socials\x18\x08 \x03(\x0b\x32\x35.akiora.community.user.UpdateUserRequest.SocialsEntry\x1aM\n\x0cSocialsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12,\n\x05value\x18\x02 \x01(\x0b\x32\x1d.akiora.community.user.Social:\x02\x38\x01\x42\x0b\n\t_nicknameB\x06\n\x04_bioB\t\n\x07_avatarB\r\n\x0b_birth_date*6\n\x06Gender\x12\x16\n\x12GENDER_UNSPECIFIED\x10\x00\x12\x08\n\x04MALE\x10\x01\x12\n\n\x06\x46\x45MALE\x10\x02*c\n\x08UserType\x12\x19\n\x15USER_TYPE_UNSPECIFIED\x10\x00\x12\x0b\n\x07\x44\x45\x46\x41ULT\x10\x01\x12\t\n\x05STAFF\x10\x02\x12\x0c\n\x08STREAMER\x10\x03\x12\x07\n\x03PRO\x10\x04\x12\r\n\tMODERATOR\x10\x05\x32\xf6\x03\n\x0bUserService\x12q\n\nCreateUser\x12(.akiora.community.user.CreateUserRequest\x1a#.akiora.community.user.UserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/users:\x01*\x12m\n\x07GetUser\x12%.akiora.community.user.GetUserRequest\x1a#.akiora.community.user.UserResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/v1/users/{id}\x12\x87\x01\n\x0eGetUserByEmail\x12,.akiora.community.user.GetUserByEmailRequest\x1a#.akiora.community.user.UserResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/v1/users/by-email/{email}\x12{\n\nUpdateUser\x12(.akiora.community.user.UpdateUserRequest\x1a#.akiora.community.user.UserResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x32\x13/v1/users/{user_id}:\x01*B\x17Z\x15\x61kiora/community/userb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$community/user/v1/user_service.proto\x12\x15\x61kiora.community.user\x1a\x1cgoogle/api/annotations.proto\x1a\x15google/api/http.proto\x1a\x12\x63ommon/types.proto\"&\n\x06Social\x12\x0c\n\x04link\x18\x01 \x01(\t\x12\x0e\n\x06hidden\x18\x02 \x01(\x08\"\'\n\x08\x42irthday\x12\x0b\n\x03\x64\x61y\x18\x01 \x01(\t\x12\x0e\n\x06hidden\x18\x02 \x01(\x08\"\xdd\x03\n\x0cUserResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05\x65mail\x18\x02 \x01(\t\x12\x10\n\x08nickname\x18\x03 \x01(\t\x12\x32\n\tuser_type\x18\x04 \x01(\x0e\x32\x1f.akiora.community.user.UserType\x12\x13\n\x06\x61vatar\x18\x05 \x01(\tH\x00\x88\x01\x01\x12\x10\n\x03\x62io\x18\x06 \x01(\tH\x01\x88\x01\x01\x12-\n\x06gender\x18\x07 \x01(\x0e\x32\x1d.akiora.community.user.Gender\x12\x38\n\nbirth_date\x18\x08 \x01(\x0b\x32\x1f.akiora.community.user.BirthdayH\x02\x88\x01\x01\x12\x41\n\x07socials\x18\t \x03(\x0b\x32\x30.akiora.community.user.UserResponse.SocialsEntry\x12\x12\n\ncreated_at\x18\n \x01(\x03\x12\x14\n\x0clast_updated\x18\x0b \x01(\x03\x1aM\n\x0cSocialsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12,\n\x05value\x18\x02 \x01(\x0b\x32\x1d.akiora.community.user.Social:\x02\x38\x01\x42\t\n\x07_avatarB\x06\n\x04_bioB\r\n\x0b_birth_date\"\x89\x01\n\x11PaginationRequest\x12\x11\n\x04page\x18\x01 \x01(\x05H\x00\x88\x01\x01\x12\x16\n\tpage_size\x18\x02 \x01(\x05H\x01\x88\x01\x01\x12\x1d\n\x10\x62\x65\x66ore_timestamp\x18\x03 \x01(\x03H\x02\x88\x01\x01\x42\x07\n\x05_pageB\x0c\n\n_page_sizeB\x13\n\x11_before_timestamp\"\xba\x02\n\nUserFilter\x12\x13\n\x06search\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x37\n\tuser_type\x18\x02 \x01(\x0e\x32\x1f.akiora.community.user.UserTypeH\x01\x88\x01\x01\x12\x32\n\x06gender\x18\x03 \x01(\x0e\x32\x1d.akiora.community.user.GenderH\x02\x88\x01\x01\x12\x17\n\nhas_avatar\x18\x04 \x01(\x08H\x03\x88\x01\x01\x12\x1b\n\x0emin_created_at\x18\x05 \x01(\x03H\x04\x88\x01\x01\x12\x1b\n\x0emax_created_at\x18\x06 \x01(\x03H\x05\x88\x01\x01\x42\t\n\x07_searchB\x0c\n\n_user_typeB\t\n\x07_genderB\r\n\x0b_has_avatarB\x11\n\x0f_min_created_atB\x11\n\x0f_max_created_at\"\xa7\x01\n\x10ListUsersRequest\x12\x36\n\x06\x66ilter\x18\x01 \x01(\x0b\x32!.akiora.community.user.UserFilterH\x00\x88\x01\x01\x12\x41\n\npagination\x18\x02 \x01(\x0b\x32(.akiora.community.user.PaginationRequestH\x01\x88\x01\x01\x42\t\n\x07_filterB\r\n\x0b_pagination\"\x8f\x01\n\x11ListUsersResponse\x12\x32\n\x05users\x18\x01 \x03(\x0b\x32#.akiora.community.user.UserResponse\x12\x13\n\x0btotal_count\x18\x02 \x01(\x05\x12\x0c\n\x04page\x18\x03 \x01(\x05\x12\x11\n\tpage_size\x18\x04 \x01(\x05\x12\x10\n\x08has_next\x18\x05 \x01(\x08\"7\n\rFriendRequest\x12\x11\n\tsender_id\x18\x01 \x01(\t\x12\x13\n\x0breceiver_id\x18\x02 \x01(\t\"P\n\x14RespondFriendRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12\x14\n\x0cresponder_id\x18\x02 \x01(\t\x12\x0e\n\x06\x61\x63\x63\x65pt\x18\x03 \x01(\x08\"z\n\x0e\x46riendResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\x11\n\tuser_id_1\x18\x02 \x01(\t\x12\x11\n\tuser_id_2\x18\x03 \x01(\t\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x12\n\ncreated_at\x18\x05 \x01(\x03\x12\x12\n\nupdated_at\x18\x06 \x01(\x03\"\xa6\x02\n\x12ListFriendsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x41\n\npagination\x18\x02 \x01(\x0b\x32(.akiora.community.user.PaginationRequestH\x00\x88\x01\x01\x12K\n\x06status\x18\x03 \x01(\x0e\x32\x36.akiora.community.user.ListFriendsRequest.FriendStatusH\x01\x88\x01\x01\"U\n\x0c\x46riendStatus\x12\x1d\n\x19\x46RIEND_STATUS_UNSPECIFIED\x10\x00\x12\x0c\n\x08\x41\x43\x43\x45PTED\x10\x01\x12\x0b\n\x07PENDING\x10\x02\x12\x0b\n\x07\x42LOCKED\x10\x03\x42\r\n\x0b_paginationB\t\n\x07_status\"b\n\x13ListFriendsResponse\x12\x36\n\x07\x66riends\x18\x01 \x03(\x0b\x32%.akiora.community.user.FriendResponse\x12\x13\n\x0btotal_count\x18\x02 \x01(\x05\"F\n\x11\x43reateUserRequest\x12\r\n\x05\x65mail\x18\x01 \x01(\t\x12\x15\n\x08nickname\x18\x02 \x01(\tH\x00\x88\x01\x01\x42\x0b\n\t_nickname\"\x1c\n\x0eGetUserRequest\x12\n\n\x02id\x18\x01 \x01(\t\"&\n\x15GetUserByEmailRequest\x12\r\n\x05\x65mail\x18\x01 \x01(\t\"\xc5\x03\n\x11UpdateUserRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x15\n\x08nickname\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\x10\n\x03\x62io\x18\x03 \x01(\tH\x01\x88\x01\x01\x12\x13\n\x06\x61vatar\x18\x04 \x01(\tH\x02\x88\x01\x01\x12-\n\x06gender\x18\x05 \x01(\x0e\x32\x1d.akiora.community.user.Gender\x12\x32\n\tuser_type\x18\x06 \x01(\x0e\x32\x1f.akiora.community.user.UserType\x12\x38\n\nbirth_date\x18\x07 \x01(\x0b\x32\x1f.akiora.community.user.BirthdayH\x03\x88\x01\x01\x12\x46\n\x07socials\x18\x08 \x03(\x0b\x32\x35.akiora.community.user.UpdateUserRequest.SocialsEntry\x1aM\n\x0cSocialsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12,\n\x05value\x18\x02 \x01(\x0b\x32\x1d.akiora.community.user.Social:\x02\x38\x01\x42\x0b\n\t_nicknameB\x06\n\x04_bioB\t\n\x07_avatarB\r\n\x0b_birth_date\"6\n\x11\x44\x65leteUserRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\"Q\n\x18SendFriendRequestRequest\x12\x35\n\x07request\x18\x01 \x01(\x0b\x32$.akiora.community.user.FriendRequest\"\\\n\x1bRespondFriendRequestRequest\x12=\n\x08response\x18\x01 \x01(\x0b\x32+.akiora.community.user.RespondFriendRequest\"M\n\x13RemoveFriendRequest\x12\x11\n\tuser_id_1\x18\x01 \x01(\t\x12\x11\n\tuser_id_2\x18\x02 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x03 \x01(\t\":\n\x10\x42lockUserRequest\x12\x12\n\nblocker_id\x18\x01 \x01(\t\x12\x12\n\nblocked_id\x18\x02 \x01(\t\"<\n\x12UnblockUserRequest\x12\x12\n\nblocker_id\x18\x01 \x01(\t\x12\x12\n\nblocked_id\x18\x02 \x01(\t\">\n\x16GetFriendStatusRequest\x12\x11\n\tuser_id_1\x18\x01 \x01(\t\x12\x11\n\tuser_id_2\x18\x02 \x01(\t\"Q\n\x17GetFriendStatusResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x17\n\nrequest_id\x18\x02 \x01(\tH\x00\x88\x01\x01\x42\r\n\x0b_request_id*6\n\x06Gender\x12\x16\n\x12GENDER_UNSPECIFIED\x10\x00\x12\x08\n\x04MALE\x10\x01\x12\n\n\x06\x46\x45MALE\x10\x02*c\n\x08UserType\x12\x19\n\x15USER_TYPE_UNSPECIFIED\x10\x00\x12\x0b\n\x07\x44\x45\x46\x41ULT\x10\x01\x12\t\n\x05STAFF\x10\x02\x12\x0c\n\x08STREAMER\x10\x03\x12\x07\n\x03PRO\x10\x04\x12\r\n\tMODERATOR\x10\x05\x32\xa5\x0f\n\x0bUserService\x12q\n\nCreateUser\x12(.akiora.community.user.CreateUserRequest\x1a#.akiora.community.user.UserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/users:\x01*\x12m\n\x07GetUser\x12%.akiora.community.user.GetUserRequest\x1a#.akiora.community.user.UserResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/v1/users/{id}\x12\x87\x01\n\x0eGetUserByEmail\x12,.akiora.community.user.GetUserByEmailRequest\x1a#.akiora.community.user.UserResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/v1/users/by-email/{email}\x12{\n\nUpdateUser\x12(.akiora.community.user.UpdateUserRequest\x1a#.akiora.community.user.UserResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x32\x13/v1/users/{user_id}:\x01*\x12i\n\nDeleteUser\x12(.akiora.community.user.DeleteUserRequest\x1a\x14.akiora.common.Empty\"\x1b\x82\xd3\xe4\x93\x02\x15*\x13/v1/users/{user_id}\x12q\n\tListUsers\x12\'.akiora.community.user.ListUsersRequest\x1a(.akiora.community.user.ListUsersResponse\"\x11\x82\xd3\xe4\x93\x02\x0b\x12\t/v1/users\x12\x95\x01\n\x11SendFriendRequest\x12/.akiora.community.user.SendFriendRequestRequest\x1a%.akiora.community.user.FriendResponse\"(\x82\xd3\xe4\x93\x02\"\"\x1d/v1/users/{sender_id}/friends:\x01*\x12\xc5\x01\n\x14RespondFriendRequest\x12\x32.akiora.community.user.RespondFriendRequestRequest\x1a%.akiora.community.user.FriendResponse\"R\x82\xd3\xe4\x93\x02L2G/v1/users/{response.responder_id}/friend-requests/{response.request_id}:\x01*\x12\x9d\x01\n\x18GetPendingFriendRequests\x12%.akiora.community.user.GetUserRequest\x1a*.akiora.community.user.ListFriendsResponse\".\x82\xd3\xe4\x93\x02(\x12&/v1/users/{id}/friend-requests/pending\x12\x88\x01\n\nGetFriends\x12).akiora.community.user.ListFriendsRequest\x1a*.akiora.community.user.ListFriendsResponse\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/v1/users/{user_id}/friends\x12\x83\x01\n\x0cRemoveFriend\x12*.akiora.community.user.RemoveFriendRequest\x1a\x14.akiora.common.Empty\"1\x82\xd3\xe4\x93\x02+*)/v1/users/{user_id_1}/friends/{user_id_2}\x12\x85\x01\n\tBlockUser\x12\'.akiora.community.user.BlockUserRequest\x1a\x14.akiora.common.Empty\"9\x82\xd3\xe4\x93\x02\x33\"1/v1/users/{blocker_id}/blocked-users/{blocked_id}\x12\x89\x01\n\x0bUnblockUser\x12).akiora.community.user.UnblockUserRequest\x1a\x14.akiora.common.Empty\"9\x82\xd3\xe4\x93\x02\x33*1/v1/users/{blocker_id}/blocked-users/{blocked_id}\x12\xa9\x01\n\x0fGetFriendStatus\x12-.akiora.community.user.GetFriendStatusRequest\x1a..akiora.community.user.GetFriendStatusResponse\"7\x82\xd3\xe4\x93\x02\x31\x12//v1/users/{user_id_1}/friend-status/{user_id_2}B\x17Z\x15\x61kiora/community/userb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -47,10 +47,30 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_USERSERVICE'].methods_by_name['GetUserByEmail']._serialized_options = b'\202\323\344\223\002\034\022\032/v1/users/by-email/{email}'
   _globals['_USERSERVICE'].methods_by_name['UpdateUser']._loaded_options = None
   _globals['_USERSERVICE'].methods_by_name['UpdateUser']._serialized_options = b'\202\323\344\223\002\0302\023/v1/users/{user_id}:\001*'
-  _globals['_GENDER']._serialized_start=1295
-  _globals['_GENDER']._serialized_end=1349
-  _globals['_USERTYPE']._serialized_start=1351
-  _globals['_USERTYPE']._serialized_end=1450
+  _globals['_USERSERVICE'].methods_by_name['DeleteUser']._loaded_options = None
+  _globals['_USERSERVICE'].methods_by_name['DeleteUser']._serialized_options = b'\202\323\344\223\002\025*\023/v1/users/{user_id}'
+  _globals['_USERSERVICE'].methods_by_name['ListUsers']._loaded_options = None
+  _globals['_USERSERVICE'].methods_by_name['ListUsers']._serialized_options = b'\202\323\344\223\002\013\022\t/v1/users'
+  _globals['_USERSERVICE'].methods_by_name['SendFriendRequest']._loaded_options = None
+  _globals['_USERSERVICE'].methods_by_name['SendFriendRequest']._serialized_options = b'\202\323\344\223\002\"\"\035/v1/users/{sender_id}/friends:\001*'
+  _globals['_USERSERVICE'].methods_by_name['RespondFriendRequest']._loaded_options = None
+  _globals['_USERSERVICE'].methods_by_name['RespondFriendRequest']._serialized_options = b'\202\323\344\223\002L2G/v1/users/{response.responder_id}/friend-requests/{response.request_id}:\001*'
+  _globals['_USERSERVICE'].methods_by_name['GetPendingFriendRequests']._loaded_options = None
+  _globals['_USERSERVICE'].methods_by_name['GetPendingFriendRequests']._serialized_options = b'\202\323\344\223\002(\022&/v1/users/{id}/friend-requests/pending'
+  _globals['_USERSERVICE'].methods_by_name['GetFriends']._loaded_options = None
+  _globals['_USERSERVICE'].methods_by_name['GetFriends']._serialized_options = b'\202\323\344\223\002\035\022\033/v1/users/{user_id}/friends'
+  _globals['_USERSERVICE'].methods_by_name['RemoveFriend']._loaded_options = None
+  _globals['_USERSERVICE'].methods_by_name['RemoveFriend']._serialized_options = b'\202\323\344\223\002+*)/v1/users/{user_id_1}/friends/{user_id_2}'
+  _globals['_USERSERVICE'].methods_by_name['BlockUser']._loaded_options = None
+  _globals['_USERSERVICE'].methods_by_name['BlockUser']._serialized_options = b'\202\323\344\223\0023\"1/v1/users/{blocker_id}/blocked-users/{blocked_id}'
+  _globals['_USERSERVICE'].methods_by_name['UnblockUser']._loaded_options = None
+  _globals['_USERSERVICE'].methods_by_name['UnblockUser']._serialized_options = b'\202\323\344\223\0023*1/v1/users/{blocker_id}/blocked-users/{blocked_id}'
+  _globals['_USERSERVICE'].methods_by_name['GetFriendStatus']._loaded_options = None
+  _globals['_USERSERVICE'].methods_by_name['GetFriendStatus']._serialized_options = b'\202\323\344\223\0021\022//v1/users/{user_id_1}/friend-status/{user_id_2}'
+  _globals['_GENDER']._serialized_start=3309
+  _globals['_GENDER']._serialized_end=3363
+  _globals['_USERTYPE']._serialized_start=3365
+  _globals['_USERTYPE']._serialized_end=3464
   _globals['_SOCIAL']._serialized_start=136
   _globals['_SOCIAL']._serialized_end=174
   _globals['_BIRTHDAY']._serialized_start=176
@@ -59,16 +79,52 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_USERRESPONSE']._serialized_end=695
   _globals['_USERRESPONSE_SOCIALSENTRY']._serialized_start=584
   _globals['_USERRESPONSE_SOCIALSENTRY']._serialized_end=661
-  _globals['_CREATEUSERREQUEST']._serialized_start=697
-  _globals['_CREATEUSERREQUEST']._serialized_end=767
-  _globals['_GETUSERREQUEST']._serialized_start=769
-  _globals['_GETUSERREQUEST']._serialized_end=797
-  _globals['_GETUSERBYEMAILREQUEST']._serialized_start=799
-  _globals['_GETUSERBYEMAILREQUEST']._serialized_end=837
-  _globals['_UPDATEUSERREQUEST']._serialized_start=840
-  _globals['_UPDATEUSERREQUEST']._serialized_end=1293
+  _globals['_PAGINATIONREQUEST']._serialized_start=698
+  _globals['_PAGINATIONREQUEST']._serialized_end=835
+  _globals['_USERFILTER']._serialized_start=838
+  _globals['_USERFILTER']._serialized_end=1152
+  _globals['_LISTUSERSREQUEST']._serialized_start=1155
+  _globals['_LISTUSERSREQUEST']._serialized_end=1322
+  _globals['_LISTUSERSRESPONSE']._serialized_start=1325
+  _globals['_LISTUSERSRESPONSE']._serialized_end=1468
+  _globals['_FRIENDREQUEST']._serialized_start=1470
+  _globals['_FRIENDREQUEST']._serialized_end=1525
+  _globals['_RESPONDFRIENDREQUEST']._serialized_start=1527
+  _globals['_RESPONDFRIENDREQUEST']._serialized_end=1607
+  _globals['_FRIENDRESPONSE']._serialized_start=1609
+  _globals['_FRIENDRESPONSE']._serialized_end=1731
+  _globals['_LISTFRIENDSREQUEST']._serialized_start=1734
+  _globals['_LISTFRIENDSREQUEST']._serialized_end=2028
+  _globals['_LISTFRIENDSREQUEST_FRIENDSTATUS']._serialized_start=1917
+  _globals['_LISTFRIENDSREQUEST_FRIENDSTATUS']._serialized_end=2002
+  _globals['_LISTFRIENDSRESPONSE']._serialized_start=2030
+  _globals['_LISTFRIENDSRESPONSE']._serialized_end=2128
+  _globals['_CREATEUSERREQUEST']._serialized_start=2130
+  _globals['_CREATEUSERREQUEST']._serialized_end=2200
+  _globals['_GETUSERREQUEST']._serialized_start=2202
+  _globals['_GETUSERREQUEST']._serialized_end=2230
+  _globals['_GETUSERBYEMAILREQUEST']._serialized_start=2232
+  _globals['_GETUSERBYEMAILREQUEST']._serialized_end=2270
+  _globals['_UPDATEUSERREQUEST']._serialized_start=2273
+  _globals['_UPDATEUSERREQUEST']._serialized_end=2726
   _globals['_UPDATEUSERREQUEST_SOCIALSENTRY']._serialized_start=584
   _globals['_UPDATEUSERREQUEST_SOCIALSENTRY']._serialized_end=661
-  _globals['_USERSERVICE']._serialized_start=1453
-  _globals['_USERSERVICE']._serialized_end=1955
+  _globals['_DELETEUSERREQUEST']._serialized_start=2728
+  _globals['_DELETEUSERREQUEST']._serialized_end=2782
+  _globals['_SENDFRIENDREQUESTREQUEST']._serialized_start=2784
+  _globals['_SENDFRIENDREQUESTREQUEST']._serialized_end=2865
+  _globals['_RESPONDFRIENDREQUESTREQUEST']._serialized_start=2867
+  _globals['_RESPONDFRIENDREQUESTREQUEST']._serialized_end=2959
+  _globals['_REMOVEFRIENDREQUEST']._serialized_start=2961
+  _globals['_REMOVEFRIENDREQUEST']._serialized_end=3038
+  _globals['_BLOCKUSERREQUEST']._serialized_start=3040
+  _globals['_BLOCKUSERREQUEST']._serialized_end=3098
+  _globals['_UNBLOCKUSERREQUEST']._serialized_start=3100
+  _globals['_UNBLOCKUSERREQUEST']._serialized_end=3160
+  _globals['_GETFRIENDSTATUSREQUEST']._serialized_start=3162
+  _globals['_GETFRIENDSTATUSREQUEST']._serialized_end=3224
+  _globals['_GETFRIENDSTATUSRESPONSE']._serialized_start=3226
+  _globals['_GETFRIENDSTATUSRESPONSE']._serialized_end=3307
+  _globals['_USERSERVICE']._serialized_start=3467
+  _globals['_USERSERVICE']._serialized_end=5424
 # @@protoc_insertion_point(module_scope)

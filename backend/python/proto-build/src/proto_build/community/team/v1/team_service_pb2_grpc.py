@@ -50,6 +50,16 @@ class TeamServiceStub(object):
                 request_serializer=community_dot_team_dot_v1_dot_team__service__pb2.UpdateTeamRequest.SerializeToString,
                 response_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.TeamResponse.FromString,
                 _registered_method=True)
+        self.DeleteTeam = channel.unary_unary(
+                '/akiora.community.team.TeamService/DeleteTeam',
+                request_serializer=community_dot_team_dot_v1_dot_team__service__pb2.DeleteTeamRequest.SerializeToString,
+                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                _registered_method=True)
+        self.ListTeams = channel.unary_unary(
+                '/akiora.community.team.TeamService/ListTeams',
+                request_serializer=community_dot_team_dot_v1_dot_team__service__pb2.ListTeamsRequest.SerializeToString,
+                response_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.ListTeamsResponse.FromString,
+                _registered_method=True)
         self.AddMember = channel.unary_unary(
                 '/akiora.community.team.TeamService/AddMember',
                 request_serializer=community_dot_team_dot_v1_dot_team__service__pb2.AddTeamMemberRequest.SerializeToString,
@@ -58,7 +68,27 @@ class TeamServiceStub(object):
         self.RemoveMember = channel.unary_unary(
                 '/akiora.community.team.TeamService/RemoveMember',
                 request_serializer=community_dot_team_dot_v1_dot_team__service__pb2.RemoveTeamMemberRequest.SerializeToString,
-                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                response_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.TeamResponse.FromString,
+                _registered_method=True)
+        self.GetMembers = channel.unary_unary(
+                '/akiora.community.team.TeamService/GetMembers',
+                request_serializer=community_dot_team_dot_v1_dot_team__service__pb2.GetMembersRequest.SerializeToString,
+                response_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.TeamMembersResponse.FromString,
+                _registered_method=True)
+        self.SearchMembers = channel.unary_unary(
+                '/akiora.community.team.TeamService/SearchMembers',
+                request_serializer=community_dot_team_dot_v1_dot_team__service__pb2.SearchMembersRequest.SerializeToString,
+                response_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.TeamMembersResponse.FromString,
+                _registered_method=True)
+        self.CheckCapacity = channel.unary_unary(
+                '/akiora.community.team.TeamService/CheckCapacity',
+                request_serializer=community_dot_team_dot_v1_dot_team__service__pb2.CheckCapacityRequest.SerializeToString,
+                response_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.CheckCapacityResponse.FromString,
+                _registered_method=True)
+        self.IsMember = channel.unary_unary(
+                '/akiora.community.team.TeamService/IsMember',
+                request_serializer=community_dot_team_dot_v1_dot_team__service__pb2.IsMemberRequest.SerializeToString,
+                response_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.IsMemberResponse.FromString,
                 _registered_method=True)
 
 
@@ -66,7 +96,8 @@ class TeamServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def CreateTeam(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Basic CRUD
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -83,14 +114,54 @@ class TeamServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def AddMember(self, request, context):
+    def DeleteTeam(self, request, context):
         """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListTeams(self, request, context):
+        """List with filters and pagination
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AddMember(self, request, context):
+        """Member management
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def RemoveMember(self, request, context):
         """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMembers(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SearchMembers(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CheckCapacity(self, request, context):
+        """Check capacity
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def IsMember(self, request, context):
+        """Check membership
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -113,6 +184,16 @@ def add_TeamServiceServicer_to_server(servicer, server):
                     request_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.UpdateTeamRequest.FromString,
                     response_serializer=community_dot_team_dot_v1_dot_team__service__pb2.TeamResponse.SerializeToString,
             ),
+            'DeleteTeam': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteTeam,
+                    request_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.DeleteTeamRequest.FromString,
+                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+            ),
+            'ListTeams': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListTeams,
+                    request_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.ListTeamsRequest.FromString,
+                    response_serializer=community_dot_team_dot_v1_dot_team__service__pb2.ListTeamsResponse.SerializeToString,
+            ),
             'AddMember': grpc.unary_unary_rpc_method_handler(
                     servicer.AddMember,
                     request_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.AddTeamMemberRequest.FromString,
@@ -121,7 +202,27 @@ def add_TeamServiceServicer_to_server(servicer, server):
             'RemoveMember': grpc.unary_unary_rpc_method_handler(
                     servicer.RemoveMember,
                     request_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.RemoveTeamMemberRequest.FromString,
-                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+                    response_serializer=community_dot_team_dot_v1_dot_team__service__pb2.TeamResponse.SerializeToString,
+            ),
+            'GetMembers': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMembers,
+                    request_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.GetMembersRequest.FromString,
+                    response_serializer=community_dot_team_dot_v1_dot_team__service__pb2.TeamMembersResponse.SerializeToString,
+            ),
+            'SearchMembers': grpc.unary_unary_rpc_method_handler(
+                    servicer.SearchMembers,
+                    request_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.SearchMembersRequest.FromString,
+                    response_serializer=community_dot_team_dot_v1_dot_team__service__pb2.TeamMembersResponse.SerializeToString,
+            ),
+            'CheckCapacity': grpc.unary_unary_rpc_method_handler(
+                    servicer.CheckCapacity,
+                    request_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.CheckCapacityRequest.FromString,
+                    response_serializer=community_dot_team_dot_v1_dot_team__service__pb2.CheckCapacityResponse.SerializeToString,
+            ),
+            'IsMember': grpc.unary_unary_rpc_method_handler(
+                    servicer.IsMember,
+                    request_deserializer=community_dot_team_dot_v1_dot_team__service__pb2.IsMemberRequest.FromString,
+                    response_serializer=community_dot_team_dot_v1_dot_team__service__pb2.IsMemberResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -216,6 +317,60 @@ class TeamService(object):
             _registered_method=True)
 
     @staticmethod
+    def DeleteTeam(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.team.TeamService/DeleteTeam',
+            community_dot_team_dot_v1_dot_team__service__pb2.DeleteTeamRequest.SerializeToString,
+            common_dot_types__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListTeams(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.team.TeamService/ListTeams',
+            community_dot_team_dot_v1_dot_team__service__pb2.ListTeamsRequest.SerializeToString,
+            community_dot_team_dot_v1_dot_team__service__pb2.ListTeamsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
     def AddMember(request,
             target,
             options=(),
@@ -258,7 +413,115 @@ class TeamService(object):
             target,
             '/akiora.community.team.TeamService/RemoveMember',
             community_dot_team_dot_v1_dot_team__service__pb2.RemoveTeamMemberRequest.SerializeToString,
-            common_dot_types__pb2.Empty.FromString,
+            community_dot_team_dot_v1_dot_team__service__pb2.TeamResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMembers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.team.TeamService/GetMembers',
+            community_dot_team_dot_v1_dot_team__service__pb2.GetMembersRequest.SerializeToString,
+            community_dot_team_dot_v1_dot_team__service__pb2.TeamMembersResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SearchMembers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.team.TeamService/SearchMembers',
+            community_dot_team_dot_v1_dot_team__service__pb2.SearchMembersRequest.SerializeToString,
+            community_dot_team_dot_v1_dot_team__service__pb2.TeamMembersResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CheckCapacity(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.team.TeamService/CheckCapacity',
+            community_dot_team_dot_v1_dot_team__service__pb2.CheckCapacityRequest.SerializeToString,
+            community_dot_team_dot_v1_dot_team__service__pb2.CheckCapacityResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def IsMember(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.community.team.TeamService/IsMember',
+            community_dot_team_dot_v1_dot_team__service__pb2.IsMemberRequest.SerializeToString,
+            community_dot_team_dot_v1_dot_team__service__pb2.IsMemberResponse.FromString,
             options,
             channel_credentials,
             insecure,

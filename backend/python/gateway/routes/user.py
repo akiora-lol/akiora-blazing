@@ -1,17 +1,34 @@
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, status, Query
 from uuid import UUID
 import grpc
 from loguru import logger
 from dishka.integrations.fastapi import DishkaRoute, FromDishka, inject
 from schemas.cookie import CookieSchema
 from shared.contracts.user import (
+    BlockUserRequest,
     CreateUserRequest,
+    DeleteUserRequest,
+    FriendResponse,
+    Gender,
+    GetFriendStatusRequest,
+    GetFriendStatusResponse,
     GetUserRequest,
     GetUserByEmailRequest,
+    ListFriendsRequest,
+    ListFriendsResponse,
+    ListUsersRequest,
+    ListUsersResponse,
+    PaginationRequest,
+    RemoveFriendRequest,
+    RespondFriendRequestRequest,
+    SendFriendRequestRequest,
+    UnblockUserRequest,
     UpdateUserRequest,
     UserResponse,
+    UserFilter,
+    UserType,
 )
 from stubs.user_stub import UserStub
 from dependencies import get_community_channel
@@ -46,6 +63,36 @@ async def create_user(request: CreateUserRequest):
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
+@router.get(path="", response_model=ListUsersResponse)
+async def list_users(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+    search: Optional[str] = None,
+    user_type: Optional[UserType] = None,
+    gender: Optional[Gender] = None,
+    has_avatar: bool = False,
+    min_created_at: Optional[int] = None,
+    max_created_at: Optional[int] = None,
+):
+    try:
+        return await _get_stub().list_users(
+            ListUsersRequest(
+                filter=UserFilter(
+                    search=search,
+                    user_type=user_type,
+                    gender=gender,
+                    has_avatar=has_avatar,
+                    min_created_at=min_created_at,
+                    max_created_at=max_created_at,
+                ),
+                pagination=PaginationRequest(page=page, page_size=page_size),
+            )
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in list_users: {} {}", e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
 @router.get(path="/{user_id}", response_model=UserResponse)
 async def get_user(user_id: UUID):
     try:
@@ -54,6 +101,15 @@ async def get_user(user_id: UUID):
         logger.warning(
             "gRPC error in get_user({}): {} {}", user_id, e.code(), e.details()
         )
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.delete(path="/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(user_id: UUID, actor_id: UUID):
+    try:
+        await _get_stub().delete_user(DeleteUserRequest(user_id=user_id, actor_id=actor_id))
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in delete_user({}): {} {}", user_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -93,6 +149,97 @@ async def update_user(
     except ValueError as e:
         logger.warning("Value error  in update_user({}): {}", user_id, e)
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post(path="/friend-requests", response_model=FriendResponse)
+async def send_friend_request(request: SendFriendRequestRequest):
+    try:
+        return await _get_stub().send_friend_request(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in send_friend_request: {} {}", e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/friend-requests/respond", response_model=FriendResponse)
+async def respond_friend_request(request: RespondFriendRequestRequest):
+    try:
+        return await _get_stub().respond_friend_request(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in respond_friend_request: {} {}", e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.get(path="/{user_id}/friend-requests/pending", response_model=ListFriendsResponse)
+async def get_pending_friend_requests(user_id: UUID):
+    try:
+        return await _get_stub().get_pending_friend_requests(GetUserRequest(id=user_id))
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in get_pending_friend_requests({}): {} {}", user_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.get(path="/{user_id}/friends", response_model=ListFriendsResponse)
+async def get_friends(
+    user_id: UUID,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+    friend_status: str = "ACCEPTED",
+):
+    try:
+        return await _get_stub().get_friends(
+            ListFriendsRequest(
+                user_id=user_id,
+                status=friend_status,
+                pagination=PaginationRequest(page=page, page_size=page_size),
+            )
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in get_friends({}): {} {}", user_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.delete(path="/{user_id}/friends/{friend_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_friend(user_id: UUID, friend_id: UUID, actor_id: UUID):
+    try:
+        await _get_stub().remove_friend(
+            RemoveFriendRequest(user_id_1=user_id, user_id_2=friend_id, actor_id=actor_id)
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in remove_friend({}, {}): {} {}", user_id, friend_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/{user_id}/blocks/{blocked_id}", response_model=FriendResponse)
+async def block_user(user_id: UUID, blocked_id: UUID):
+    try:
+        return await _get_stub().block_user(
+            BlockUserRequest(blocker_id=user_id, blocked_id=blocked_id)
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in block_user({}, {}): {} {}", user_id, blocked_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.delete(path="/{user_id}/blocks/{blocked_id}", response_model=FriendResponse)
+async def unblock_user(user_id: UUID, blocked_id: UUID):
+    try:
+        return await _get_stub().unblock_user(
+            UnblockUserRequest(blocker_id=user_id, blocked_id=blocked_id)
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in unblock_user({}, {}): {} {}", user_id, blocked_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.get(path="/{user_id}/friends/{other_user_id}/status", response_model=GetFriendStatusResponse)
+async def get_friend_status(user_id: UUID, other_user_id: UUID):
+    try:
+        return await _get_stub().get_friend_status(
+            GetFriendStatusRequest(user_id_1=user_id, user_id_2=other_user_id)
+        )
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in get_friend_status({}, {}): {} {}", user_id, other_user_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
 def _grpc_to_http(code: grpc.StatusCode) -> int:

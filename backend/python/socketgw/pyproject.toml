@@ -1,0 +1,13 @@
+[project]
+name = "socketgw"
+version = "0.1.0"
+description = "Akiora WebSocket gateway"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.136.0",
+    "granian>=2.7.3",
+    "loguru>=0.7.0",
+    "pydantic-settings>=2.13.1",
+    "redis>=7.4.0",
+]

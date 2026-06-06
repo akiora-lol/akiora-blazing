@@ -28,10 +28,54 @@ message ClubResponse {
   int64 created_at = 9;
 }
 
+message MemberInfo {
+  string user_id = 1;
+  string nickname = 2;
+  string avatar = 3;
+  ClubPermission permissions = 4;
+}
+
+// Pagination request
+message PaginationRequest {
+  optional int32 page = 1;
+  optional int32 page_size = 2;
+}
+
+// Filter request
+message ClubFilter {
+  optional string search = 1;
+  optional string owner_id = 2;
+  optional bool is_member = 3;
+}
+
+// Request with filters and pagination
+message ListClubsRequest {
+  optional ClubFilter filter = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+// List response
+message ListClubsResponse {
+  repeated ClubResponse clubs = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  bool has_next = 5;
+}
+
+// Full member list response with details
+message ClubMembersResponse {
+  repeated MemberInfo members = 1;
+  int32 total_count = 2;
+}
+
+// CRUD operations
 message CreateClubRequest {
   string owner_id = 1;
   string name = 2;
-  repeated FieldGroup fields = 3;
+  optional string avatar = 3;
+  optional string description = 4;
+  repeated FieldGroup fields = 5;
 }
 
 message GetClubRequest {
@@ -47,15 +91,23 @@ message UpdateClubRequest {
   repeated FieldGroup fields = 6;
 }
 
+message DeleteClubRequest {
+  string club_id = 1;
+  string actor_id = 2;
+}
+
+// Member operations
 message AddMemberRequest {
   string club_id = 1;
-  string user_id = 2;
-  repeated string tokens = 3;
+  string actor_id = 2;
+  string user_id = 3;
+  repeated string tokens = 4; // Optional permission tokens
 }
 
 message RemoveMemberRequest {
   string club_id = 1;
-  string user_id = 2;
+  string actor_id = 2;
+  string user_id = 3;
 }
 
 message SetPermissionRequest {
@@ -65,7 +117,30 @@ message SetPermissionRequest {
   repeated string tokens = 4;
 }
 
+message GetMembersRequest {
+  string club_id = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+message GetMemberPermissionsRequest {
+  string club_id = 1;
+  string user_id = 2;
+}
+
+message MemberPermissionResponse {
+  string user_id = 1;
+  repeated string tokens = 2;
+}
+
+// Search members
+message SearchMembersRequest {
+  string club_id = 1;
+  optional string search = 2;
+  optional PaginationRequest pagination = 3;
+}
+
 service ClubService {
+  // Basic CRUD
   rpc CreateClub(CreateClubRequest) returns (ClubResponse) {
     option (google.api.http) = {
       post: "/v1/clubs"
@@ -86,6 +161,20 @@ service ClubService {
     };
   }
 
+  rpc DeleteClub(DeleteClubRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/clubs/{club_id}"
+    };
+  }
+
+  // List with filters and pagination
+  rpc ListClubs(ListClubsRequest) returns (ListClubsResponse) {
+    option (google.api.http) = {
+      get: "/v1/clubs"
+    };
+  }
+
+  // Member management
   rpc AddMember(AddMemberRequest) returns (ClubResponse) {
     option (google.api.http) = {
       post: "/v1/clubs/{club_id}/members"
@@ -93,7 +182,7 @@ service ClubService {
     };
   }
 
-  rpc RemoveMember(RemoveMemberRequest) returns (common.Empty) {
+  rpc RemoveMember(RemoveMemberRequest) returns (ClubResponse) {
     option (google.api.http) = {
       delete: "/v1/clubs/{club_id}/members/{user_id}"
     };
@@ -105,4 +194,41 @@ service ClubService {
       body: "*"
     };
   }
+
+  rpc GetMembers(GetMembersRequest) returns (ClubMembersResponse) {
+    option (google.api.http) = {
+      get: "/v1/clubs/{club_id}/members"
+    };
+  }
+
+  rpc GetMemberPermissions(GetMemberPermissionsRequest) returns (MemberPermissionResponse) {
+    option (google.api.http) = {
+      get: "/v1/clubs/{club_id}/members/{user_id}/permissions"
+    };
+  }
+
+  rpc SearchMembers(SearchMembersRequest) returns (ClubMembersResponse) {
+    option (google.api.http) = {
+      get: "/v1/clubs/{club_id}/members/search"
+    };
+  }
+
+  // Check membership
+  rpc IsMember(IsMemberRequest) returns (IsMemberResponse) {
+    option (google.api.http) = {
+      get: "/v1/clubs/{club_id}/members/{user_id}/is-member"
+    };
+  }
+}
+
+// Additional messages
+message IsMemberRequest {
+  string club_id = 1;
+  string user_id = 2;
+}
+
+message IsMemberResponse {
+  bool is_member = 1;
+  optional string role = 2; // owner, member, etc.
+  optional ClubPermission permissions = 3;
 }

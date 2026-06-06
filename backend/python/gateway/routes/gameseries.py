@@ -3,7 +3,7 @@ from uuid import UUID
 import grpc
 from loguru import logger
 
-from shared.contracts.gameseries import ToggleReadyRequest
+from shared.contracts.gameseries import DraftActionRequest, ToggleReadyRequest
 from stubs.gameseries_stub import GameSeriesStub
 from dependencies import get_game_channel
 
@@ -29,9 +29,17 @@ async def toggle_ready(series_id: UUID, request: ToggleReadyRequest):
 
 
 @router.post(path="/{series_id}/draft/action", status_code=status.HTTP_204_NO_CONTENT)
-async def draft_action(series_id: UUID):
-    # TODO: implement draft_action in stub
-    raise HTTPException(status_code=501, detail="Not implemented")
+async def draft_action(series_id: UUID, request: DraftActionRequest):
+    if request.series_id != series_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Series ID in path does not match request body",
+        )
+    try:
+        await _get_stub().draft_action(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in draft_action({}): {} {}", series_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
 def _grpc_to_http(code: grpc.StatusCode) -> int:

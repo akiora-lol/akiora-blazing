@@ -23,13 +23,12 @@ _sym_db = _symbol_database.Default()
 
 
 from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
-from google.api import http_pb2 as google_dot_api_dot_http__pb2
 from common import game_actors_pb2 as common_dot_game__actors__pb2
 from common import game_settings_pb2 as common_dot_game__settings__pb2
 from common import types_pb2 as common_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n game/v1/tournament_service.proto\x12\x16\x61kiora.game.tournament\x1a\x1cgoogle/api/annotations.proto\x1a\x15google/api/http.proto\x1a\x18\x63ommon/game_actors.proto\x1a\x1a\x63ommon/game_settings.proto\x1a\x12\x63ommon/types.proto\"\x92\x02\n\x15LolTournamentSettings\x12?\n\x0ftournament_type\x18\x01 \x01(\x0e\x32&.akiora.game.tournament.TournamentType\x12\x33\n\x0c\x62racket_mode\x18\x02 \x01(\x0e\x32\x1d.akiora.common.LolBracketMode\x12.\n\ndraft_mode\x18\x03 \x03(\x0e\x32\x1a.akiora.common.LolGameMode\x12\x11\n\tteam_size\x18\x04 \x01(\r\x12\x0b\n\x03map\x18\x05 \x01(\r\x12\x1b\n\x13\x66orbidden_champions\x18\x06 \x03(\r\x12\x16\n\x0eseries_best_of\x18\x07 \x03(\r\"%\n\x15TftTournamentSettings\x12\x0c\n\x04todo\x18\x01 \x01(\t\"*\n\x1aValorantTournamentSettings\x12\x0c\n\x04todo\x18\x01 \x01(\t\"\x90\x02\n\x12TournamentSettings\x12*\n\tgame_type\x18\x01 \x01(\x0e\x32\x17.akiora.common.GameType\x12<\n\x03lol\x18\x02 \x01(\x0b\x32-.akiora.game.tournament.LolTournamentSettingsH\x00\x12<\n\x03tft\x18\x03 \x01(\x0b\x32-.akiora.game.tournament.TftTournamentSettingsH\x00\x12\x46\n\x08valorant\x18\x04 \x01(\x0b\x32\x32.akiora.game.tournament.ValorantTournamentSettingsH\x00\x42\n\n\x08settings\"\xae\x01\n\x17\x43reateTournamentRequest\x12\"\n\x04host\x18\x01 \x01(\x0b\x32\x14.akiora.common.Actor\x12<\n\x08settings\x18\x03 \x01(\x0b\x32*.akiora.game.tournament.TournamentSettings\x12\r\n\x05start\x18\x04 \x01(\x03\x12\x11\n\tprizepool\x18\x05 \x01(\t\x12\x0f\n\x07is_open\x18\x06 \x01(\x08\"b\n\x14GetTournamentRequest\x12\x0b\n\x03ids\x18\x01 \x03(\t\x12/\n\tgame_type\x18\x02 \x01(\x0e\x32\x17.akiora.common.GameTypeH\x00\x88\x01\x01\x42\x0c\n\n_game_type\"\xaa\x02\n\x12TournamentResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\"\n\x04host\x18\x02 \x01(\x0b\x32\x14.akiora.common.Actor\x12*\n\x0cparticipants\x18\x03 \x03(\x0b\x32\x14.akiora.common.Actor\x12<\n\x08settings\x18\x04 \x01(\x0b\x32*.akiora.game.tournament.TournamentSettings\x12\x17\n\x0fgame_series_ids\x18\x05 \x03(\t\x12\r\n\x05start\x18\x06 \x01(\x03\x12\x10\n\x03\x65nd\x18\x07 \x01(\x03H\x00\x88\x01\x01\x12%\n\x06status\x18\x08 \x01(\x0e\x32\x15.akiora.common.Status\x12\x11\n\tprizepool\x18\t \x01(\tB\x06\n\x04_end\"Z\n\x17ManyTournamentsResponse\x12?\n\x0btournaments\x18\x01 \x03(\x0b\x32*.akiora.game.tournament.TournamentResponse\"\x86\x01\n\x14\x43hangeBracketRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12,\n\x0eswap_initiator\x18\x02 \x01(\x0b\x32\x14.akiora.common.Actor\x12)\n\x0bswap_victim\x18\x03 \x01(\x0b\x32\x14.akiora.common.Actor\"Y\n\x15\x41\x64\x64ParticipantRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12)\n\x0bparticipant\x18\x02 \x01(\x0b\x32\x14.akiora.common.Actor\"l\n\x19\x41\x64\x64TeamParticipantRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x38\n\x10team_participant\x18\x02 \x01(\x0b\x32\x1e.akiora.common.TeamParticipant\"I\n\x18RemoveParticipantRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x16\n\x0eparticipant_id\x18\x02 \x01(\t*:\n\x0eTournamentType\x12\x0f\n\x0bUNSPECIFIED\x10\x00\x12\x0b\n\x07PRESIGN\x10\x01\x12\n\n\x06PICKEM\x10\x02\x32\x8a\x0c\n\x11TournamentService\x12u\n\x10\x43reateTournament\x12/.akiora.game.tournament.CreateTournamentRequest\x1a\x14.akiora.common.Empty\"\x1a\x82\xd3\xe4\x93\x02\x14\"\x0f/v1/tournaments:\x01*\x12\x8d\x01\n\rGetTournament\x12,.akiora.game.tournament.GetTournamentRequest\x1a/.akiora.game.tournament.ManyTournamentsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/tournaments/{ids}\x12\x88\x01\n\x0eGetTournaments\x12,.akiora.game.tournament.GetTournamentRequest\x1a/.akiora.game.tournament.ManyTournamentsResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/v1/tournaments\x12z\n\x0fStartTournament\x12,.akiora.game.tournament.GetTournamentRequest\x1a\x14.akiora.common.Empty\"#\x82\xd3\xe4\x93\x02\x1d\"\x1b/v1/tournaments/{ids}/start\x12\x85\x01\n\x0fPreBuildBracket\x12,.akiora.game.tournament.GetTournamentRequest\x1a\x14.akiora.common.Empty\".\x82\xd3\xe4\x93\x02(\"&/v1/tournaments/{ids}/prebuild-bracket\x12|\n\x10\x46inishTournament\x12,.akiora.game.tournament.GetTournamentRequest\x1a\x14.akiora.common.Empty\"$\x82\xd3\xe4\x93\x02\x1e\"\x1c/v1/tournaments/{ids}/finish\x12\x8e\x01\n\x0e\x41\x64\x64Participant\x12-.akiora.game.tournament.AddParticipantRequest\x1a\x14.akiora.common.Empty\"7\x82\xd3\xe4\x93\x02\x31\",/v1/tournaments/{tournament_id}/participants:\x01*\x12\x84\x01\n\x07\x41\x64\x64Team\x12\x31.akiora.game.tournament.AddTeamParticipantRequest\x1a\x14.akiora.common.Empty\"0\x82\xd3\xe4\x93\x02*\"%/v1/tournaments/{tournament_id}/teams:\x01*\x12\x94\x01\n\x18\x41\x64\x64ParticipantToWaitList\x12-.akiora.game.tournament.AddParticipantRequest\x1a\x14.akiora.common.Empty\"3\x82\xd3\xe4\x93\x02-\"(/v1/tournaments/{tournament_id}/waitlist:\x01*\x12\x8c\x01\n\rChangeBracket\x12,.akiora.game.tournament.ChangeBracketRequest\x1a\x14.akiora.common.Empty\"7\x82\xd3\xe4\x93\x02\x31\",/v1/tournaments/{tournament_id}/bracket/swap:\x01*\x12\xa2\x01\n\x11RemoveParticipant\x12\x30.akiora.game.tournament.RemoveParticipantRequest\x1a\x14.akiora.common.Empty\"E\x82\xd3\xe4\x93\x02?*=/v1/tournaments/{tournament_id}/participants/{participant_id}B\x18Z\x16\x61kiora/game/tournamentb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n game/v1/tournament_service.proto\x12\x16\x61kiora.game.tournament\x1a\x1cgoogle/api/annotations.proto\x1a\x18\x63ommon/game_actors.proto\x1a\x1a\x63ommon/game_settings.proto\x1a\x12\x63ommon/types.proto\"\x92\x02\n\x15LolTournamentSettings\x12?\n\x0ftournament_type\x18\x01 \x01(\x0e\x32&.akiora.game.tournament.TournamentType\x12\x33\n\x0c\x62racket_mode\x18\x02 \x01(\x0e\x32\x1d.akiora.common.LolBracketMode\x12.\n\ndraft_mode\x18\x03 \x03(\x0e\x32\x1a.akiora.common.LolGameMode\x12\x11\n\tteam_size\x18\x04 \x01(\r\x12\x0b\n\x03map\x18\x05 \x01(\r\x12\x1b\n\x13\x66orbidden_champions\x18\x06 \x03(\r\x12\x16\n\x0eseries_best_of\x18\x07 \x03(\r\"%\n\x15TftTournamentSettings\x12\x0c\n\x04todo\x18\x01 \x01(\t\"*\n\x1aValorantTournamentSettings\x12\x0c\n\x04todo\x18\x01 \x01(\t\"\x90\x02\n\x12TournamentSettings\x12*\n\tgame_type\x18\x01 \x01(\x0e\x32\x17.akiora.common.GameType\x12<\n\x03lol\x18\x02 \x01(\x0b\x32-.akiora.game.tournament.LolTournamentSettingsH\x00\x12<\n\x03tft\x18\x03 \x01(\x0b\x32-.akiora.game.tournament.TftTournamentSettingsH\x00\x12\x46\n\x08valorant\x18\x04 \x01(\x0b\x32\x32.akiora.game.tournament.ValorantTournamentSettingsH\x00\x42\n\n\x08settings\"U\n\x11PaginationRequest\x12\x11\n\x04page\x18\x01 \x01(\x05H\x00\x88\x01\x01\x12\x16\n\tpage_size\x18\x02 \x01(\x05H\x01\x88\x01\x01\x42\x07\n\x05_pageB\x0c\n\n_page_size\"\xdc\x02\n\x10TournamentFilter\x12/\n\tgame_type\x18\x01 \x01(\x0e\x32\x17.akiora.common.GameTypeH\x00\x88\x01\x01\x12*\n\x06status\x18\x02 \x01(\x0e\x32\x15.akiora.common.StatusH\x01\x88\x01\x01\x12\x14\n\x07host_id\x18\x03 \x01(\tH\x02\x88\x01\x01\x12\x1b\n\x0eis_participant\x18\x04 \x01(\x08H\x03\x88\x01\x01\x12\x1b\n\x0emin_start_time\x18\x05 \x01(\x03H\x04\x88\x01\x01\x12\x1b\n\x0emax_start_time\x18\x06 \x01(\x03H\x05\x88\x01\x01\x12\x14\n\x07is_open\x18\x07 \x01(\x08H\x06\x88\x01\x01\x42\x0c\n\n_game_typeB\t\n\x07_statusB\n\n\x08_host_idB\x11\n\x0f_is_participantB\x11\n\x0f_min_start_timeB\x11\n\x0f_max_start_timeB\n\n\x08_is_open\"a\n\x0fParticipantInfo\x12)\n\x0bparticipant\x18\x01 \x01(\x0b\x32\x14.akiora.common.Actor\x12\x10\n\x08user_ids\x18\x02 \x03(\t\x12\x11\n\tjoined_at\x18\x03 \x01(\x03\"I\n\x0b\x42racketInfo\x12\x12\n\nbracket_id\x18\x01 \x01(\t\x12\x17\n\x0fparticipant_ids\x18\x02 \x03(\t\x12\r\n\x05round\x18\x03 \x01(\x05\"\xb5\x01\n\x16ListTournamentsRequest\x12=\n\x06\x66ilter\x18\x01 \x01(\x0b\x32(.akiora.game.tournament.TournamentFilterH\x00\x88\x01\x01\x12\x42\n\npagination\x18\x02 \x01(\x0b\x32).akiora.game.tournament.PaginationRequestH\x01\x88\x01\x01\x42\t\n\x07_filterB\r\n\x0b_pagination\"\xa2\x01\n\x17ListTournamentsResponse\x12?\n\x0btournaments\x18\x01 \x03(\x0b\x32*.akiora.game.tournament.TournamentResponse\x12\x13\n\x0btotal_count\x18\x02 \x01(\x05\x12\x0c\n\x04page\x18\x03 \x01(\x05\x12\x11\n\tpage_size\x18\x04 \x01(\x05\x12\x10\n\x08has_next\x18\x05 \x01(\x08\"\x82\x01\n\x16GetParticipantsRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x42\n\npagination\x18\x02 \x01(\x0b\x32).akiora.game.tournament.PaginationRequestH\x00\x88\x01\x01\x42\r\n\x0b_pagination\"m\n\x17GetParticipantsResponse\x12=\n\x0cparticipants\x18\x01 \x03(\x0b\x32\'.akiora.game.tournament.ParticipantInfo\x12\x13\n\x0btotal_count\x18\x02 \x01(\x05\"~\n\x12GetWaitlistRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x42\n\npagination\x18\x02 \x01(\x0b\x32).akiora.game.tournament.PaginationRequestH\x00\x88\x01\x01\x42\r\n\x0b_pagination\"V\n\x13GetWaitlistResponse\x12*\n\x0cparticipants\x18\x01 \x03(\x0b\x32\x14.akiora.common.Actor\x12\x13\n\x0btotal_count\x18\x02 \x01(\x05\"*\n\x11GetBracketRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\"J\n\x12GetBracketResponse\x12\x34\n\x07\x62racket\x18\x01 \x01(\x0b\x32#.akiora.game.tournament.BracketInfo\"\x94\x02\n\x17\x43reateTournamentRequest\x12\"\n\x04host\x18\x01 \x01(\x0b\x32\x14.akiora.common.Actor\x12<\n\x08settings\x18\x02 \x01(\x0b\x32*.akiora.game.tournament.TournamentSettings\x12\r\n\x05start\x18\x03 \x01(\x03\x12\x11\n\tprizepool\x18\x04 \x01(\t\x12\x0f\n\x07is_open\x18\x05 \x01(\x08\x12\x11\n\x04name\x18\x06 \x01(\tH\x00\x88\x01\x01\x12\x18\n\x0b\x64\x65scription\x18\x07 \x01(\tH\x01\x88\x01\x01\x12\x13\n\x06\x61vatar\x18\x08 \x01(\tH\x02\x88\x01\x01\x42\x07\n\x05_nameB\x0e\n\x0c_descriptionB\t\n\x07_avatar\"b\n\x14GetTournamentRequest\x12\x0b\n\x03ids\x18\x01 \x03(\t\x12/\n\tgame_type\x18\x02 \x01(\x0e\x32\x17.akiora.common.GameTypeH\x00\x88\x01\x01\x42\x0c\n\n_game_type\"\xa5\x02\n\x17UpdateTournamentRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\x12\x12\n\x05start\x18\x03 \x01(\x03H\x00\x88\x01\x01\x12\x16\n\tprizepool\x18\x04 \x01(\tH\x01\x88\x01\x01\x12\x14\n\x07is_open\x18\x05 \x01(\x08H\x02\x88\x01\x01\x12*\n\x06status\x18\x06 \x01(\x0e\x32\x15.akiora.common.StatusH\x03\x88\x01\x01\x12\x11\n\x04name\x18\x07 \x01(\tH\x04\x88\x01\x01\x12\x18\n\x0b\x64\x65scription\x18\x08 \x01(\tH\x05\x88\x01\x01\x42\x08\n\x06_startB\x0c\n\n_prizepoolB\n\n\x08_is_openB\t\n\x07_statusB\x07\n\x05_nameB\x0e\n\x0c_description\"B\n\x17\x44\x65leteTournamentRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\"\x7f\n\x15\x41\x64\x64ParticipantRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12)\n\x0bparticipant\x18\x02 \x01(\x0b\x32\x14.akiora.common.Actor\x12\x16\n\tteam_name\x18\x03 \x01(\tH\x00\x88\x01\x01\x42\x0c\n\n_team_name\"l\n\x19\x41\x64\x64TeamParticipantRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x38\n\x10team_participant\x18\x02 \x01(\x0b\x32\x1e.akiora.common.TeamParticipant\"[\n\x18RemoveParticipantRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x16\n\x0eparticipant_id\x18\x02 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x03 \x01(\t\"\x81\x01\n\x18UpdateParticipantRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x16\n\x0eparticipant_id\x18\x02 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x03 \x01(\t\x12\x16\n\tteam_name\x18\x04 \x01(\tH\x00\x88\x01\x01\x42\x0c\n\n_team_name\"A\n\x16StartTournamentRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\"h\n\x17\x46inishTournamentRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\x12\x16\n\twinner_id\x18\x03 \x01(\tH\x00\x88\x01\x01\x42\x0c\n\n_winner_id\"A\n\x16PreBuildBracketRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x02 \x01(\t\"\x86\x01\n\x14\x43hangeBracketRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12,\n\x0eswap_initiator\x18\x02 \x01(\x0b\x32\x14.akiora.common.Actor\x12)\n\x0bswap_victim\x18\x03 \x01(\x0b\x32\x14.akiora.common.Actor\"c\n\x1f\x41\x64\x64ParticipantToWaitListRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12)\n\x0bparticipant\x18\x02 \x01(\x0b\x32\x14.akiora.common.Actor\"J\n\x19RemoveFromWaitListRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x16\n\x0eparticipant_id\x18\x02 \x01(\t\"2\n\x19GetTournamentStatsRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\"\x8c\x01\n\x17TournamentStatsResponse\x12\x1a\n\x12total_participants\x18\x01 \x01(\x05\x12\x13\n\x0btotal_teams\x18\x02 \x01(\x05\x12\x16\n\x0ewaitlist_count\x18\x03 \x01(\x05\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x18\n\x10time_until_start\x18\x05 \x01(\x03\"\xaa\x02\n\x12TournamentResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\"\n\x04host\x18\x02 \x01(\x0b\x32\x14.akiora.common.Actor\x12*\n\x0cparticipants\x18\x03 \x03(\x0b\x32\x14.akiora.common.Actor\x12<\n\x08settings\x18\x04 \x01(\x0b\x32*.akiora.game.tournament.TournamentSettings\x12\x17\n\x0fgame_series_ids\x18\x05 \x03(\t\x12\r\n\x05start\x18\x06 \x01(\x03\x12\x10\n\x03\x65nd\x18\x07 \x01(\x03H\x00\x88\x01\x01\x12%\n\x06status\x18\x08 \x01(\x0e\x32\x15.akiora.common.Status\x12\x11\n\tprizepool\x18\t \x01(\tB\x06\n\x04_end\"Z\n\x17ManyTournamentsResponse\x12?\n\x0btournaments\x18\x01 \x03(\x0b\x32*.akiora.game.tournament.TournamentResponse\"E\n\x14IsParticipantRequest\x12\x15\n\rtournament_id\x18\x01 \x01(\t\x12\x16\n\x0eparticipant_id\x18\x02 \x01(\t\"K\n\x15IsParticipantResponse\x12\x16\n\x0eis_participant\x18\x01 \x01(\x08\x12\x11\n\x04role\x18\x02 \x01(\tH\x00\x88\x01\x01\x42\x07\n\x05_role*:\n\x0eTournamentType\x12\x0f\n\x0bUNSPECIFIED\x10\x00\x12\x0b\n\x07PRESIGN\x10\x01\x12\n\n\x06PICKEM\x10\x02\x32\xf4\x19\n\x11TournamentService\x12\x8b\x01\n\x10\x43reateTournament\x12/.akiora.game.tournament.CreateTournamentRequest\x1a*.akiora.game.tournament.TournamentResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\"\x0f/v1/tournaments:\x01*\x12\x8d\x01\n\rGetTournament\x12,.akiora.game.tournament.GetTournamentRequest\x1a/.akiora.game.tournament.ManyTournamentsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/tournaments/{ids}\x12\x9b\x01\n\x10UpdateTournament\x12/.akiora.game.tournament.UpdateTournamentRequest\x1a*.akiora.game.tournament.TournamentResponse\"*\x82\xd3\xe4\x93\x02$2\x1f/v1/tournaments/{tournament_id}:\x01*\x12\x82\x01\n\x10\x44\x65leteTournament\x12/.akiora.game.tournament.DeleteTournamentRequest\x1a\x14.akiora.common.Empty\"\'\x82\xd3\xe4\x93\x02!*\x1f/v1/tournaments/{tournament_id}\x12\x8b\x01\n\x0fListTournaments\x12..akiora.game.tournament.ListTournamentsRequest\x1a/.akiora.game.tournament.ListTournamentsResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/v1/tournaments\x12\x9f\x01\n\x0fStartTournament\x12..akiora.game.tournament.StartTournamentRequest\x1a*.akiora.game.tournament.TournamentResponse\"0\x82\xd3\xe4\x93\x02*\"%/v1/tournaments/{tournament_id}/start:\x01*\x12\xa2\x01\n\x10\x46inishTournament\x12/.akiora.game.tournament.FinishTournamentRequest\x1a*.akiora.game.tournament.TournamentResponse\"1\x82\xd3\xe4\x93\x02+\"&/v1/tournaments/{tournament_id}/finish:\x01*\x12\xaa\x01\n\x0fPreBuildBracket\x12..akiora.game.tournament.PreBuildBracketRequest\x1a*.akiora.game.tournament.TournamentResponse\";\x82\xd3\xe4\x93\x02\x35\"0/v1/tournaments/{tournament_id}/prebuild-bracket:\x01*\x12\xa4\x01\n\x0e\x41\x64\x64Participant\x12-.akiora.game.tournament.AddParticipantRequest\x1a*.akiora.game.tournament.TournamentResponse\"7\x82\xd3\xe4\x93\x02\x31\",/v1/tournaments/{tournament_id}/participants:\x01*\x12\x9a\x01\n\x07\x41\x64\x64Team\x12\x31.akiora.game.tournament.AddTeamParticipantRequest\x1a*.akiora.game.tournament.TournamentResponse\"0\x82\xd3\xe4\x93\x02*\"%/v1/tournaments/{tournament_id}/teams:\x01*\x12\xb8\x01\n\x11RemoveParticipant\x12\x30.akiora.game.tournament.RemoveParticipantRequest\x1a*.akiora.game.tournament.TournamentResponse\"E\x82\xd3\xe4\x93\x02?*=/v1/tournaments/{tournament_id}/participants/{participant_id}\x12\xbb\x01\n\x11UpdateParticipant\x12\x30.akiora.game.tournament.UpdateParticipantRequest\x1a*.akiora.game.tournament.TournamentResponse\"H\x82\xd3\xe4\x93\x02\x42\x32=/v1/tournaments/{tournament_id}/participants/{participant_id}:\x01*\x12\xb4\x01\n\x18\x41\x64\x64ParticipantToWaitList\x12\x37.akiora.game.tournament.AddParticipantToWaitListRequest\x1a*.akiora.game.tournament.TournamentResponse\"3\x82\xd3\xe4\x93\x02-\"(/v1/tournaments/{tournament_id}/waitlist:\x01*\x12\xb6\x01\n\x12RemoveFromWaitList\x12\x31.akiora.game.tournament.RemoveFromWaitListRequest\x1a*.akiora.game.tournament.TournamentResponse\"A\x82\xd3\xe4\x93\x02;*9/v1/tournaments/{tournament_id}/waitlist/{participant_id}\x12\xa2\x01\n\rChangeBracket\x12,.akiora.game.tournament.ChangeBracketRequest\x1a*.akiora.game.tournament.TournamentResponse\"7\x82\xd3\xe4\x93\x02\x31\",/v1/tournaments/{tournament_id}/bracket/swap:\x01*\x12\x94\x01\n\nGetBracket\x12).akiora.game.tournament.GetBracketRequest\x1a*.akiora.game.tournament.GetBracketResponse\"/\x82\xd3\xe4\x93\x02)\x12\'/v1/tournaments/{tournament_id}/bracket\x12\xa8\x01\n\x0fGetParticipants\x12..akiora.game.tournament.GetParticipantsRequest\x1a/.akiora.game.tournament.GetParticipantsResponse\"4\x82\xd3\xe4\x93\x02.\x12,/v1/tournaments/{tournament_id}/participants\x12\x98\x01\n\x0bGetWaitlist\x12*.akiora.game.tournament.GetWaitlistRequest\x1a+.akiora.game.tournament.GetWaitlistResponse\"0\x82\xd3\xe4\x93\x02*\x12(/v1/tournaments/{tournament_id}/waitlist\x12\xc2\x01\n\rIsParticipant\x12,.akiora.game.tournament.IsParticipantRequest\x1a-.akiora.game.tournament.IsParticipantResponse\"T\x82\xd3\xe4\x93\x02N\x12L/v1/tournaments/{tournament_id}/participants/{participant_id}/is-participant\x12\xa7\x01\n\x12GetTournamentStats\x12\x31.akiora.game.tournament.GetTournamentStatsRequest\x1a/.akiora.game.tournament.TournamentStatsResponse\"-\x82\xd3\xe4\x93\x02\'\x12%/v1/tournaments/{tournament_id}/statsB\x18Z\x16\x61kiora/game/tournamentb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -41,50 +40,116 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_TOURNAMENTSERVICE'].methods_by_name['CreateTournament']._serialized_options = b'\202\323\344\223\002\024\"\017/v1/tournaments:\001*'
   _globals['_TOURNAMENTSERVICE'].methods_by_name['GetTournament']._loaded_options = None
   _globals['_TOURNAMENTSERVICE'].methods_by_name['GetTournament']._serialized_options = b'\202\323\344\223\002\027\022\025/v1/tournaments/{ids}'
-  _globals['_TOURNAMENTSERVICE'].methods_by_name['GetTournaments']._loaded_options = None
-  _globals['_TOURNAMENTSERVICE'].methods_by_name['GetTournaments']._serialized_options = b'\202\323\344\223\002\021\022\017/v1/tournaments'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['UpdateTournament']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['UpdateTournament']._serialized_options = b'\202\323\344\223\002$2\037/v1/tournaments/{tournament_id}:\001*'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['DeleteTournament']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['DeleteTournament']._serialized_options = b'\202\323\344\223\002!*\037/v1/tournaments/{tournament_id}'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['ListTournaments']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['ListTournaments']._serialized_options = b'\202\323\344\223\002\021\022\017/v1/tournaments'
   _globals['_TOURNAMENTSERVICE'].methods_by_name['StartTournament']._loaded_options = None
-  _globals['_TOURNAMENTSERVICE'].methods_by_name['StartTournament']._serialized_options = b'\202\323\344\223\002\035\"\033/v1/tournaments/{ids}/start'
-  _globals['_TOURNAMENTSERVICE'].methods_by_name['PreBuildBracket']._loaded_options = None
-  _globals['_TOURNAMENTSERVICE'].methods_by_name['PreBuildBracket']._serialized_options = b'\202\323\344\223\002(\"&/v1/tournaments/{ids}/prebuild-bracket'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['StartTournament']._serialized_options = b'\202\323\344\223\002*\"%/v1/tournaments/{tournament_id}/start:\001*'
   _globals['_TOURNAMENTSERVICE'].methods_by_name['FinishTournament']._loaded_options = None
-  _globals['_TOURNAMENTSERVICE'].methods_by_name['FinishTournament']._serialized_options = b'\202\323\344\223\002\036\"\034/v1/tournaments/{ids}/finish'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['FinishTournament']._serialized_options = b'\202\323\344\223\002+\"&/v1/tournaments/{tournament_id}/finish:\001*'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['PreBuildBracket']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['PreBuildBracket']._serialized_options = b'\202\323\344\223\0025\"0/v1/tournaments/{tournament_id}/prebuild-bracket:\001*'
   _globals['_TOURNAMENTSERVICE'].methods_by_name['AddParticipant']._loaded_options = None
   _globals['_TOURNAMENTSERVICE'].methods_by_name['AddParticipant']._serialized_options = b'\202\323\344\223\0021\",/v1/tournaments/{tournament_id}/participants:\001*'
   _globals['_TOURNAMENTSERVICE'].methods_by_name['AddTeam']._loaded_options = None
   _globals['_TOURNAMENTSERVICE'].methods_by_name['AddTeam']._serialized_options = b'\202\323\344\223\002*\"%/v1/tournaments/{tournament_id}/teams:\001*'
-  _globals['_TOURNAMENTSERVICE'].methods_by_name['AddParticipantToWaitList']._loaded_options = None
-  _globals['_TOURNAMENTSERVICE'].methods_by_name['AddParticipantToWaitList']._serialized_options = b'\202\323\344\223\002-\"(/v1/tournaments/{tournament_id}/waitlist:\001*'
-  _globals['_TOURNAMENTSERVICE'].methods_by_name['ChangeBracket']._loaded_options = None
-  _globals['_TOURNAMENTSERVICE'].methods_by_name['ChangeBracket']._serialized_options = b'\202\323\344\223\0021\",/v1/tournaments/{tournament_id}/bracket/swap:\001*'
   _globals['_TOURNAMENTSERVICE'].methods_by_name['RemoveParticipant']._loaded_options = None
   _globals['_TOURNAMENTSERVICE'].methods_by_name['RemoveParticipant']._serialized_options = b'\202\323\344\223\002?*=/v1/tournaments/{tournament_id}/participants/{participant_id}'
-  _globals['_TOURNAMENTTYPE']._serialized_start=1905
-  _globals['_TOURNAMENTTYPE']._serialized_end=1963
-  _globals['_LOLTOURNAMENTSETTINGS']._serialized_start=188
-  _globals['_LOLTOURNAMENTSETTINGS']._serialized_end=462
-  _globals['_TFTTOURNAMENTSETTINGS']._serialized_start=464
-  _globals['_TFTTOURNAMENTSETTINGS']._serialized_end=501
-  _globals['_VALORANTTOURNAMENTSETTINGS']._serialized_start=503
-  _globals['_VALORANTTOURNAMENTSETTINGS']._serialized_end=545
-  _globals['_TOURNAMENTSETTINGS']._serialized_start=548
-  _globals['_TOURNAMENTSETTINGS']._serialized_end=820
-  _globals['_CREATETOURNAMENTREQUEST']._serialized_start=823
-  _globals['_CREATETOURNAMENTREQUEST']._serialized_end=997
-  _globals['_GETTOURNAMENTREQUEST']._serialized_start=999
-  _globals['_GETTOURNAMENTREQUEST']._serialized_end=1097
-  _globals['_TOURNAMENTRESPONSE']._serialized_start=1100
-  _globals['_TOURNAMENTRESPONSE']._serialized_end=1398
-  _globals['_MANYTOURNAMENTSRESPONSE']._serialized_start=1400
-  _globals['_MANYTOURNAMENTSRESPONSE']._serialized_end=1490
-  _globals['_CHANGEBRACKETREQUEST']._serialized_start=1493
-  _globals['_CHANGEBRACKETREQUEST']._serialized_end=1627
-  _globals['_ADDPARTICIPANTREQUEST']._serialized_start=1629
-  _globals['_ADDPARTICIPANTREQUEST']._serialized_end=1718
-  _globals['_ADDTEAMPARTICIPANTREQUEST']._serialized_start=1720
-  _globals['_ADDTEAMPARTICIPANTREQUEST']._serialized_end=1828
-  _globals['_REMOVEPARTICIPANTREQUEST']._serialized_start=1830
-  _globals['_REMOVEPARTICIPANTREQUEST']._serialized_end=1903
-  _globals['_TOURNAMENTSERVICE']._serialized_start=1966
-  _globals['_TOURNAMENTSERVICE']._serialized_end=3512
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['UpdateParticipant']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['UpdateParticipant']._serialized_options = b'\202\323\344\223\002B2=/v1/tournaments/{tournament_id}/participants/{participant_id}:\001*'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['AddParticipantToWaitList']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['AddParticipantToWaitList']._serialized_options = b'\202\323\344\223\002-\"(/v1/tournaments/{tournament_id}/waitlist:\001*'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['RemoveFromWaitList']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['RemoveFromWaitList']._serialized_options = b'\202\323\344\223\002;*9/v1/tournaments/{tournament_id}/waitlist/{participant_id}'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['ChangeBracket']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['ChangeBracket']._serialized_options = b'\202\323\344\223\0021\",/v1/tournaments/{tournament_id}/bracket/swap:\001*'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['GetBracket']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['GetBracket']._serialized_options = b'\202\323\344\223\002)\022\'/v1/tournaments/{tournament_id}/bracket'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['GetParticipants']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['GetParticipants']._serialized_options = b'\202\323\344\223\002.\022,/v1/tournaments/{tournament_id}/participants'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['GetWaitlist']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['GetWaitlist']._serialized_options = b'\202\323\344\223\002*\022(/v1/tournaments/{tournament_id}/waitlist'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['IsParticipant']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['IsParticipant']._serialized_options = b'\202\323\344\223\002N\022L/v1/tournaments/{tournament_id}/participants/{participant_id}/is-participant'
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['GetTournamentStats']._loaded_options = None
+  _globals['_TOURNAMENTSERVICE'].methods_by_name['GetTournamentStats']._serialized_options = b'\202\323\344\223\002\'\022%/v1/tournaments/{tournament_id}/stats'
+  _globals['_TOURNAMENTTYPE']._serialized_start=4837
+  _globals['_TOURNAMENTTYPE']._serialized_end=4895
+  _globals['_LOLTOURNAMENTSETTINGS']._serialized_start=165
+  _globals['_LOLTOURNAMENTSETTINGS']._serialized_end=439
+  _globals['_TFTTOURNAMENTSETTINGS']._serialized_start=441
+  _globals['_TFTTOURNAMENTSETTINGS']._serialized_end=478
+  _globals['_VALORANTTOURNAMENTSETTINGS']._serialized_start=480
+  _globals['_VALORANTTOURNAMENTSETTINGS']._serialized_end=522
+  _globals['_TOURNAMENTSETTINGS']._serialized_start=525
+  _globals['_TOURNAMENTSETTINGS']._serialized_end=797
+  _globals['_PAGINATIONREQUEST']._serialized_start=799
+  _globals['_PAGINATIONREQUEST']._serialized_end=884
+  _globals['_TOURNAMENTFILTER']._serialized_start=887
+  _globals['_TOURNAMENTFILTER']._serialized_end=1235
+  _globals['_PARTICIPANTINFO']._serialized_start=1237
+  _globals['_PARTICIPANTINFO']._serialized_end=1334
+  _globals['_BRACKETINFO']._serialized_start=1336
+  _globals['_BRACKETINFO']._serialized_end=1409
+  _globals['_LISTTOURNAMENTSREQUEST']._serialized_start=1412
+  _globals['_LISTTOURNAMENTSREQUEST']._serialized_end=1593
+  _globals['_LISTTOURNAMENTSRESPONSE']._serialized_start=1596
+  _globals['_LISTTOURNAMENTSRESPONSE']._serialized_end=1758
+  _globals['_GETPARTICIPANTSREQUEST']._serialized_start=1761
+  _globals['_GETPARTICIPANTSREQUEST']._serialized_end=1891
+  _globals['_GETPARTICIPANTSRESPONSE']._serialized_start=1893
+  _globals['_GETPARTICIPANTSRESPONSE']._serialized_end=2002
+  _globals['_GETWAITLISTREQUEST']._serialized_start=2004
+  _globals['_GETWAITLISTREQUEST']._serialized_end=2130
+  _globals['_GETWAITLISTRESPONSE']._serialized_start=2132
+  _globals['_GETWAITLISTRESPONSE']._serialized_end=2218
+  _globals['_GETBRACKETREQUEST']._serialized_start=2220
+  _globals['_GETBRACKETREQUEST']._serialized_end=2262
+  _globals['_GETBRACKETRESPONSE']._serialized_start=2264
+  _globals['_GETBRACKETRESPONSE']._serialized_end=2338
+  _globals['_CREATETOURNAMENTREQUEST']._serialized_start=2341
+  _globals['_CREATETOURNAMENTREQUEST']._serialized_end=2617
+  _globals['_GETTOURNAMENTREQUEST']._serialized_start=2619
+  _globals['_GETTOURNAMENTREQUEST']._serialized_end=2717
+  _globals['_UPDATETOURNAMENTREQUEST']._serialized_start=2720
+  _globals['_UPDATETOURNAMENTREQUEST']._serialized_end=3013
+  _globals['_DELETETOURNAMENTREQUEST']._serialized_start=3015
+  _globals['_DELETETOURNAMENTREQUEST']._serialized_end=3081
+  _globals['_ADDPARTICIPANTREQUEST']._serialized_start=3083
+  _globals['_ADDPARTICIPANTREQUEST']._serialized_end=3210
+  _globals['_ADDTEAMPARTICIPANTREQUEST']._serialized_start=3212
+  _globals['_ADDTEAMPARTICIPANTREQUEST']._serialized_end=3320
+  _globals['_REMOVEPARTICIPANTREQUEST']._serialized_start=3322
+  _globals['_REMOVEPARTICIPANTREQUEST']._serialized_end=3413
+  _globals['_UPDATEPARTICIPANTREQUEST']._serialized_start=3416
+  _globals['_UPDATEPARTICIPANTREQUEST']._serialized_end=3545
+  _globals['_STARTTOURNAMENTREQUEST']._serialized_start=3547
+  _globals['_STARTTOURNAMENTREQUEST']._serialized_end=3612
+  _globals['_FINISHTOURNAMENTREQUEST']._serialized_start=3614
+  _globals['_FINISHTOURNAMENTREQUEST']._serialized_end=3718
+  _globals['_PREBUILDBRACKETREQUEST']._serialized_start=3720
+  _globals['_PREBUILDBRACKETREQUEST']._serialized_end=3785
+  _globals['_CHANGEBRACKETREQUEST']._serialized_start=3788
+  _globals['_CHANGEBRACKETREQUEST']._serialized_end=3922
+  _globals['_ADDPARTICIPANTTOWAITLISTREQUEST']._serialized_start=3924
+  _globals['_ADDPARTICIPANTTOWAITLISTREQUEST']._serialized_end=4023
+  _globals['_REMOVEFROMWAITLISTREQUEST']._serialized_start=4025
+  _globals['_REMOVEFROMWAITLISTREQUEST']._serialized_end=4099
+  _globals['_GETTOURNAMENTSTATSREQUEST']._serialized_start=4101
+  _globals['_GETTOURNAMENTSTATSREQUEST']._serialized_end=4151
+  _globals['_TOURNAMENTSTATSRESPONSE']._serialized_start=4154
+  _globals['_TOURNAMENTSTATSRESPONSE']._serialized_end=4294
+  _globals['_TOURNAMENTRESPONSE']._serialized_start=4297
+  _globals['_TOURNAMENTRESPONSE']._serialized_end=4595
+  _globals['_MANYTOURNAMENTSRESPONSE']._serialized_start=4597
+  _globals['_MANYTOURNAMENTSRESPONSE']._serialized_end=4687
+  _globals['_ISPARTICIPANTREQUEST']._serialized_start=4689
+  _globals['_ISPARTICIPANTREQUEST']._serialized_end=4758
+  _globals['_ISPARTICIPANTRESPONSE']._serialized_start=4760
+  _globals['_ISPARTICIPANTRESPONSE']._serialized_end=4835
+  _globals['_TOURNAMENTSERVICE']._serialized_start=4898
+  _globals['_TOURNAMENTSERVICE']._serialized_end=8214
 # @@protoc_insertion_point(module_scope)
