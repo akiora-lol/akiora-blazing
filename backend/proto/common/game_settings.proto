@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package akiora.common;
+
+option go_package = "akiora/common";
+
+enum GameType {
+  GAME_TYPE_UNSPECIFIED = 0;
+  LOL = 1;
+  TFT = 2;
+  VALORANT = 3;
+}
+
+enum LolGameMode {
+  GAME_MODE_UNSPECIFIED = 0;
+  CLASSIC = 1;
+  FEARLESS = 2;
+  IRON_MAN = 3;
+  ALL_RANDOM = 4;
+}
+
+message LolGameSettings {
+  LolGameMode mode = 1;
+  uint32 team_size = 2;
+  uint32 map = 3;
+  uint32 best_of = 4;
+}
+
+message TftGameSettings {
+  string todo = 1;
+}
+
+message ValorantGameSettings {
+  string todo = 1;
+}
+
+message GameSettings {
+  GameType game_type = 1;
+  oneof settings {
+    LolGameSettings lol = 2;
+    TftGameSettings tft = 3;
+    ValorantGameSettings valorant = 4;
+  }
+}
+
+enum LolBracketMode {
+  LOL_BRACKET_MODE_UNSPECIFIED = 0;
+  DOUBLE_ELIM = 1;
+  SINGLE_ELIM_THIRD_PLACE = 2;
+  SINGLE_ELIM_NO_THIRD_PLACE = 3;
+  SWISS = 4;
+  ROUND_ROBIN = 5;
+  SCRIM = 6;
+}

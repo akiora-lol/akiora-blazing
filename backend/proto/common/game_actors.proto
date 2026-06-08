@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package akiora.common;
+
+option go_package = "akiora/common";
+
+enum ActorType {
+  ACTOR_UNSPECIFIED = 0;
+  USER = 1;
+  TEAM = 2;
+  CLUB = 3;
+}
+
+message Actor {
+  string id = 1;
+  ActorType actor_type = 2;
+}
+
+message TeamParticipant {
+  Actor participant = 1;
+  repeated string user_ids = 2;
+}

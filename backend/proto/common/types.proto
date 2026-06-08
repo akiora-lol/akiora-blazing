@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package akiora.common;
+
+option go_package = "akiora/common";
+
+
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  SCHEDULED = 1;
+  ACTIVE = 2;
+  FINISHED = 3;
+  CANCELLED = 4;
+}
+
+message Empty {}

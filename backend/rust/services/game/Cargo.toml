@@ -1,0 +1,23 @@
+[package]
+name = "game"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+shared = { workspace=true }
+uuid ={ workspace = true, features = ["serde"] }
+serde={ workspace=true }
+serde_json={ workspace=true }
+chrono={ workspace=true }
+bitvec = { workspace=true }
+tonic={workspace=true}
+mongodb={workspace=true}
+futures={workspace=true}
+
+proto-build = { workspace=true }
+prost-types = { workspace=true }
+tokio = { workspace=true }
+dotenvy = { workspace=true }
+anyhow = { workspace=true }
+serde_with = { workspace=true }

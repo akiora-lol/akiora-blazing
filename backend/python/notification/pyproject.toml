@@ -1,0 +1,18 @@
+[project]
+name = "notification"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "beanie>=2.0.0",
+    "dishka>=1.9.1",
+    "faststream>=0.6.7",
+    "loguru>=0.7.3",
+    "pydantic-settings>=2.13.1",
+    "redis>=7.4.0",
+    "shared",
+]
+
+[tool.uv.sources]
+shared = { workspace = true }

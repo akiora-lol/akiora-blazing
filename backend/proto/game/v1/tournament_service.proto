@@ -1,0 +1,536 @@
+syntax = "proto3";
+
+package akiora.game.tournament;
+
+import "google/api/annotations.proto";
+
+import "common/game_actors.proto";
+import "common/game_settings.proto";
+import "common/types.proto";
+
+option go_package = "akiora/game/tournament";
+
+// ============= ENUMS =============
+enum TournamentType {
+  UNSPECIFIED = 0;
+  PRESIGNED = 1;
+  DRAFT = 2;
+}
+
+enum TournamentLifecycle {
+  TOURNAMENT_LIFECYCLE_UNSPECIFIED = 0;
+  REGISTRATION_OPEN = 1;
+  REGISTRATION_LOCKED = 2;
+  CAPTAIN_SETUP = 3;
+  DRAFT_READY = 4;
+  DRAFT_IN_PROGRESS = 5;
+  DRAFT_FINISHED = 6;
+  BRACKET_READY = 7;
+  TOURNAMENT_ACTIVE = 8;
+  TOURNAMENT_FINISHED = 9;
+  TOURNAMENT_CANCELLED = 10;
+}
+
+enum DraftPickDirection {
+  DRAFT_PICK_DIRECTION_UNSPECIFIED = 0;
+  LINEAR = 1;
+  SNAKE = 2;
+  MANUAL = 3;
+}
+
+// ============= SETTINGS MESSAGES =============
+message LolTournamentSettings {
+  TournamentType tournament_type = 1;
+  common.LolBracketMode bracket_mode = 2;
+  repeated common.LolGameMode draft_mode = 3;
+  uint32 team_size = 4;
+  uint32 map = 5;
+  repeated uint32 forbidden_champions = 6;
+  repeated uint32 series_best_of = 7;
+  optional int64 draft_start = 8;
+}
+
+message TftTournamentSettings {
+  string todo = 1;
+}
+
+message ValorantTournamentSettings {
+  string todo = 1;
+}
+
+message TournamentSettings {
+  common.GameType game_type = 1;
+  oneof settings {
+    LolTournamentSettings lol = 2;
+    TftTournamentSettings tft = 3;
+    ValorantTournamentSettings valorant = 4;
+  }
+}
+
+// ============= BASE MESSAGES =============
+message PaginationRequest {
+  optional int32 page = 1;
+  optional int32 page_size = 2;
+}
+
+message TournamentFilter {
+  optional common.GameType game_type = 1;
+  optional common.Status status = 2;
+  optional string host_id = 3;
+  optional bool is_participant = 4;
+  optional int64 min_start_time = 5;
+  optional int64 max_start_time = 6;
+  optional bool is_open = 7;
+}
+
+message ParticipantInfo {
+  common.Actor participant = 1;
+  repeated string user_ids = 2;
+  int64 joined_at = 3;
+  repeated string draft_roles = 4;
+  optional bool is_captain = 5;
+  optional int32 captain_order = 6;
+}
+
+message DraftCaptainInfo {
+  common.Actor captain = 1;
+  int32 order = 2;
+  repeated common.Actor picked_players = 3;
+}
+
+message DraftConfig {
+  uint32 captain_count = 1;
+  repeated DraftCaptainInfo captains = 2;
+  repeated string pick_order_captain_ids = 3;
+  DraftPickDirection pick_direction = 4;
+  uint32 max_extra_players_per_team = 5;
+}
+
+message DraftState {
+  DraftConfig config = 1;
+  int32 current_pick_index = 2;
+  optional string current_captain_id = 3;
+  repeated string available_player_ids = 4;
+  bool finished = 5;
+}
+
+message BracketRoundSettings {
+  int32 round = 1;
+  string label = 2;
+  uint32 best_of = 3;
+}
+
+message BracketMatchInfo {
+  string game_series_id = 1;
+  optional common.Actor team1 = 2;
+  optional common.Actor team2 = 3;
+  optional common.Actor winner = 4;
+  int32 round = 5;
+  int32 match_number = 6;
+  optional int32 next_match_id = 7;
+  uint32 best_of = 8;
+}
+
+message BracketInfo {
+  string bracket_id = 1;
+  repeated string participant_ids = 2;
+  int32 round = 3;
+  repeated BracketRoundSettings round_settings = 4;
+  repeated BracketMatchInfo matches = 5;
+}
+
+// ============= REQUEST/RESPONSE MESSAGES =============
+message ListTournamentsRequest {
+  optional TournamentFilter filter = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+message ListTournamentsResponse {
+  repeated TournamentResponse tournaments = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  bool has_next = 5;
+}
+
+message GetParticipantsRequest {
+  string tournament_id = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+message GetParticipantsResponse {
+  repeated ParticipantInfo participants = 1;
+  int32 total_count = 2;
+}
+
+message GetWaitlistRequest {
+  string tournament_id = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+message GetWaitlistResponse {
+  repeated common.Actor participants = 1;
+  int32 total_count = 2;
+}
+
+message GetBracketRequest {
+  string tournament_id = 1;
+}
+
+message GetBracketResponse {
+  BracketInfo bracket = 1;
+}
+
+message CreateTournamentRequest {
+  common.Actor host = 1;
+  TournamentSettings settings = 2;  // Исправлено: было 3, должно быть 2
+  int64 start = 3;                   // Исправлено: было 4
+  string prizepool = 4;              // Исправлено: было 5
+  bool is_open = 5;                  // Исправлено: было 6
+  optional string name = 6;
+  optional string description = 7;
+  optional string avatar = 8;
+  optional int64 draft_start = 9;
+}
+
+message GetTournamentRequest {
+  repeated string ids = 1;
+  optional common.GameType game_type = 2;
+}
+
+message UpdateTournamentRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  optional int64 start = 3;
+  optional string prizepool = 4;
+  optional bool is_open = 5;
+  optional common.Status status = 6;
+  optional string name = 7;
+  optional string description = 8;
+  optional int64 draft_start = 9;
+}
+
+message DeleteTournamentRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+}
+
+message AddParticipantRequest {
+  string tournament_id = 1;
+  common.Actor participant = 2;
+  optional string team_name = 3;
+  repeated string draft_roles = 4;
+}
+
+message AddTeamParticipantRequest {
+  string tournament_id = 1;
+  common.TeamParticipant team_participant = 2;
+}
+
+message RemoveParticipantRequest {
+  string tournament_id = 1;
+  string participant_id = 2;
+  string actor_id = 3;
+}
+
+message LockRegistrationRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+}
+
+message RescheduleTournamentRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  int64 start = 3;
+  optional int64 draft_start = 4;
+}
+
+message UpdateParticipantRequest {
+  string tournament_id = 1;
+  string participant_id = 2;
+  string actor_id = 3;
+  optional string team_name = 4;
+}
+
+message StartTournamentRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+}
+
+message FinishTournamentRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  optional string winner_id = 3;
+}
+
+message PreBuildBracketRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  repeated BracketRoundSettings round_settings = 3;
+}
+
+message ChangeBracketRequest {
+  string tournament_id = 1;
+  common.Actor swap_initiator = 2;
+  common.Actor swap_victim = 3;
+}
+
+message UpdateBracketMatchRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  string game_series_id = 3;
+  optional common.Actor team1 = 4;
+  optional common.Actor team2 = 5;
+  optional uint32 best_of = 6;
+}
+
+message SetDraftCaptainsRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  uint32 captain_count = 3;
+  repeated string captain_ids = 4;
+  DraftPickDirection pick_direction = 5;
+  uint32 max_extra_players_per_team = 6;
+}
+
+message UpdateDraftPickOrderRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  repeated string captain_ids = 3;
+}
+
+message DraftPickPlayerRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  string captain_id = 3;
+  string player_id = 4;
+}
+
+message AddParticipantToWaitListRequest {
+  string tournament_id = 1;
+  common.Actor participant = 2;
+}
+
+message RemoveFromWaitListRequest {
+  string tournament_id = 1;
+  string participant_id = 2;
+}
+
+message GetTournamentStatsRequest {
+  string tournament_id = 1;
+}
+
+message TournamentStatsResponse {
+  int32 total_participants = 1;
+  int32 total_teams = 2;
+  int32 waitlist_count = 3;
+  string status = 4;
+  int64 time_until_start = 5;
+}
+
+message TournamentResponse {
+  string id = 1;
+  common.Actor host = 2;
+  repeated common.Actor participants = 3;
+  TournamentSettings settings = 4;
+  repeated string game_series_ids = 5;
+  int64 start = 6;
+  optional int64 end = 7;
+  common.Status status = 8;
+  string prizepool = 9;
+  bool is_open = 10;
+  TournamentLifecycle lifecycle = 11;
+  optional int64 draft_start = 12;
+  optional int64 registration_locked_at = 13;
+  optional DraftState draft_state = 14;
+  optional BracketInfo bracket = 15;
+}
+
+message ManyTournamentsResponse {
+  repeated TournamentResponse tournaments = 1;
+}
+
+message IsParticipantRequest {
+  string tournament_id = 1;
+  string participant_id = 2;
+}
+
+message IsParticipantResponse {
+  bool is_participant = 1;
+  optional string role = 2;
+}
+
+// ============= SERVICE =============
+service TournamentService {
+  rpc CreateTournament(CreateTournamentRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments"
+      body: "*"
+    };
+  }
+
+  rpc GetTournament(GetTournamentRequest) returns (ManyTournamentsResponse) {
+    option (google.api.http) = {
+      get: "/v1/tournaments/{ids}"
+    };
+  }
+
+  rpc UpdateTournament(UpdateTournamentRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      patch: "/v1/tournaments/{tournament_id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteTournament(DeleteTournamentRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/tournaments/{tournament_id}"
+    };
+  }
+
+  rpc ListTournaments(ListTournamentsRequest) returns (ListTournamentsResponse) {
+    option (google.api.http) = {
+      get: "/v1/tournaments"
+    };
+  }
+
+  rpc StartTournament(StartTournamentRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/start"
+      body: "*"
+    };
+  }
+
+  rpc LockRegistration(LockRegistrationRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/lock-registration"
+      body: "*"
+    };
+  }
+
+  rpc RescheduleTournament(RescheduleTournamentRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/reschedule"
+      body: "*"
+    };
+  }
+
+  rpc FinishTournament(FinishTournamentRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/finish"
+      body: "*"
+    };
+  }
+
+  rpc PreBuildBracket(PreBuildBracketRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/prebuild-bracket"
+      body: "*"
+    };
+  }
+
+  rpc SetDraftCaptains(SetDraftCaptainsRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/draft/captains"
+      body: "*"
+    };
+  }
+
+  rpc UpdateDraftPickOrder(UpdateDraftPickOrderRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/draft/pick-order"
+      body: "*"
+    };
+  }
+
+  rpc DraftPickPlayer(DraftPickPlayerRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/draft/picks"
+      body: "*"
+    };
+  }
+
+  rpc AddParticipant(AddParticipantRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/participants"
+      body: "*"
+    };
+  }
+
+  rpc AddTeam(AddTeamParticipantRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/teams"
+      body: "*"
+    };
+  }
+
+  rpc RemoveParticipant(RemoveParticipantRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      delete: "/v1/tournaments/{tournament_id}/participants/{participant_id}"
+    };
+  }
+
+  rpc UpdateParticipant(UpdateParticipantRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      patch: "/v1/tournaments/{tournament_id}/participants/{participant_id}"
+      body: "*"
+    };
+  }
+
+  rpc AddParticipantToWaitList(AddParticipantToWaitListRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/waitlist"
+      body: "*"
+    };
+  }
+
+  rpc RemoveFromWaitList(RemoveFromWaitListRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      delete: "/v1/tournaments/{tournament_id}/waitlist/{participant_id}"
+    };
+  }
+
+  rpc ChangeBracket(ChangeBracketRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/bracket/swap"
+      body: "*"
+    };
+  }
+
+  rpc UpdateBracketMatch(UpdateBracketMatchRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      patch: "/v1/tournaments/{tournament_id}/bracket/matches/{game_series_id}"
+      body: "*"
+    };
+  }
+
+  rpc GetBracket(GetBracketRequest) returns (GetBracketResponse) {
+    option (google.api.http) = {
+      get: "/v1/tournaments/{tournament_id}/bracket"
+    };
+  }
+
+  rpc GetParticipants(GetParticipantsRequest) returns (GetParticipantsResponse) {
+    option (google.api.http) = {
+      get: "/v1/tournaments/{tournament_id}/participants"
+    };
+  }
+
+  rpc GetWaitlist(GetWaitlistRequest) returns (GetWaitlistResponse) {
+    option (google.api.http) = {
+      get: "/v1/tournaments/{tournament_id}/waitlist"
+    };
+  }
+
+  rpc IsParticipant(IsParticipantRequest) returns (IsParticipantResponse) {
+    option (google.api.http) = {
+      get: "/v1/tournaments/{tournament_id}/participants/{participant_id}/is-participant"
+    };
+  }
+
+  rpc GetTournamentStats(GetTournamentStatsRequest) returns (TournamentStatsResponse) {
+    option (google.api.http) = {
+      get: "/v1/tournaments/{tournament_id}/stats"
+    };
+  }
+}

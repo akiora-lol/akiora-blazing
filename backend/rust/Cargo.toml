@@ -1,28 +1,29 @@
 [workspace]
 
 resolver="3"
-members = ["proto-build", "services/draft","shared"]
+members = ["proto-build", "services/*","shared"]
 
 [workspace.dependencies]
 shared = { path = "shared" }
-proto_build = { path = "proto_build" }
+proto-build = { path = "proto-build" }
 
+bitvec = { version = "1.0.1", features = ["serde"] }
+prost-types = { version = "0.14.3", features = ["chrono"] }
 tokio = { version = "1.50.0", features = ["full"] }
-axum = "0.8.8"
+axum = "0.8.9"
 chrono = { version = "0.4.44", features = ["serde"] }
-redis = { version = "1.0.5", features = ["tokio-comp"] }
+redis = { version = "1.0.5", features = ["tokio-comp","aio","connection-manager"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
-time = "0.3.47"
-uuid = { version = "1.22.0", features = ["v4","serde"] }
+uuid = { version = "1.23.0", features = ["v4","serde"] }
 anyhow = "1.0.102"
 thiserror = "2.0.18"
-regex = "1.12.3"
 mongodb = "3.5.1"
+serde_with = "3.18.0"
+dotenvy = "0.15.7"
 futures = "0.3.32"
+redis-macros = "1.0.1"
 
 tonic = "0.14.5"
 prost = "0.14.3"
-tonic-build = "0.14.5"
-prost-build = "0.14.3"
 tonic-prost-build = "0.14.5"

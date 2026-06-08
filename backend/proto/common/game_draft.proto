@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package akiora.common;
+
+import "common/game_actors.proto";
+
+option go_package = "akiora/common";
+
+message Command {
+  common.Actor actor = 1;
+  Action action = 2;
+}
+
+
+
+
+message Action {
+  oneof action_type {
+    int32 pick = 1;
+    int32 ban = 2;
+  }
+}
+
+message ChampLock {
+  int32 champion_id = 1;
+  string player_id = 2;
+}

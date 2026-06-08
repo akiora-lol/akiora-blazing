@@ -1,14 +1,13 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+pub mod common {
+    tonic::include_proto!("akiora.common");
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub mod game {
+    pub mod tournament {
+        tonic::include_proto!("akiora.game.tournament");
+    }
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    pub mod gameseries {
+        tonic::include_proto!("akiora.game.gameseries");
     }
 }
