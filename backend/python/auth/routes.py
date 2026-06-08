@@ -1,5 +1,5 @@
 from typing import Literal, Annotated
-from fastapi import APIRouter, Request, Cookie, HTTPException
+from fastapi import APIRouter, Request, Cookie, Header, HTTPException
 
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -23,6 +23,21 @@ class LoginFInishRequest(BaseModel):
     code: str = Field(..., max_length=6, min_length=6)
 
 
+class DesktopLoginFinishRequest(BaseModel):
+    verification_id: str
+    code: str = Field(..., max_length=6, min_length=6)
+
+
+class LolVerificationStartRequest(BaseModel):
+    server: str = Field(..., min_length=2, max_length=8)
+    username: str = Field(..., min_length=1, max_length=32)
+    tagline: str = Field(..., min_length=1, max_length=16)
+
+
+class LolVerificationFinishRequest(BaseModel):
+    verification_id: str
+
+
 class AuthResponse(BaseModel):
     user: dict
     authenticated: bool
@@ -34,6 +49,16 @@ ProviderType = Literal[
     "yandex",
     "discord",
 ]
+
+
+def _session_token(cookie: CookieSchema, authorization: str | None) -> str:
+    if cookie.sid:
+        return cookie.sid
+    if authorization:
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() == "bearer" and token:
+            return token
+    raise HTTPException(status_code=401, detail="Missing session")
 
 
 @router.post("/logout")
@@ -105,4 +130,48 @@ async def enter_email_code(
 
     return await auth_service.finish_verify_user_email(
         cookie.email, cookie.cvid, req_body.code
+    )
+
+
+@router.post("/desktop/email/login/start")
+async def desktop_login_email(
+    req_body: LoginInitRequest, auth_service: FromDishka[AuthService]
+):
+    return await auth_service.init_desktop_email_login(req_body.email)
+
+
+@router.post("/desktop/email/login/finish")
+async def desktop_enter_email_code(
+    req_body: DesktopLoginFinishRequest,
+    auth_service: FromDishka[AuthService],
+):
+    return await auth_service.finish_desktop_email_login(
+        req_body.verification_id, req_body.code
+    )
+
+
+@router.post("/lol/verification/start")
+async def start_lol_verification(
+    req_body: LolVerificationStartRequest,
+    cookie: Annotated[CookieSchema, Cookie()],
+    auth_service: FromDishka[AuthService],
+    authorization: str | None = Header(default=None),
+):
+    return await auth_service.start_lol_account_verification(
+        _session_token(cookie, authorization),
+        req_body.server,
+        req_body.username,
+        req_body.tagline,
+    )
+
+
+@router.post("/lol/verification/finish")
+async def finish_lol_verification(
+    req_body: LolVerificationFinishRequest,
+    cookie: Annotated[CookieSchema, Cookie()],
+    auth_service: FromDishka[AuthService],
+    authorization: str | None = Header(default=None),
+):
+    return await auth_service.finish_lol_account_verification(
+        _session_token(cookie, authorization), req_body.verification_id
     )

@@ -1,10 +1,12 @@
 from beanie import Document
+from pydantic import Field
 from uuid import UUID, uuid4
 from domain.value_objects.actors import Actor, TeamParticipant
 from datetime import datetime, UTC, timedelta
 
 from domain.value_objects.statuses import TournamentStatus
 from domain.value_objects.settings import LolTournamentSettings
+from domain.value_objects.settings import DraftState, TournamentLifecycle, TournamentType
 from domain.value_objects.bracket import Bracket
 
 
@@ -12,15 +14,19 @@ class Tournament(Document):
     id: UUID
 
     host: Actor
-    participant_pool: list[TeamParticipant]
+    participant_pool: list[TeamParticipant] = Field(default_factory=list)
     prizepool: str
-    is_open: bool
-    wait_list: list[TeamParticipant]
-    status: TournamentStatus
+    is_open: bool = True
+    wait_list: list[TeamParticipant] = Field(default_factory=list)
+    status: TournamentStatus = TournamentStatus.SCHEDULED
     settings: LolTournamentSettings
+    lifecycle: TournamentLifecycle = TournamentLifecycle.REGISTRATION_OPEN
+    draft_start: datetime | None = None
+    registration_locked_at: datetime | None = None
+    draft_state: DraftState | None = None
     start: datetime
-    end: datetime | None
-    bracket: Bracket | None
+    end: datetime | None = None
+    bracket: Bracket | None = None
 
     class Settings:
         bson_encoders = {UUID: str}
@@ -33,17 +39,29 @@ class Tournament(Document):
         is_open: bool,
         prizepool: str,
         settings: LolTournamentSettings,
+        draft_start: int | None = None,
     ) -> "Tournament":
+        start_dt = datetime.fromtimestamp(start, UTC)
+        draft_start_dt = datetime.fromtimestamp(draft_start, UTC) if draft_start else None
+        if settings.tournament_type == TournamentType.DRAFT:
+            if not draft_start_dt:
+                raise Exception("Draft tournaments require draft start time")
+            if start_dt - draft_start_dt < timedelta(days=2):
+                raise Exception("Tournament start must be at least 2 days after draft start")
         return Tournament(
             id=uuid4(),
             host=host,
             prizepool=prizepool,
             is_open=is_open,
             participant_pool=[],
-            start=datetime.fromtimestamp(start, UTC),
+            start=start_dt,
             end=None,
             status=TournamentStatus.SCHEDULED,
             settings=settings,
+            lifecycle=TournamentLifecycle.REGISTRATION_OPEN,
+            draft_start=draft_start_dt,
+            registration_locked_at=None,
+            draft_state=None,
             bracket=None,
             wait_list=[],
         )
@@ -53,14 +71,27 @@ class Tournament(Document):
         self.wait_list.append(TeamParticipant(actor=p, players=team))
         return self
 
-    def add_participant(self, p: Actor, team: list[UUID]) -> "Tournament":
-        self.participant_pool.append(TeamParticipant(actor=p, players=team))
+    def add_participant(self, p: Actor, team: list[UUID], draft_roles: list[str] | None = None) -> "Tournament":
+        if self.lifecycle != TournamentLifecycle.REGISTRATION_OPEN:
+            raise Exception("Registration is locked")
+        self.participant_pool.append(
+            TeamParticipant(actor=p, players=team, draft_roles=draft_roles or [])
+        )
         return self
 
-    def reschedule(self, start: int) -> "Tournament":
+    def reschedule(self, start: int, draft_start: int | None = None) -> "Tournament":
         new_start = datetime.fromtimestamp(start, UTC)
-        if self.start >= new_start:
-            raise Exception("Tournament cannot reschedule to earlier time")
+        new_draft_start = (
+            datetime.fromtimestamp(draft_start, UTC)
+            if draft_start
+            else self.draft_start
+        )
+        if self.settings.tournament_type == TournamentType.DRAFT:
+            if not new_draft_start:
+                raise Exception("Draft tournaments require draft start time")
+            if new_start - new_draft_start < timedelta(days=2):
+                raise Exception("Tournament start must be at least 2 days after draft start")
+            self.draft_start = new_draft_start
         self.start = new_start
         self.status = TournamentStatus.SCHEDULED
         return self
@@ -72,4 +103,5 @@ class Tournament(Document):
         if datetime.now(UTC) - self.start > timedelta(hours=2):
             raise Exception("Tournament cannot be started after 2 hrs past start time")
         self.status = TournamentStatus.ACTIVE
+        self.lifecycle = TournamentLifecycle.TOURNAMENT_ACTIVE
         return self

@@ -12,6 +12,7 @@ from routes.group import router as group_router
 from routes.messenger import router as messenger_router
 from routes.tournament import router as tournament_router
 from routes.gameseries import router as gameseries_router
+from routes.search import router as search_router
 from dependencies import close_all_channels
 from settings import Settings
 
@@ -24,6 +25,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Community service: {settings.community_service_address}")
     logger.info(f"Messenger service: {settings.messenger_service_address}")
     logger.info(f"Game service: {settings.game_service_address}")
+    logger.info(f"Search service: {settings.search_service_address}")
     yield
     logger.info("Gateway shutting down...")
     await close_all_channels()
@@ -67,6 +69,7 @@ app.include_router(messenger_router)
 # Game routes
 app.include_router(tournament_router)
 app.include_router(gameseries_router)
+app.include_router(search_router)
 
 setup_dishka(container=container, app=app)
 

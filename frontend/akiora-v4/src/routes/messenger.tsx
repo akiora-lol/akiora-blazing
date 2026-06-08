@@ -5,7 +5,12 @@ import { AkioraBackground } from '../components/PageShell'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useUserChats, useMessages, useSendMessage, type ChatResponse, type MessageResponse } from '../lib/api'
 
-export const Route = createFileRoute('/messenger')({ component: MessengerPage })
+export const Route = createFileRoute('/messenger')({
+    validateSearch: (search: Record<string, unknown>) => ({
+        chat: typeof search.chat === 'string' ? search.chat : undefined,
+    }),
+    component: MessengerPage,
+})
 
 function formatTime(timestamp: number) {
     const date = new Date(timestamp * 1000)
@@ -145,6 +150,7 @@ function MessageBubble({ message, isOwn, showDate }: { message: MessageResponse;
 
 function MessengerPage() {
     const { user } = useAuthContext()
+    const search = Route.useSearch()
     const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
     const [messageText, setMessageText] = useState('')
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -154,10 +160,14 @@ function MessengerPage() {
     const sendMessageMutation = useSendMessage()
 
     useEffect(() => {
+        if (search.chat && selectedChatId !== search.chat) {
+            setSelectedChatId(search.chat)
+            return
+        }
         if (chats && chats.length > 0 && !selectedChatId) {
             setSelectedChatId(chats[0].id)
         }
-    }, [chats, selectedChatId])
+    }, [chats, selectedChatId, search.chat])
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

@@ -1,6 +1,7 @@
-def main():
-    print("Hello from search!")
+import asyncio
+
+from app.app import serve
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(serve())

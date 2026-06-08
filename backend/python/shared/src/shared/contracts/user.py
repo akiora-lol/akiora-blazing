@@ -39,6 +39,18 @@ class Birthday(BaseModel):
         return v
 
 
+class LeagueAccount(BaseModel):
+    status: str = "pending"
+    username: str
+    tagline: str
+    server: str
+    profile_image_url: Optional[str] = None
+    solo_tier: Optional[str] = None
+    solo_division: Optional[int] = None
+    solo_lp: Optional[int] = None
+    solo_tier_image_url: Optional[str] = None
+
+
 class CreateUserRequest(BaseModel):
     email: EmailStr
     nickname: Optional[str] = None
@@ -61,6 +73,7 @@ class UpdateUserRequest(BaseModel):
     user_type: UserType = UserType.UNSPECIFIED
     birth_date: Optional[Birthday] = None
     socials: Dict[str, Social] = Field(default_factory=dict)
+    league_accounts: Optional[List[LeagueAccount]] = None
 
 
 class UserResponse(BaseModel):
@@ -73,6 +86,7 @@ class UserResponse(BaseModel):
     gender: Gender
     birth_date: Optional[Birthday] = None
     socials: Dict[str, Social] = Field(default_factory=dict)
+    league_accounts: List[LeagueAccount] = Field(default_factory=list)
     created_at: int
     last_updated: int
 

@@ -1,1012 +1,729 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
-import { FiHeart, FiMessageSquare, FiEyeOff, FiSlash, FiChevronLeft, FiChevronRight, FiGrid, FiSquare, FiFilter, FiX, FiPlus } from 'react-icons/fi'
+import type { CSSProperties } from 'react'
+import { useMemo, useState } from 'react'
+import {
+    FiChevronLeft,
+    FiFilter,
+    FiHeart,
+    FiMessageSquare,
+    FiPlus,
+    FiRefreshCcw,
+    FiSearch,
+    FiSend,
+    FiSlash,
+    FiX,
+    FiZap,
+} from 'react-icons/fi'
+import { PageShell } from '../components/PageShell'
 import { useAuthContext } from '../contexts/AuthContext'
+import {
+    type ColdFormResponse,
+    type CreateSearchFormRequest,
+    type HotFormResponse,
+    type SearchRankName,
+    type SearchRole,
+    type SearchServer,
+    useColdDeck,
+    useCreateColdSearchFormMutation,
+    useCreateHotSearchFormMutation,
+    useHotForms,
+    useSwipeColdSearchFormMutation,
+    useSwipeHotSearchFormMutation,
+} from '../lib/api'
 
 export const Route = createFileRoute('/search')({ component: SearchPage })
 
-// ─── Types matching backend entities ──────────────────────────────
-type LolRole = 'top' | 'jg' | 'mid' | 'adc' | 'sup'
-type Server = 'euw' | 'ru' | 'eune' | 'na' | 'tr'
-type LolRankName = 'iron' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'emerald' | 'diamond' | 'master' | 'grandmaster' | 'challenger'
+type FormMode = 'cold' | 'hot'
+type Lang = 'ru' | 'en'
 
-interface RankRange {
-    server: Server
-    min_rank: { rank: LolRankName; division: number }
-    max_rank: { rank: LolRankName; division: number }
+const ROLE_LABELS: Record<SearchRole, string> = {
+    top: 'Top',
+    jg: 'Jungle',
+    mid: 'Mid',
+    adc: 'ADC',
+    sup: 'Support',
 }
 
-interface FormProfile {
-    id: string
-    owner_id: string
-    owner_name: string
-    rank_range: RankRange[]
-    my_roles: LolRole[]
-    looking_for_roles: LolRole[]
-    description: string
-    created_at: string
-    status?: 'active' | 'frozen'
+const SERVER_LABELS: Record<SearchServer, string> = {
+    euw: 'EUW',
+    ru: 'RU',
+    eune: 'EUNE',
+    na: 'NA',
+    tr: 'TR',
 }
 
-// ─── Dummy Data ──────────────────────────────────────────────────
-const DUMMY_HOT: FormProfile[] = [
-    { id: 'h1', owner_id: 'u1', owner_name: 'AceSniper', rank_range: [{ server: 'euw', min_rank: { rank: 'diamond', division: 2 }, max_rank: { rank: 'master', division: 1 } }], my_roles: ['adc'], looking_for_roles: ['sup'], description: 'ADC main looking for a duo support. Aggressive lane, high KDA player. I want someone who can roam and make plays with me. Diamond+ only.', created_at: '2m ago' },
-    { id: 'h2', owner_id: 'u2', owner_name: 'MidOrFeed', rank_range: [{ server: 'na', min_rank: { rank: 'master', division: 1 }, max_rank: { rank: 'challenger', division: 1 } }], my_roles: ['mid'], looking_for_roles: ['jg', 'sup'], description: 'Mechanical god. Will 1v9 your promos. Looking for a jungler who knows how to play around mid. Assassin player, need ganks early.', created_at: '5m ago' },
-    { id: 'h3', owner_id: 'u3', owner_name: 'WardMachine', rank_range: [{ server: 'euw', min_rank: { rank: 'diamond', division: 1 }, max_rank: { rank: 'grandmaster', division: 1 } }], my_roles: ['sup'], looking_for_roles: ['adc'], description: 'Support diff every game. Vision score through the roof. Looking for an ADC who can actually follow up on my engages. Thresh/Nautilus specialist.', created_at: '8m ago' },
-    { id: 'h4', owner_id: 'u4', owner_name: 'JungleDiff', rank_range: [{ server: 'euw', min_rank: { rank: 'platinum', division: 1 }, max_rank: { rank: 'diamond', division: 2 } }], my_roles: ['jg'], looking_for_roles: ['mid', 'top'], description: 'Early game pressure specialist. Will gank your lane level 3 guaranteed. Lee Sin / Elise / Nidalee player. Need lanes that have CC.', created_at: '12m ago' },
-    { id: 'h5', owner_id: 'u5', owner_name: 'TopGap', rank_range: [{ server: 'na', min_rank: { rank: 'master', division: 1 }, max_rank: { rank: 'grandmaster', division: 1 } }], my_roles: ['top'], looking_for_roles: ['jg'], description: 'Split push artist. Give me a lead and I end the game. Looking for a jungler who understands topside pressure and herald timings.', created_at: '15m ago' },
+const RANK_LABELS: Record<SearchRankName, string> = {
+    iron: 'Iron',
+    bronze: 'Bronze',
+    silver: 'Silver',
+    gold: 'Gold',
+    platinum: 'Platinum',
+    emerald: 'Emerald',
+    diamond: 'Diamond',
+    master: 'Master',
+    grandmaster: 'GM',
+    challenger: 'Challenger',
+}
+
+const RANK_COLORS: Record<SearchRankName, string> = {
+    iron: '#858585',
+    bronze: '#b87746',
+    silver: '#c7d2fe',
+    gold: '#f5b642',
+    platinum: '#2dd4bf',
+    emerald: '#34d399',
+    diamond: '#60a5fa',
+    master: '#c084fc',
+    grandmaster: '#fb7185',
+    challenger: '#facc15',
+}
+
+const ROLES: SearchRole[] = ['top', 'jg', 'mid', 'adc', 'sup']
+const SERVERS: SearchServer[] = ['euw', 'ru', 'eune', 'na', 'tr']
+const RANKS: SearchRankName[] = [
+    'iron',
+    'bronze',
+    'silver',
+    'gold',
+    'platinum',
+    'emerald',
+    'diamond',
+    'master',
+    'grandmaster',
+    'challenger',
 ]
 
-const DUMMY_COLD: FormProfile[] = [
-    { id: 'c1', owner_id: 'u6', owner_name: 'ChillGamer', rank_range: [{ server: 'euw', min_rank: { rank: 'silver', division: 1 }, max_rank: { rank: 'gold', division: 3 } }], my_roles: ['sup'], looking_for_roles: ['adc', 'mid'], description: 'Casual player, just here for fun. ARAM enjoyer looking for chill people to play normals with. No toxicity please.', created_at: '2h ago', status: 'active' },
-    { id: 'c2', owner_id: 'u7', owner_name: 'WeekendWarrior', rank_range: [{ server: 'na', min_rank: { rank: 'bronze', division: 1 }, max_rank: { rank: 'silver', division: 2 } }], my_roles: ['top'], looking_for_roles: ['jg', 'sup'], description: 'Play on weekends only. Looking for a chill group that doesn\'t flame. Garen/Malphite player. Just want to have fun climbing slowly.', created_at: '5h ago', status: 'active' },
-    { id: 'c3', owner_id: 'u8', owner_name: 'NormsDude', rank_range: [{ server: 'euw', min_rank: { rank: 'gold', division: 1 }, max_rank: { rank: 'platinum', division: 4 } }], my_roles: ['adc'], looking_for_roles: ['sup'], description: 'No ranked anxiety here. Normals only lifestyle. Looking for a support to duo normals and learn new champs together.', created_at: '1d ago', status: 'active' },
-    { id: 'c4', owner_id: 'u9', owner_name: 'ARAMKing', rank_range: [{ server: 'na', min_rank: { rank: 'iron', division: 4 }, max_rank: { rank: 'challenger', division: 1 } }], my_roles: ['top', 'mid', 'jg', 'adc', 'sup'], looking_for_roles: ['top', 'mid', 'jg', 'adc', 'sup'], description: 'ARAM is the true game mode. 5000+ games played. Any rank welcome, just have fun and don\'t int the bush checks.', created_at: '2d ago', status: 'active' },
-    { id: 'c5', owner_id: 'u10', owner_name: 'CoachMePlz', rank_range: [{ server: 'eune', min_rank: { rank: 'diamond', division: 4 }, max_rank: { rank: 'challenger', division: 1 } }], my_roles: ['mid', 'sup'], looking_for_roles: ['mid', 'adc', 'top'], description: 'Looking for a high elo player to review my VODs and help me improve. I\'m stuck Emerald and want to finally hit Diamond this split.', created_at: '3d ago', status: 'active' },
-]
-
-// ─── Helpers ──────────────────────────────────────────────────────
-const RANK_COLORS: Record<LolRankName, string> = {
-    iron: '#5e5e5e', bronze: '#8B4513', silver: '#9CA3AF', gold: '#F59E0B',
-    platinum: '#06B6D4', emerald: '#10B981', diamond: '#6366F1',
-    master: '#a600ff', grandmaster: '#FF002A', challenger: '#F59E0B',
+const TEXT = {
+    ru: {
+        title: 'Поиск напарника',
+        subtitle: 'Холодные анкеты листаются карточками, горячие заявки живут в быстром списке.',
+        cold: 'Холодные',
+        hot: 'Горячие',
+        filters: 'Фильтры',
+        create: 'Создать',
+        lookingFor: 'Ищет',
+        myRoles: 'Играет',
+        server: 'Сервер',
+        rank: 'Ранг',
+        minRank: 'Мин. ранг',
+        maxRank: 'Макс. ранг',
+        description: 'Описание',
+        publish: 'Опубликовать',
+        emptyCold: 'Карточки закончились',
+        emptyHot: 'Горячих заявок пока нет',
+        login: 'Войдите, чтобы свайпать и создавать анкеты',
+        refresh: 'Обновить',
+        searchPlaceholder: 'Поиск по описанию',
+        allRoles: 'Все роли',
+        allServers: 'Все сервера',
+        page: 'Страница',
+        next: 'Дальше',
+        previous: 'Назад',
+    },
+    en: {
+        title: 'Partner Search',
+        subtitle: 'Cold profiles are swipe cards, hot requests stay in a fast filtered list.',
+        cold: 'Cold',
+        hot: 'Hot',
+        filters: 'Filters',
+        create: 'Create',
+        lookingFor: 'Looking for',
+        myRoles: 'Plays',
+        server: 'Server',
+        rank: 'Rank',
+        minRank: 'Min rank',
+        maxRank: 'Max rank',
+        description: 'Description',
+        publish: 'Publish',
+        emptyCold: 'No more cards',
+        emptyHot: 'No hot requests yet',
+        login: 'Sign in to swipe and create forms',
+        refresh: 'Refresh',
+        searchPlaceholder: 'Search description',
+        allRoles: 'All roles',
+        allServers: 'All servers',
+        page: 'Page',
+        next: 'Next',
+        previous: 'Previous',
+    },
 }
 
-const ROLE_LABELS: Record<LolRole, string> = { top: 'Top', jg: 'Jungle', mid: 'Mid', adc: 'ADC', sup: 'Support' }
-const SERVER_LABELS: Record<Server, string> = { euw: 'EUW', ru: 'RU', eune: 'EUNE', na: 'NA', tr: 'TR' }
-const RANK_LABELS: Record<LolRankName, string> = {
-    iron: 'Iron', bronze: 'Bronze', silver: 'Silver', gold: 'Gold',
-    platinum: 'Platinum', emerald: 'Emerald', diamond: 'Diamond',
-    master: 'Master', grandmaster: 'GM', challenger: 'Challenger',
-}
-
-function formatRankRange(rr: RankRange): string {
-    const min = `${RANK_LABELS[rr.min_rank.rank]}${rr.min_rank.division > 1 ? ' ' + rr.min_rank.division : ''}`
-    const max = `${RANK_LABELS[rr.max_rank.rank]}${rr.max_rank.division > 1 ? ' ' + rr.max_rank.division : ''}`
-    return `${min} – ${max}`
-}
-
-function getMainRankColor(profile: FormProfile): string {
-    if (profile.rank_range.length === 0) return '#a600ff'
-    return RANK_COLORS[profile.rank_range[0].max_rank.rank] ?? '#a600ff'
-}
-
-// ─── Filter Panel ─────────────────────────────────────────────────
 interface Filters {
-    roles: LolRole[]
-    servers: Server[]
-    minRank: LolRankName | null
+    roles: SearchRole[]
+    servers: SearchServer[]
+    query: string
 }
 
-function FilterPanel({ filters, onChange, onClose }: { filters: Filters; onChange: (f: Filters) => void; onClose: () => void }) {
-    const allRoles: LolRole[] = ['top', 'jg', 'mid', 'adc', 'sup']
-    const allServers: Server[] = ['euw', 'ru', 'eune', 'na', 'tr']
-    const allRanks: LolRankName[] = ['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger']
+const defaultForm = {
+    server: 'euw' as SearchServer,
+    minRank: 'gold' as SearchRankName,
+    minDivision: 4,
+    maxRank: 'diamond' as SearchRankName,
+    maxDivision: 1,
+    myRoles: [] as SearchRole[],
+    lookingForRoles: [] as SearchRole[],
+    description: '',
+}
 
-    const toggleRole = (r: LolRole) => {
-        const roles = filters.roles.includes(r) ? filters.roles.filter(x => x !== r) : [...filters.roles, r]
-        onChange({ ...filters, roles })
-    }
-    const toggleServer = (s: Server) => {
-        const servers = filters.servers.includes(s) ? filters.servers.filter(x => x !== s) : [...filters.servers, s]
-        onChange({ ...filters, servers })
-    }
+function displayName(form: ColdFormResponse | HotFormResponse) {
+    return form.owner?.username || form.owner?.riot_game_name || `Player ${form.owner_id.slice(0, 8)}`
+}
 
+function rankRange(form: ColdFormResponse | HotFormResponse) {
+    const first = form.rank_range[0]
+    if (!first) return 'Any rank'
+    const min = `${RANK_LABELS[first.min_rank.rank]} ${first.min_rank.division}`
+    const max = `${RANK_LABELS[first.max_rank.rank]} ${first.max_rank.division}`
+    return `${SERVER_LABELS[first.server]} · ${min} - ${max}`
+}
+
+function formAccent(form: ColdFormResponse | HotFormResponse) {
+    const rank = form.rank_range[0]?.max_rank.rank ?? 'gold'
+    return RANK_COLORS[rank]
+}
+
+function timeAgo(value: string) {
+    const then = new Date(value).getTime()
+    if (Number.isNaN(then)) return value
+    const diff = Math.max(0, Date.now() - then)
+    const minutes = Math.floor(diff / 60000)
+    if (minutes < 1) return 'now'
+    if (minutes < 60) return `${minutes}m`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h`
+    return `${Math.floor(hours / 24)}d`
+}
+
+function Avatar({ form, size = 56 }: { form: ColdFormResponse | HotFormResponse; size?: number }) {
+    const name = displayName(form)
+    const image = form.owner?.profile_image_url || form.owner?.avatar_url
+    const accent = formAccent(form)
     return (
-        <div className="filter-panel">
-            <div className="filter-header">
-                <span className="filter-title">Filters</span>
-                <button className="filter-close" onClick={onClose}><FiX size={16} /></button>
-            </div>
-
-            <div className="filter-section">
-                <span className="filter-label">Looking for role</span>
-                <div className="filter-chips">
-                    {allRoles.map(r => (
-                        <button key={r} className={`filter-chip ${filters.roles.includes(r) ? 'active' : ''}`} onClick={() => toggleRole(r)}>
-                            {ROLE_LABELS[r]}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div className="filter-section">
-                <span className="filter-label">Server</span>
-                <div className="filter-chips">
-                    {allServers.map(s => (
-                        <button key={s} className={`filter-chip ${filters.servers.includes(s) ? 'active' : ''}`} onClick={() => toggleServer(s)}>
-                            {SERVER_LABELS[s]}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div className="filter-section">
-                <span className="filter-label">Min rank</span>
-                <div className="filter-chips">
-                    {allRanks.map(r => (
-                        <button key={r}
-                            className={`filter-chip ${filters.minRank === r ? 'active' : ''}`}
-                            style={filters.minRank === r ? { background: `${RANK_COLORS[r]}20`, color: RANK_COLORS[r], borderColor: `${RANK_COLORS[r]}50` } : undefined}
-                            onClick={() => onChange({ ...filters, minRank: filters.minRank === r ? null : r })}
-                        >
-                            {RANK_LABELS[r]}
-                        </button>
-                    ))}
-                </div>
-            </div>
+        <div className="ps-avatar" style={{ width: size, height: size, borderColor: `${accent}66` }}>
+            {image ? <img src={image} alt="" /> : <span>{name.slice(0, 2).toUpperCase()}</span>}
         </div>
     )
 }
 
-// ─── Profile Card ─────────────────────────────────────────────────
-function ProfileCard({ profile, onLike, onMessage, onHide, onBlock, liked, compact }: {
-    profile: FormProfile
-    onLike: () => void
-    onMessage: () => void
-    onHide: () => void
-    onBlock: () => void
-    liked: boolean
-    compact?: boolean
-}) {
-    const rankColor = getMainRankColor(profile)
-
+function RolePills({ roles }: { roles: SearchRole[] }) {
     return (
-        <div className={`profile-card ${compact ? 'profile-card-compact' : ''}`}>
-            <div className="profile-card-avatar" style={{ background: `linear-gradient(135deg, ${rankColor}15, ${rankColor}35)`, borderBottom: `1px solid ${rankColor}30` }}>
-                <span style={{ fontFamily: "'Russo One', sans-serif", fontSize: compact ? '24px' : '36px', color: rankColor, textShadow: `0 0 20px ${rankColor}60` }}>
-                    {profile.owner_name.slice(0, 2).toUpperCase()}
+        <div className="ps-pills">
+            {roles.map((role) => (
+                <span key={role} className="ps-pill">
+                    {ROLE_LABELS[role]}
                 </span>
-            </div>
-
-            <div className="profile-card-info">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                    <h3 className="profile-card-name">{profile.owner_name}</h3>
-                    <span className="profile-card-time">{profile.created_at}</span>
-                </div>
-
-                {/* Rank ranges */}
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                    {profile.rank_range.map((rr, i) => (
-                        <span key={i} className="profile-tag" style={{ background: `${RANK_COLORS[rr.max_rank.rank]}15`, color: RANK_COLORS[rr.max_rank.rank], border: `1px solid ${RANK_COLORS[rr.max_rank.rank]}35` }}>
-                            {SERVER_LABELS[rr.server]} {formatRankRange(rr)}
-                        </span>
-                    ))}
-                </div>
-
-                {/* Roles */}
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                        <span className="role-label">My:</span>
-                        {profile.my_roles.map(r => (
-                            <span key={r} className="role-tag">{ROLE_LABELS[r]}</span>
-                        ))}
-                    </div>
-                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                        <span className="role-label">LF:</span>
-                        {profile.looking_for_roles.map(r => (
-                            <span key={r} className="role-tag role-tag-looking">{ROLE_LABELS[r]}</span>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Description */}
-                <p className="profile-card-bio">{profile.description}</p>
-
-                {/* Actions */}
-                <div className="profile-card-actions">
-                    <button className={`action-btn action-like ${liked ? 'liked' : ''}`} onClick={onLike} title="Like">
-                        <FiHeart size={18} />
-                    </button>
-                    <button className="action-btn action-message" onClick={onMessage} title="Message">
-                        <FiMessageSquare size={18} />
-                    </button>
-                    <button className="action-btn action-hide" onClick={onHide} title="Hide">
-                        <FiEyeOff size={16} />
-                    </button>
-                    <button className="action-btn action-block" onClick={onBlock} title="Block">
-                        <FiSlash size={16} />
-                    </button>
-                </div>
-            </div>
+            ))}
         </div>
     )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────
-function SearchPage() {
-    const { user } = useAuthContext()
-    const navigate = useNavigate()
-    const [tab, setTab] = useState<'hot' | 'cold'>('hot')
-    const [viewMode, setViewMode] = useState<'swipe' | 'list'>('swipe')
-    const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
-    const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
-    const [currentIndex, setCurrentIndex] = useState(0)
-    const [showFilters, setShowFilters] = useState(false)
-    const [filters, setFilters] = useState<Filters>({ roles: [], servers: [], minRank: null })
-    const [showCreateModal, setShowCreateModal] = useState(false)
-    const [formData, setFormData] = useState({
-        server: 'euw' as Server,
-        minRank: 'gold' as LolRankName,
-        minDiv: 4,
-        maxRank: 'diamond' as LolRankName,
-        maxDiv: 1,
-        myRoles: [] as LolRole[],
-        lookingForRoles: [] as LolRole[],
-        description: '',
-    })
-
-    const allProfiles = tab === 'hot' ? DUMMY_HOT : DUMMY_COLD
-
-    const RANK_ORDER: LolRankName[] = ['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger']
-
-    const profiles = allProfiles.filter(p => {
-        if (hiddenIds.has(p.id)) return false
-        if (filters.roles.length > 0 && !p.looking_for_roles.some(r => filters.roles.includes(r))) return false
-        if (filters.servers.length > 0 && !p.rank_range.some(rr => filters.servers.includes(rr.server))) return false
-        if (filters.minRank) {
-            const minIdx = RANK_ORDER.indexOf(filters.minRank)
-            const hasMatchingRank = p.rank_range.some(rr => RANK_ORDER.indexOf(rr.max_rank.rank) >= minIdx)
-            if (!hasMatchingRank) return false
-        }
-        return true
-    })
-
-    const handleLike = (id: string) => {
-        setLikedIds(prev => {
-            const next = new Set(prev)
-            if (next.has(id)) next.delete(id); else next.add(id)
-            return next
+function FilterBar({
+    filters,
+    labels,
+    onChange,
+}: {
+    filters: Filters
+    labels: typeof TEXT[Lang]
+    onChange: (filters: Filters) => void
+}) {
+    const toggleRole = (role: SearchRole) => {
+        onChange({
+            ...filters,
+            roles: filters.roles.includes(role)
+                ? filters.roles.filter((item) => item !== role)
+                : [...filters.roles, role],
+        })
+    }
+    const toggleServer = (server: SearchServer) => {
+        onChange({
+            ...filters,
+            servers: filters.servers.includes(server)
+                ? filters.servers.filter((item) => item !== server)
+                : [...filters.servers, server],
         })
     }
 
-    const handleMessage = (_id: string) => {
-        navigate({ to: '/messenger' })
-    }
+    return (
+        <div className="ps-filterbar">
+            <label className="ps-searchbox">
+                <FiSearch size={16} />
+                <input
+                    value={filters.query}
+                    onChange={(event) => onChange({ ...filters, query: event.target.value })}
+                    placeholder={labels.searchPlaceholder}
+                />
+            </label>
+            <div className="ps-filter-row">
+                <span><FiFilter size={14} /> {labels.allRoles}</span>
+                {ROLES.map((role) => (
+                    <button
+                        key={role}
+                        type="button"
+                        className={`ps-chip ${filters.roles.includes(role) ? 'active' : ''}`}
+                        onClick={() => toggleRole(role)}
+                    >
+                        {ROLE_LABELS[role]}
+                    </button>
+                ))}
+            </div>
+            <div className="ps-filter-row">
+                <span>{labels.allServers}</span>
+                {SERVERS.map((server) => (
+                    <button
+                        key={server}
+                        type="button"
+                        className={`ps-chip ${filters.servers.includes(server) ? 'active' : ''}`}
+                        onClick={() => toggleServer(server)}
+                    >
+                        {SERVER_LABELS[server]}
+                    </button>
+                ))}
+            </div>
+        </div>
+    )
+}
 
-    const handleHide = (id: string) => {
-        setHiddenIds(prev => new Set(prev).add(id))
-    }
-
-    const handleBlock = (id: string) => {
-        setHiddenIds(prev => new Set(prev).add(id))
-    }
-
-    const handlePrev = () => setCurrentIndex(i => Math.max(0, i - 1))
-    const handleNext = () => setCurrentIndex(i => Math.min(profiles.length - 1, i + 1))
-
-    const safeIndex = Math.min(currentIndex, Math.max(0, profiles.length - 1))
-    const currentProfile = profiles[safeIndex]
-
-    const activeFilterCount = filters.roles.length + filters.servers.length + (filters.minRank ? 1 : 0)
+function ColdCard({
+    form,
+    labels,
+    dragX,
+    onDrag,
+    onRelease,
+    onLike,
+    onDislike,
+    onBlock,
+}: {
+    form: ColdFormResponse
+    labels: typeof TEXT[Lang]
+    dragX: number
+    onDrag: (value: number) => void
+    onRelease: () => void
+    onLike: () => void
+    onDislike: () => void
+    onBlock: () => void
+}) {
+    const accent = formAccent(form)
+    const [startX, setStartX] = useState<number | null>(null)
 
     return (
-        <>
+        <article
+            className="ps-cold-card"
+            style={{
+                '--accent': accent,
+                transform: `translateX(${dragX}px) rotate(${dragX / 20}deg)`,
+            } as CSSProperties}
+            onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId)
+                setStartX(event.clientX)
+            }}
+            onPointerMove={(event) => {
+                if (startX !== null) onDrag(event.clientX - startX)
+            }}
+            onPointerUp={() => {
+                setStartX(null)
+                onRelease()
+            }}
+        >
+            <div className="ps-card-topline">
+                <span>{rankRange(form)}</span>
+                <span>{timeAgo(form.created_at)}</span>
+            </div>
+            <div className="ps-card-hero">
+                <Avatar form={form} size={88} />
+                <div>
+                    <h2>{displayName(form)}</h2>
+                    <p>{form.owner?.riot_tagline ? `#${form.owner.riot_tagline}` : form.owner_id.slice(0, 8)}</p>
+                </div>
+            </div>
+            <div className="ps-role-grid">
+                <section>
+                    <span>{labels.myRoles}</span>
+                    <RolePills roles={form.my_roles} />
+                </section>
+                <section>
+                    <span>{labels.lookingFor}</span>
+                    <RolePills roles={form.looking_for_roles} />
+                </section>
+            </div>
+            <p className="ps-card-description">{form.description}</p>
+            <div className="ps-card-actions">
+                <button className="ps-action danger" type="button" onClick={onDislike} title="Skip">
+                    <FiX size={24} />
+                </button>
+                <button className="ps-action muted" type="button" onClick={onBlock} title="Block">
+                    <FiSlash size={19} />
+                </button>
+                <button className="ps-action good" type="button" onClick={onLike} title="Like">
+                    <FiHeart size={24} />
+                </button>
+            </div>
+            <div className={`ps-swipe-mark like ${dragX > 70 ? 'visible' : ''}`}>LIKE</div>
+            <div className={`ps-swipe-mark nope ${dragX < -70 ? 'visible' : ''}`}>SKIP</div>
+        </article>
+    )
+}
+
+function HotRow({
+    form,
+    labels,
+    onLike,
+}: {
+    form: HotFormResponse
+    labels: typeof TEXT[Lang]
+    onLike: () => void
+}) {
+    const accent = formAccent(form)
+    return (
+        <article className="ps-hot-row" style={{ '--accent': accent } as CSSProperties}>
+            <Avatar form={form} />
+            <div className="ps-hot-main">
+                <div className="ps-hot-title">
+                    <h3>{displayName(form)}</h3>
+                    <span>{rankRange(form)}</span>
+                </div>
+                <p>{form.description}</p>
+                <div className="ps-hot-meta">
+                    <span>{labels.myRoles}</span>
+                    <RolePills roles={form.my_roles} />
+                    <span>{labels.lookingFor}</span>
+                    <RolePills roles={form.looking_for_roles} />
+                </div>
+            </div>
+            <div className="ps-hot-actions">
+                <span>{timeAgo(form.created_at)}</span>
+                <button type="button" className="ps-icon-btn good" onClick={onLike} title="Like">
+                    <FiHeart size={18} />
+                </button>
+                <button type="button" className="ps-icon-btn" title="Message">
+                    <FiMessageSquare size={18} />
+                </button>
+            </div>
+        </article>
+    )
+}
+
+function CreatePanel({
+    mode,
+    labels,
+    disabled,
+    onSubmit,
+}: {
+    mode: FormMode
+    labels: typeof TEXT[Lang]
+    disabled: boolean
+    onSubmit: (data: Omit<CreateSearchFormRequest, 'owner_id'>) => void
+}) {
+    const [form, setForm] = useState(defaultForm)
+
+    const toggle = (field: 'myRoles' | 'lookingForRoles', role: SearchRole) => {
+        setForm((current) => ({
+            ...current,
+            [field]: current[field].includes(role)
+                ? current[field].filter((item) => item !== role)
+                : [...current[field], role],
+        }))
+    }
+
+    const submit = () => {
+        if (!form.description.trim() || form.myRoles.length === 0 || form.lookingForRoles.length === 0) return
+        onSubmit({
+            rank_range: [
+                {
+                    server: form.server,
+                    min_rank: { rank: form.minRank, division: form.minDivision },
+                    max_rank: { rank: form.maxRank, division: form.maxDivision },
+                },
+            ],
+            my_roles: form.myRoles,
+            looking_for_roles: form.lookingForRoles,
+            description: form.description.trim(),
+            status: mode === 'cold' ? 'active' : undefined,
+        })
+        setForm(defaultForm)
+    }
+
+    return (
+        <aside className="ps-create-panel">
+            <div className="ps-create-head">
+                <FiPlus size={18} />
+                <span>{labels.create} · {mode === 'cold' ? labels.cold : labels.hot}</span>
+            </div>
+            <div className="ps-form-grid">
+                <label>
+                    {labels.server}
+                    <select value={form.server} onChange={(event) => setForm({ ...form, server: event.target.value as SearchServer })}>
+                        {SERVERS.map((server) => <option key={server} value={server}>{SERVER_LABELS[server]}</option>)}
+                    </select>
+                </label>
+                <label>
+                    {labels.minRank}
+                    <select value={form.minRank} onChange={(event) => setForm({ ...form, minRank: event.target.value as SearchRankName })}>
+                        {RANKS.map((rank) => <option key={rank} value={rank}>{RANK_LABELS[rank]}</option>)}
+                    </select>
+                </label>
+                <label>
+                    {labels.maxRank}
+                    <select value={form.maxRank} onChange={(event) => setForm({ ...form, maxRank: event.target.value as SearchRankName })}>
+                        {RANKS.map((rank) => <option key={rank} value={rank}>{RANK_LABELS[rank]}</option>)}
+                    </select>
+                </label>
+            </div>
+            <div className="ps-form-section">
+                <span>{labels.myRoles}</span>
+                <div className="ps-filter-row compact">
+                    {ROLES.map((role) => (
+                        <button key={role} type="button" className={`ps-chip ${form.myRoles.includes(role) ? 'active' : ''}`} onClick={() => toggle('myRoles', role)}>
+                            {ROLE_LABELS[role]}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div className="ps-form-section">
+                <span>{labels.lookingFor}</span>
+                <div className="ps-filter-row compact">
+                    {ROLES.map((role) => (
+                        <button key={role} type="button" className={`ps-chip ${form.lookingForRoles.includes(role) ? 'active' : ''}`} onClick={() => toggle('lookingForRoles', role)}>
+                            {ROLE_LABELS[role]}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <label className="ps-textarea-label">
+                {labels.description}
+                <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} maxLength={1000} />
+            </label>
+            <button type="button" className="ps-primary-btn" disabled={disabled} onClick={submit}>
+                <FiSend size={16} /> {labels.publish}
+            </button>
+        </aside>
+    )
+}
+
+function SearchPage() {
+    const [lang, setLang] = useState<Lang>('ru')
+    const [mode, setMode] = useState<FormMode>('cold')
+    const [filters, setFilters] = useState<Filters>({ roles: [], servers: [], query: '' })
+    const [page, setPage] = useState(1)
+    const [dragX, setDragX] = useState(0)
+    const [localHidden, setLocalHidden] = useState<Set<string>>(new Set())
+    const { user, isAuthenticated } = useAuthContext()
+    const navigate = useNavigate()
+    const labels = TEXT[lang]
+
+    const apiFilter = useMemo(() => ({
+        looking_for_roles: filters.roles,
+        servers: filters.servers,
+        exclude_owner_id: user?.id,
+        exclude_blocked_by: user?.id,
+        status: 'active' as const,
+        query: filters.query || null,
+    }), [filters, user?.id])
+
+    const coldDeck = useColdDeck(user?.id, apiFilter, 24)
+    const hotForms = useHotForms(
+        { ...apiFilter, status: null },
+        { page, page_size: 30 },
+    )
+    const createCold = useCreateColdSearchFormMutation()
+    const createHot = useCreateHotSearchFormMutation()
+    const swipeCold = useSwipeColdSearchFormMutation()
+    const swipeHot = useSwipeHotSearchFormMutation()
+
+    const coldForms = (coldDeck.data?.forms ?? []).filter((form) => !localHidden.has(form.id))
+    const hotList = (hotForms.data?.forms ?? []).filter((form) => {
+        if (!filters.query.trim()) return true
+        return form.description.toLowerCase().includes(filters.query.trim().toLowerCase())
+    })
+    const activeCold = coldForms[0]
+
+    const swipe = (form: ColdFormResponse, action: 'like' | 'dislike' | 'block') => {
+        if (!user) return
+        setLocalHidden((current) => new Set(current).add(form.id))
+        setDragX(0)
+        swipeCold.mutate({ formId: form.id, userId: user.id, action })
+    }
+
+    const releaseDrag = () => {
+        if (!activeCold) {
+            setDragX(0)
+            return
+        }
+        if (dragX > 90) swipe(activeCold, 'like')
+        else if (dragX < -90) swipe(activeCold, 'dislike')
+        else setDragX(0)
+    }
+
+    const submitForm = (data: Omit<CreateSearchFormRequest, 'owner_id'>) => {
+        if (!user) {
+            navigate({ to: '/login' })
+            return
+        }
+        const payload = { ...data, owner_id: user.id }
+        if (mode === 'cold') createCold.mutate(payload)
+        else createHot.mutate(payload)
+    }
+
+    return (
+        <PageShell lang={lang} onLangChange={setLang}>
             <style>{`
-                .search-page {
-                    position: relative;
-                    z-index: 10;
-                    min-height: calc(100vh - 52px);
-                    margin-top: 52px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    padding: 32px 20px;
-                }
-
-                .search-toolbar {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    margin-bottom: 64px;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                }
-
-                .search-tabs {
-                    display: flex;
-                    gap: 2px;
-                    background: rgba(0,0,0,0.4);
-                    border: 1px solid rgba(166,0,255,0.08);
-                    border-radius: 10px;
-                    padding: 3px;
-                    backdrop-filter: blur(12px);
-                    position: relative;
-                }
-                .search-tab {
-                    padding: 8px 24px;
-                    border: none;
-                    border-radius: 8px;
-                    background: transparent;
-                    color: rgba(255,255,255,0.4);
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 11px;
-                    font-weight: 600;
-                    letter-spacing: 0.1em;
-                    text-transform: uppercase;
-                    cursor: pointer;
-                    transition: all 180ms;
-                    position: relative;
-                }
-                .search-tab .tab-tooltip {
-                    position: absolute;
-                    top: calc(100% + 10px);
-                    left: 50%;
-                    transform: translateX(-50%);
-                    width: 200px;
-                    padding: 8px 12px;
-                    background: rgba(0,0,0,0.9);
-                    border: 1px solid rgba(166,0,255,0.12);
-                    border-radius: 8px;
-                    font-size: 10px;
-                    font-weight: 400;
-                    color: rgba(255,255,255,0.6);
-                    letter-spacing: 0.02em;
-                    text-transform: none;
-                    line-height: 1.5;
-                    white-space: normal;
-                    pointer-events: none;
-                    opacity: 0;
-                    transition: opacity 150ms;
-                    z-index: 10;
-                    backdrop-filter: blur(12px);
-                }
-                .search-tab:hover .tab-tooltip {
-                    opacity: 1;
-                }
-                .search-tab:hover { color: rgba(255,255,255,0.7); }
-                .search-tab.active {
-                    background: rgba(6,182,212,0.12);
-                    color: #06B6D4;
-                }
-                .search-tab.hot {
-                    color: rgba(255,0,42,0.5);
-                }
-                .search-tab.hot:hover { color: #FF002A; }
-                .search-tab.hot.active {
-                    background: rgba(255,0,42,0.12);
-                    color: #FF002A;
-                }
-                .search-tab.cold {
-                    color: rgba(6,182,212,0.5);
-                }
-                .search-tab.cold:hover { color: #06B6D4; }
-                .search-tab.cold.active {
-                    background: rgba(6,182,212,0.12);
-                    color: #06B6D4;
-                }
-
-                .toolbar-btn {
-                    width: 36px; height: 36px;
-                    border-radius: 8px;
-                    border: 1px solid rgba(255,255,255,0.06);
-                    background: rgba(0,0,0,0.4);
-                    color: rgba(255,255,255,0.4);
-                    cursor: pointer;
-                    display: flex; align-items: center; justify-content: center;
-                    transition: all 150ms;
-                    position: relative;
-                    backdrop-filter: blur(8px);
-                }
-                .toolbar-btn:hover { background: rgba(166,0,255,0.08); color: #c77dff; border-color: rgba(166,0,255,0.15); }
-                .toolbar-btn.active { background: rgba(166,0,255,0.12); color: #c77dff; border-color: rgba(166,0,255,0.2); }
-                .toolbar-badge {
-                    position: absolute; top: -4px; right: -4px;
-                    width: 16px; height: 16px; border-radius: 50%;
-                    background: #a600ff; color: #fff;
-                    font-size: 9px; font-weight: 700;
-                    display: flex; align-items: center; justify-content: center;
-                    font-family: 'Chakra Petch', monospace;
-                }
-
-                /* ─── Filter panel ───── */
-                .filter-panel {
-                    width: 100%;
-                    max-width: 520px;
-                    background: rgba(0,0,0,0.6);
-                    border: 1px solid rgba(166,0,255,0.08);
-                    border-radius: 12px;
-                    padding: 16px;
-                    margin-bottom: 24px;
-                    backdrop-filter: blur(16px);
-                }
-                .filter-header {
-                    display: flex; align-items: center; justify-content: space-between;
-                    margin-bottom: 14px;
-                }
-                .filter-title {
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 12px; font-weight: 600;
-                    color: rgba(255,255,255,0.6);
-                    letter-spacing: 0.1em; text-transform: uppercase;
-                }
-                .filter-close {
-                    background: none; border: none; color: rgba(255,255,255,0.3);
-                    cursor: pointer; padding: 4px; display: flex;
-                    transition: color 150ms;
-                }
-                .filter-close:hover { color: #fff; }
-                .filter-section { margin-bottom: 12px; }
-                .filter-label {
-                    display: block;
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 9px; font-weight: 600;
-                    color: rgba(255,255,255,0.3);
-                    letter-spacing: 0.12em; text-transform: uppercase;
-                    margin-bottom: 6px;
-                }
-                .filter-chips { display: flex; gap: 4px; flex-wrap: wrap; }
-                .filter-chip {
-                    padding: 4px 10px; border-radius: 6px;
-                    border: 1px solid rgba(255,255,255,0.06);
-                    background: rgba(255,255,255,0.03);
-                    color: rgba(255,255,255,0.4);
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 10px; font-weight: 500;
-                    cursor: pointer; transition: all 150ms;
-                }
-                .filter-chip:hover { border-color: rgba(166,0,255,0.2); color: rgba(255,255,255,0.7); }
-                .filter-chip.active {
-                    background: rgba(166,0,255,0.1);
-                    border-color: rgba(166,0,255,0.25);
-                    color: #c77dff;
-                }
-
-                /* ─── Card viewport ───── */
-                .card-viewport {
-                    position: relative;
-                    width: 100%;
-                    max-width: 520px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                }
-
-                .list-viewport {
-                    width: 100%;
-                    max-width: 1100px;
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 16px;
-                }
-
-                .profile-card {
-                    width: 100%;
-                    background: rgba(0,0,0,0.45);
-                    border: 1px solid rgba(166,0,255,0.06);
-                    border-radius: 16px;
-                    backdrop-filter: blur(20px);
-                    overflow: hidden;
-                    transition: transform 300ms cubic-bezier(.34,1.56,.64,1), opacity 300ms;
-                }
-                .profile-card-compact {
-                    border-radius: 12px;
-                }
-                .profile-card-compact .profile-card-avatar {
-                    height: 100px;
-                }
-
-                .profile-card-avatar {
-                    width: 100%;
-                    height: 160px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                .profile-card-info {
-                    padding: 20px 24px 24px;
-                }
-                .profile-card-name {
-                    margin: 0;
-                    font-family: 'Russo One', sans-serif;
-                    font-size: 22px;
-                    color: #fff;
-                    letter-spacing: 0.02em;
-                }
-                .profile-card-compact .profile-card-name { font-size: 16px; }
-                .profile-card-time {
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 10px;
-                    color: rgba(255,255,255,0.2);
-                }
-                .profile-tag {
-                    padding: 3px 9px;
-                    border-radius: 5px;
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 10px;
-                    font-weight: 600;
-                    color: rgba(255,255,255,0.5);
-                    background: rgba(255,255,255,0.04);
-                    border: 1px solid rgba(255,255,255,0.06);
-                    letter-spacing: 0.03em;
-                }
-                .role-label {
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 9px;
-                    color: rgba(255,255,255,0.25);
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                }
-                .role-tag {
-                    padding: 2px 8px;
-                    border-radius: 4px;
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 10px;
-                    font-weight: 500;
-                    color: rgba(255,255,255,0.6);
-                    background: rgba(255,255,255,0.04);
-                    border: 1px solid rgba(255,255,255,0.06);
-                }
-                .role-tag-looking {
-                    color: rgba(166,0,255,0.7);
-                    background: rgba(166,0,255,0.06);
-                    border-color: rgba(166,0,255,0.12);
-                }
-                .profile-card-bio {
-                    margin: 0 0 16px;
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 12px;
-                    color: rgba(255,255,255,0.5);
-                    line-height: 1.7;
-                }
-                .profile-card-compact .profile-card-bio {
-                    font-size: 11px;
-                    margin-bottom: 12px;
-                }
-
-                .profile-card-actions {
-                    display: flex;
-                    gap: 10px;
-                    justify-content: center;
-                }
-                .action-btn {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 50%;
-                    border: 1px solid rgba(255,255,255,0.06);
-                    background: rgba(255,255,255,0.03);
-                    color: rgba(255,255,255,0.4);
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 180ms;
-                }
-                .profile-card-compact .action-btn { width: 40px; height: 40px; }
-                .action-like:hover, .action-like.liked {
-                    background: rgba(255,0,42,0.12);
-                    border-color: rgba(255,0,42,0.3);
-                    color: #FF002A;
-                    box-shadow: 0 0 16px rgba(255,0,42,0.12);
-                }
-                .action-like.liked { background: rgba(255,0,42,0.2); }
-                .action-message:hover {
-                    background: rgba(166,0,255,0.1);
-                    border-color: rgba(166,0,255,0.25);
-                    color: #c77dff;
-                    box-shadow: 0 0 16px rgba(166,0,255,0.12);
-                }
-                .action-hide:hover {
-                    background: rgba(255,255,255,0.06);
-                    border-color: rgba(255,255,255,0.12);
-                    color: rgba(255,255,255,0.8);
-                }
-                .action-block:hover {
-                    background: rgba(255,60,60,0.08);
-                    border-color: rgba(255,60,60,0.2);
-                    color: #ff4444;
-                }
-
-                .nav-arrows {
-                    display: flex;
-                    gap: 14px;
-                    margin-top: 24px;
-                    align-items: center;
-                }
-                .nav-arrow {
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    border: 1px solid rgba(255,255,255,0.06);
-                    background: rgba(0,0,0,0.4);
-                    color: rgba(255,255,255,0.4);
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 150ms;
-                    backdrop-filter: blur(8px);
-                }
-                .nav-arrow:hover:not(:disabled) {
-                    background: rgba(166,0,255,0.1);
-                    border-color: rgba(166,0,255,0.2);
-                    color: #c77dff;
-                }
-                .nav-arrow:disabled { opacity: 0.2; cursor: not-allowed; }
-                .nav-counter {
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 11px;
-                    color: rgba(255,255,255,0.2);
-                    letter-spacing: 0.05em;
-                    min-width: 50px;
-                    text-align: center;
-                }
-
-                .empty-state {
-                    text-align: center;
-                    padding: 80px 20px;
-                    color: rgba(255,255,255,0.15);
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 13px;
-                }
-
-                /* ─── Create button ───── */
-                .create-form-btn {
-                    padding: 8px 20px;
-                    border-radius: 8px;
-                    border: 1px solid rgba(166,0,255,0.2);
-                    background: rgba(166,0,255,0.1);
-                    color: #c77dff;
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 11px;
-                    font-weight: 600;
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    transition: all 180ms;
-                    backdrop-filter: blur(8px);
-                }
-                .create-form-btn:hover {
-                    background: rgba(166,0,255,0.18);
-                    border-color: rgba(166,0,255,0.35);
-                    box-shadow: 0 0 16px rgba(166,0,255,0.12);
-                }
-
-                /* ─── Modal ───── */
-                .modal-overlay {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 200;
-                    background: rgba(0,0,0,0.7);
-                    backdrop-filter: blur(6px);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px;
-                }
-                .modal-content {
-                    width: 100%;
-                    max-width: 480px;
-                    max-height: 85vh;
-                    overflow-y: auto;
-                    background: rgba(8,0,16,0.95);
-                    border: 1px solid rgba(166,0,255,0.1);
-                    border-radius: 16px;
-                    padding: 28px;
-                    backdrop-filter: blur(24px);
-                    box-shadow: 0 16px 64px rgba(0,0,0,0.6), 0 0 24px rgba(166,0,255,0.06);
-                }
-                .modal-content::-webkit-scrollbar { width: 2px; }
-                .modal-content::-webkit-scrollbar-thumb { background: rgba(166,0,255,0.15); }
-                .modal-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 24px;
-                }
-                .modal-title {
-                    font-family: 'Russo One', sans-serif;
-                    font-size: 16px;
-                    color: #fff;
-                    letter-spacing: 0.04em;
-                }
-                .modal-close {
-                    background: none;
-                    border: none;
-                    color: rgba(255,255,255,0.3);
-                    cursor: pointer;
-                    padding: 4px;
-                    display: flex;
-                    transition: color 150ms;
-                }
-                .modal-close:hover { color: #fff; }
-                .modal-section {
-                    margin-bottom: 18px;
-                }
-                .modal-label {
-                    display: block;
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 9px;
-                    font-weight: 600;
-                    color: rgba(255,255,255,0.3);
-                    letter-spacing: 0.12em;
-                    text-transform: uppercase;
-                    margin-bottom: 8px;
-                }
-                .modal-chips {
-                    display: flex;
-                    gap: 4px;
-                    flex-wrap: wrap;
-                }
-                .modal-chip {
-                    padding: 5px 12px;
-                    border-radius: 6px;
-                    border: 1px solid rgba(255,255,255,0.06);
-                    background: rgba(255,255,255,0.03);
-                    color: rgba(255,255,255,0.4);
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 11px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 150ms;
-                }
-                .modal-chip:hover { border-color: rgba(166,0,255,0.2); color: rgba(255,255,255,0.7); }
-                .modal-chip.active {
-                    background: rgba(166,0,255,0.1);
-                    border-color: rgba(166,0,255,0.25);
-                    color: #c77dff;
-                }
-                .modal-select {
-                    padding: 8px 12px;
-                    border-radius: 8px;
-                    border: 1px solid rgba(255,255,255,0.06);
-                    background: rgba(255,255,255,0.03);
-                    color: #fff;
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 11px;
-                    outline: none;
-                    cursor: pointer;
-                    transition: border-color 150ms;
-                    appearance: none;
-                    -webkit-appearance: none;
-                }
-                .modal-select:focus { border-color: rgba(166,0,255,0.3); }
-                .modal-select option { background: #0a0010; color: #fff; }
-                .modal-textarea {
-                    width: 100%;
-                    min-height: 80px;
-                    padding: 10px 14px;
-                    border-radius: 10px;
-                    border: 1px solid rgba(255,255,255,0.06);
-                    background: rgba(255,255,255,0.03);
-                    color: #fff;
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 12px;
-                    line-height: 1.6;
-                    outline: none;
-                    resize: vertical;
-                    transition: border-color 150ms;
-                    box-sizing: border-box;
-                }
-                .modal-textarea:focus { border-color: rgba(166,0,255,0.3); }
-                .modal-textarea::placeholder { color: rgba(255,255,255,0.15); }
-                .modal-rank-row {
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                }
-                .modal-rank-sep {
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 10px;
-                    color: rgba(255,255,255,0.2);
-                }
-                .modal-submit {
-                    width: 100%;
-                    padding: 12px;
-                    border-radius: 10px;
-                    border: 1px solid rgba(166,0,255,0.25);
-                    background: rgba(166,0,255,0.12);
-                    color: #c77dff;
-                    font-family: 'Chakra Petch', monospace;
-                    font-size: 12px;
-                    font-weight: 600;
-                    letter-spacing: 0.1em;
-                    text-transform: uppercase;
-                    cursor: pointer;
-                    transition: all 180ms;
-                    margin-top: 8px;
-                }
-                .modal-submit:hover {
-                    background: rgba(166,0,255,0.2);
-                    border-color: rgba(166,0,255,0.4);
-                    box-shadow: 0 0 20px rgba(166,0,255,0.15);
-                }
+                .ps-page { min-height: 100vh; padding: 88px 24px 48px; color: #fff; position: relative; z-index: 1; }
+                .ps-shell { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+                .ps-hero { max-width: 1180px; margin: 0 auto 24px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+                .ps-title h1 { font-family: 'Russo One', sans-serif; font-size: clamp(2rem, 5vw, 4rem); margin: 0 0 10px; letter-spacing: 0; }
+                .ps-title p { margin: 0; max-width: 620px; color: rgba(255,255,255,.58); line-height: 1.6; font-size: 14px; }
+                .ps-tabs { display: flex; gap: 8px; padding: 6px; border: 1px solid rgba(255,255,255,.1); background: rgba(6,8,18,.72); border-radius: 8px; backdrop-filter: blur(18px); }
+                .ps-tab { height: 40px; padding: 0 16px; border: 0; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px; background: transparent; color: rgba(255,255,255,.58); cursor: pointer; font: 700 12px 'Chakra Petch', monospace; text-transform: uppercase; }
+                .ps-tab.active { color: #fff; background: linear-gradient(135deg, rgba(45,212,191,.2), rgba(192,132,252,.22)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+                .ps-main { min-width: 0; }
+                .ps-panel { border: 1px solid rgba(255,255,255,.1); background: rgba(5,8,18,.76); border-radius: 8px; backdrop-filter: blur(18px); box-shadow: 0 18px 60px rgba(0,0,0,.28); }
+                .ps-filterbar { padding: 16px; margin-bottom: 18px; display: grid; gap: 12px; }
+                .ps-searchbox { height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-radius: 6px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.45); }
+                .ps-searchbox input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: #fff; font: 500 13px 'Chakra Petch', monospace; }
+                .ps-filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+                .ps-filter-row > span { display: inline-flex; align-items: center; gap: 6px; min-width: 102px; color: rgba(255,255,255,.46); font: 700 11px 'Chakra Petch', monospace; text-transform: uppercase; }
+                .ps-filter-row.compact > span { min-width: 0; }
+                .ps-chip { height: 30px; padding: 0 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; background: rgba(255,255,255,.04); color: rgba(255,255,255,.64); cursor: pointer; font: 700 11px 'Chakra Petch', monospace; }
+                .ps-chip.active { color: #fff; border-color: rgba(45,212,191,.5); background: rgba(45,212,191,.14); }
+                .ps-deck { min-height: 620px; display: grid; place-items: center; padding: 26px; overflow: hidden; }
+                .ps-cold-card { --accent: #2dd4bf; width: min(100%, 520px); min-height: 560px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--accent) 42%, rgba(255,255,255,.08)); background: radial-gradient(circle at 50% 0, color-mix(in srgb, var(--accent) 24%, transparent), transparent 34%), rgba(8,12,24,.94); box-shadow: 0 24px 80px rgba(0,0,0,.38); padding: 22px; touch-action: none; user-select: none; position: relative; transition: transform 160ms ease; }
+                .ps-card-topline { display: flex; justify-content: space-between; color: rgba(255,255,255,.54); font: 700 11px 'Chakra Petch', monospace; text-transform: uppercase; }
+                .ps-card-hero { display: flex; align-items: center; gap: 18px; margin: 34px 0 28px; }
+                .ps-card-hero h2 { font-family: 'Russo One', sans-serif; margin: 0 0 6px; font-size: 30px; letter-spacing: 0; }
+                .ps-card-hero p { margin: 0; color: rgba(255,255,255,.5); }
+                .ps-avatar { flex: 0 0 auto; border: 2px solid rgba(255,255,255,.16); border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: rgba(255,255,255,.06); }
+                .ps-avatar img { width: 100%; height: 100%; object-fit: cover; }
+                .ps-avatar span { font-family: 'Russo One', sans-serif; color: #fff; }
+                .ps-role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+                .ps-role-grid section { padding: 14px; border-radius: 8px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.08); }
+                .ps-role-grid section > span, .ps-form-section > span { display: block; margin-bottom: 10px; color: rgba(255,255,255,.45); font: 700 11px 'Chakra Petch', monospace; text-transform: uppercase; }
+                .ps-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+                .ps-pill { border-radius: 6px; padding: 5px 8px; background: rgba(255,255,255,.08); color: rgba(255,255,255,.82); font: 700 11px 'Chakra Petch', monospace; }
+                .ps-card-description { min-height: 112px; margin: 22px 0; color: rgba(255,255,255,.72); line-height: 1.65; font-size: 14px; }
+                .ps-card-actions { display: flex; justify-content: center; gap: 14px; }
+                .ps-action, .ps-icon-btn { border: 1px solid rgba(255,255,255,.12); color: #fff; background: rgba(255,255,255,.06); cursor: pointer; display: inline-grid; place-items: center; }
+                .ps-action { width: 58px; height: 58px; border-radius: 50%; }
+                .ps-icon-btn { width: 38px; height: 38px; border-radius: 50%; }
+                .ps-action.good, .ps-icon-btn.good { color: #34d399; border-color: rgba(52,211,153,.36); background: rgba(52,211,153,.1); }
+                .ps-action.danger { color: #fb7185; border-color: rgba(251,113,133,.36); background: rgba(251,113,133,.1); }
+                .ps-action.muted { color: #facc15; border-color: rgba(250,204,21,.3); background: rgba(250,204,21,.09); }
+                .ps-swipe-mark { position: absolute; top: 86px; padding: 8px 12px; border: 2px solid currentColor; border-radius: 6px; font: 900 24px 'Russo One', sans-serif; opacity: 0; transform: rotate(-12deg); }
+                .ps-swipe-mark.like { left: 28px; color: #34d399; }
+                .ps-swipe-mark.nope { right: 28px; color: #fb7185; transform: rotate(12deg); }
+                .ps-swipe-mark.visible { opacity: .9; }
+                .ps-hot-list { display: grid; gap: 12px; }
+                .ps-hot-row { --accent: #2dd4bf; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 16px; border: 1px solid rgba(255,255,255,.1); background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 48%), rgba(6,9,18,.72); border-radius: 8px; }
+                .ps-hot-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+                .ps-hot-title h3 { margin: 0; font-family: 'Russo One', sans-serif; letter-spacing: 0; }
+                .ps-hot-title span, .ps-hot-actions span { color: rgba(255,255,255,.48); font: 700 11px 'Chakra Petch', monospace; text-transform: uppercase; }
+                .ps-hot-main p { margin: 8px 0 12px; color: rgba(255,255,255,.66); line-height: 1.5; }
+                .ps-hot-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+                .ps-hot-meta > span { color: rgba(255,255,255,.4); font: 700 10px 'Chakra Petch', monospace; text-transform: uppercase; }
+                .ps-hot-actions { display: flex; align-items: center; gap: 8px; }
+                .ps-create-panel { position: sticky; top: 88px; border: 1px solid rgba(255,255,255,.1); background: rgba(6,8,18,.76); border-radius: 8px; padding: 16px; backdrop-filter: blur(18px); }
+                .ps-create-head { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font: 800 12px 'Chakra Petch', monospace; text-transform: uppercase; color: #fff; }
+                .ps-form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+                .ps-form-grid label, .ps-textarea-label { display: grid; gap: 6px; color: rgba(255,255,255,.48); font: 700 10px 'Chakra Petch', monospace; text-transform: uppercase; }
+                .ps-form-grid select, .ps-textarea-label textarea { width: 100%; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; background: rgba(255,255,255,.055); color: #fff; outline: none; box-sizing: border-box; }
+                .ps-form-grid select { height: 38px; padding: 0 10px; }
+                .ps-textarea-label textarea { min-height: 118px; resize: vertical; padding: 10px; font: 500 13px 'Chakra Petch', monospace; text-transform: none; }
+                .ps-form-section { margin: 14px 0; }
+                .ps-primary-btn { width: 100%; height: 42px; border-radius: 6px; border: 1px solid rgba(45,212,191,.4); background: linear-gradient(135deg, rgba(45,212,191,.22), rgba(96,165,250,.18)); color: #fff; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font: 800 12px 'Chakra Petch', monospace; text-transform: uppercase; }
+                .ps-primary-btn:disabled { opacity: .45; cursor: not-allowed; }
+                .ps-empty { min-height: 360px; display: grid; place-items: center; text-align: center; color: rgba(255,255,255,.5); }
+                .ps-empty svg { margin-bottom: 12px; color: #2dd4bf; }
+                .ps-pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; }
+                .ps-pager button { height: 34px; padding: 0 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.05); color: #fff; cursor: pointer; }
+                .ps-auth { max-width: 1180px; margin: 0 auto 16px; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(250,204,21,.28); background: rgba(250,204,21,.08); color: rgba(255,255,255,.72); }
+                @media (max-width: 980px) { .ps-shell { grid-template-columns: 1fr; } .ps-create-panel { position: static; } .ps-hero { align-items: stretch; flex-direction: column; } }
+                @media (max-width: 640px) { .ps-page { padding: 78px 14px 32px; } .ps-tabs { width: 100%; } .ps-tab { flex: 1; justify-content: center; } .ps-role-grid, .ps-hot-row { grid-template-columns: 1fr; } .ps-hot-actions { justify-content: flex-start; } .ps-deck { padding: 14px; min-height: 560px; } .ps-cold-card { min-height: 520px; padding: 18px; } .ps-card-hero h2 { font-size: 24px; } }
             `}</style>
 
-            <div className="search-page">
-                {/* Toolbar */}
-                <div className="search-toolbar">
-                    <div className="search-tabs">
-                        <button className={`search-tab hot ${tab === 'hot' ? 'active' : ''}`} onClick={() => { setTab('hot'); setCurrentIndex(0) }}>
-                            Hot
-                            <span className="tab-tooltip">Live for 15 min. Quick search for teammates right now.</span>
+            <main className="ps-page">
+                <header className="ps-hero">
+                    <div className="ps-title">
+                        <h1>{labels.title}</h1>
+                        <p>{labels.subtitle}</p>
+                    </div>
+                    <div className="ps-tabs">
+                        <button className={`ps-tab ${mode === 'cold' ? 'active' : ''}`} type="button" onClick={() => setMode('cold')}>
+                            <FiHeart size={16} /> {labels.cold}
                         </button>
-                        <button className={`search-tab cold ${tab === 'cold' ? 'active' : ''}`} onClick={() => { setTab('cold'); setCurrentIndex(0) }}>
-                            Cold
-                            <span className="tab-tooltip">Permanent form, 1 per person. Find a long-term duo partner.</span>
+                        <button className={`ps-tab ${mode === 'hot' ? 'active' : ''}`} type="button" onClick={() => setMode('hot')}>
+                            <FiZap size={16} /> {labels.hot}
                         </button>
                     </div>
+                </header>
 
-                    <button className={`toolbar-btn ${viewMode === 'swipe' ? 'active' : ''}`} onClick={() => setViewMode('swipe')} title="Swipe mode">
-                        <FiSquare size={14} />
-                    </button>
-                    <button className={`toolbar-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List mode">
-                        <FiGrid size={14} />
-                    </button>
+                {!isAuthenticated && <div className="ps-auth">{labels.login}</div>}
 
-                    <button className={`toolbar-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(v => !v)} title="Filters">
-                        <FiFilter size={14} />
-                        {activeFilterCount > 0 && <span className="toolbar-badge">{activeFilterCount}</span>}
-                    </button>
+                <section className="ps-shell">
+                    <div className="ps-main">
+                        <FilterBar filters={filters} labels={labels} onChange={(next) => { setFilters(next); setPage(1) }} />
 
-                    <button className="create-form-btn" onClick={() => setShowCreateModal(true)}>
-                        <FiPlus size={14} />
-                        Create {tab === 'hot' ? 'Hot' : 'Cold'} Form
-                    </button>
-                </div>
-
-                {/* Filter panel */}
-                {showFilters && (
-                    <FilterPanel filters={filters} onChange={setFilters} onClose={() => setShowFilters(false)} />
-                )}
-
-                {/* Swipe mode */}
-                {viewMode === 'swipe' && (
-                    <div className="card-viewport">
-                        {profiles.length > 0 && currentProfile ? (
+                        {mode === 'cold' ? (
+                            <div className="ps-panel ps-deck">
+                                {coldDeck.isLoading ? (
+                                    <div className="ps-empty"><FiRefreshCcw size={28} /> Loading...</div>
+                                ) : activeCold ? (
+                                    <ColdCard
+                                        form={activeCold}
+                                        labels={labels}
+                                        dragX={dragX}
+                                        onDrag={setDragX}
+                                        onRelease={releaseDrag}
+                                        onLike={() => swipe(activeCold, 'like')}
+                                        onDislike={() => swipe(activeCold, 'dislike')}
+                                        onBlock={() => swipe(activeCold, 'block')}
+                                    />
+                                ) : (
+                                    <div className="ps-empty">
+                                        <div>
+                                            <FiRefreshCcw size={30} />
+                                            <p>{labels.emptyCold}</p>
+                                            <button className="ps-primary-btn" type="button" onClick={() => { setLocalHidden(new Set()); coldDeck.refetch() }}>
+                                                {labels.refresh}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
                             <>
-                                <ProfileCard
-                                    key={currentProfile.id}
-                                    profile={currentProfile}
-                                    onLike={() => handleLike(currentProfile.id)}
-                                    onMessage={() => handleMessage(currentProfile.id)}
-                                    onHide={() => handleHide(currentProfile.id)}
-                                    onBlock={() => handleBlock(currentProfile.id)}
-                                    liked={likedIds.has(currentProfile.id)}
-                                />
-                                <div className="nav-arrows">
-                                    <button className="nav-arrow" onClick={handlePrev} disabled={safeIndex === 0}>
-                                        <FiChevronLeft size={18} />
+                                <div className="ps-hot-list">
+                                    {hotForms.isLoading ? (
+                                        <div className="ps-panel ps-empty"><FiRefreshCcw size={28} /> Loading...</div>
+                                    ) : hotList.length > 0 ? hotList.map((form) => (
+                                        <HotRow
+                                            key={form.id}
+                                            form={form}
+                                            labels={labels}
+                                            onLike={() => user && swipeHot.mutate({ formId: form.id, userId: user.id, action: 'like' })}
+                                        />
+                                    )) : (
+                                        <div className="ps-panel ps-empty"><FiZap size={30} /><p>{labels.emptyHot}</p></div>
+                                    )}
+                                </div>
+                                <div className="ps-pager">
+                                    <button type="button" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+                                        <FiChevronLeft size={14} /> {labels.previous}
                                     </button>
-                                    <span className="nav-counter">
-                                        {safeIndex + 1} / {profiles.length}
-                                    </span>
-                                    <button className="nav-arrow" onClick={handleNext} disabled={safeIndex >= profiles.length - 1}>
-                                        <FiChevronRight size={18} />
+                                    <span>{labels.page} {page}</span>
+                                    <button type="button" disabled={!hotForms.data?.has_next} onClick={() => setPage((current) => current + 1)}>
+                                        {labels.next}
                                     </button>
                                 </div>
                             </>
-                        ) : (
-                            <div className="empty-state">No profiles match your filters</div>
                         )}
                     </div>
-                )}
 
-                {/* List mode */}
-                {viewMode === 'list' && (
-                    <div className="list-viewport">
-                        {profiles.length > 0 ? profiles.map(p => (
-                            <ProfileCard
-                                key={p.id}
-                                profile={p}
-                                onLike={() => handleLike(p.id)}
-                                onMessage={() => handleMessage(p.id)}
-                                onHide={() => handleHide(p.id)}
-                                onBlock={() => handleBlock(p.id)}
-                                liked={likedIds.has(p.id)}
-                                compact
-                            />
-                        )) : (
-                            <div className="empty-state">No profiles match your filters</div>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {/* Create Form Modal */}
-            {showCreateModal && (
-                <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <span className="modal-title">
-                                {tab === 'hot' ? 'Create Hot Form' : 'Create Cold Form'}
-                            </span>
-                            <button className="modal-close" onClick={() => setShowCreateModal(false)}><FiX size={18} /></button>
-                        </div>
-
-                        {tab === 'hot' && (
-                            <p style={{ fontFamily: "'Chakra Petch', monospace", fontSize: '10px', color: 'rgba(255,0,42,0.6)', marginBottom: '16px', marginTop: 0, lineHeight: 1.5 }}>
-                                Hot forms expire in 15 minutes. Use them to find teammates right now.
-                            </p>
-                        )}
-                        {tab === 'cold' && (
-                            <p style={{ fontFamily: "'Chakra Petch', monospace", fontSize: '10px', color: 'rgba(6,182,212,0.6)', marginBottom: '16px', marginTop: 0, lineHeight: 1.5 }}>
-                                Cold forms are permanent (1 per person). Find a long-term duo partner.
-                            </p>
-                        )}
-
-                        <div className="modal-section">
-                            <span className="modal-label">Server</span>
-                            <div className="modal-chips">
-                                {(['euw', 'ru', 'eune', 'na', 'tr'] as Server[]).map(s => (
-                                    <button key={s} className={`modal-chip ${formData.server === s ? 'active' : ''}`} onClick={() => setFormData(d => ({ ...d, server: s }))}>
-                                        {SERVER_LABELS[s]}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="modal-section">
-                            <span className="modal-label">Rank Range</span>
-                            <div className="modal-rank-row">
-                                <select className="modal-select" value={formData.minRank} onChange={e => setFormData(d => ({ ...d, minRank: e.target.value as LolRankName }))}>
-                                    {(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger'] as LolRankName[]).map(r => (
-                                        <option key={r} value={r}>{RANK_LABELS[r]}</option>
-                                    ))}
-                                </select>
-                                <select className="modal-select" value={formData.minDiv} onChange={e => setFormData(d => ({ ...d, minDiv: Number(e.target.value) }))}>
-                                    {[1, 2, 3, 4].map(d => <option key={d} value={d}>{d}</option>)}
-                                </select>
-                                <span className="modal-rank-sep">to</span>
-                                <select className="modal-select" value={formData.maxRank} onChange={e => setFormData(d => ({ ...d, maxRank: e.target.value as LolRankName }))}>
-                                    {(['iron', 'bronze', 'silver', 'gold', 'platinum', 'emerald', 'diamond', 'master', 'grandmaster', 'challenger'] as LolRankName[]).map(r => (
-                                        <option key={r} value={r}>{RANK_LABELS[r]}</option>
-                                    ))}
-                                </select>
-                                <select className="modal-select" value={formData.maxDiv} onChange={e => setFormData(d => ({ ...d, maxDiv: Number(e.target.value) }))}>
-                                    {[1, 2, 3, 4].map(d => <option key={d} value={d}>{d}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="modal-section">
-                            <span className="modal-label">My Roles</span>
-                            <div className="modal-chips">
-                                {(['top', 'jg', 'mid', 'adc', 'sup'] as LolRole[]).map(r => (
-                                    <button key={r} className={`modal-chip ${formData.myRoles.includes(r) ? 'active' : ''}`}
-                                        onClick={() => setFormData(d => ({ ...d, myRoles: d.myRoles.includes(r) ? d.myRoles.filter(x => x !== r) : [...d.myRoles, r] }))}>
-                                        {ROLE_LABELS[r]}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="modal-section">
-                            <span className="modal-label">Looking For Roles</span>
-                            <div className="modal-chips">
-                                {(['top', 'jg', 'mid', 'adc', 'sup'] as LolRole[]).map(r => (
-                                    <button key={r} className={`modal-chip ${formData.lookingForRoles.includes(r) ? 'active' : ''}`}
-                                        onClick={() => setFormData(d => ({ ...d, lookingForRoles: d.lookingForRoles.includes(r) ? d.lookingForRoles.filter(x => x !== r) : [...d.lookingForRoles, r] }))}>
-                                        {ROLE_LABELS[r]}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="modal-section">
-                            <span className="modal-label">Description</span>
-                            <textarea
-                                className="modal-textarea"
-                                placeholder="Describe what you're looking for..."
-                                value={formData.description}
-                                onChange={e => setFormData(d => ({ ...d, description: e.target.value }))}
-                                maxLength={500}
-                            />
-                            <span style={{ fontFamily: "'Chakra Petch', monospace", fontSize: '9px', color: 'rgba(255,255,255,0.15)', float: 'right', marginTop: '4px' }}>
-                                {formData.description.length}/500
-                            </span>
-                        </div>
-
-                        <button className="modal-submit" onClick={() => setShowCreateModal(false)}>
-                            Publish {tab === 'hot' ? 'Hot' : 'Cold'} Form
-                        </button>
-                    </div>
-                </div>
-            )}
-        </>
+                    <CreatePanel
+                        mode={mode}
+                        labels={labels}
+                        disabled={!user || createCold.isPending || createHot.isPending}
+                        onSubmit={submitForm}
+                    />
+                </section>
+            </main>
+        </PageShell>
     )
 }

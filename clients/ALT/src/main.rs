@@ -1,50 +1,39 @@
+mod backend;
 mod schemas;
 mod service;
 mod ui;
-use crate::service::GameService;
-use irelia::ws::types::{Event, EventKind};
-use irelia::ws::{LcuWebSocket, Subscriber};
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::thread;
-use std::time::Duration;
+
+use crate::backend::BackendClient;
+use std::io::{self, Write};
+
 #[tokio::main]
-async fn main() {
-    struct EventCounter(u32);
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let auth_url =
+        std::env::var("AKIORA_AUTH_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let backend = BackendClient::new(auth_url);
 
-    impl Subscriber for EventCounter {
-        fn on_event(&mut self, event: &Event, _: &mut bool) {
-            println!("{event:?}");
-            println!("{}", self.0);
-            self.0 += 1;
-        }
-    }
+    println!("Akiora ALT desktop login");
+    let email = prompt("Email: ")?;
+    let start = backend.start_email_login(email).await?;
 
-    let mut ws_client = LcuWebSocket::new();
+    println!("Verification code was sent to your email.");
+    let code = prompt("Code: ")?;
+    let session = backend
+        .finish_email_login(start.verification_id, code)
+        .await?;
 
-    let id = ws_client
-        .subscribe(EventKind::json_api_event(), EventCounter(0))
-        .unwrap();
+    let path = BackendClient::save_session(&session)?;
+    println!("Authenticated.");
+    println!("Session saved to {}", path.display());
 
-    static COUNTER: AtomicU32 = AtomicU32::new(0);
+    Ok(())
+}
 
-    let id_2 = ws_client
-        .subscribe_closure(EventKind::json_api_event(), |event| {
-            let count = COUNTER.fetch_add(1, Ordering::SeqCst);
-            println!("{event:?}");
-            println!("{}", count);
-        })
-        .unwrap();
+fn prompt(label: &str) -> io::Result<String> {
+    print!("{label}");
+    io::stdout().flush()?;
 
-    thread::sleep(Duration::from_secs(60));
-
-    ws_client
-        .unsubscribe(EventKind::json_api_event(), id)
-        .unwrap();
-    ws_client
-        .unsubscribe(EventKind::json_api_event(), id_2)
-        .unwrap();
-
-    ws_client.abort().unwrap();
-
-    println!("Done!");
+    let mut value = String::new();
+    io::stdin().read_line(&mut value)?;
+    Ok(value.trim().to_string())
 }

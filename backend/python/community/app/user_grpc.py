@@ -5,7 +5,7 @@ from loguru import logger
 from dishka.integrations.grpcio import inject
 
 from domain.services.user_service import UserService
-from domain.entites.user import User, UserType, Social, Birthday, Platform
+from domain.entites.user import User, UserType, Social, Birthday, LeagueAccount, Platform
 from domain.entites.friend import Friend
 
 
@@ -22,6 +22,23 @@ def _user_to_proto(user: User, pb2):
     if user.socials:
         for k, v in user.socials.items():
             socials[k] = pb2.Social(link=v.link, hidden=v.hidden)
+
+    league_accounts = []
+    if user.league_accounts:
+        league_accounts = [
+            pb2.LeagueAccount(
+                status=account.status,
+                username=account.username,
+                tagline=account.tagline,
+                server=account.server,
+                profile_image_url=account.profile_image_url or "",
+                solo_tier=account.solo_tier or "",
+                solo_division=account.solo_division or 0,
+                solo_lp=account.solo_lp or 0,
+                solo_tier_image_url=account.solo_tier_image_url or "",
+            )
+            for account in user.league_accounts
+        ]
 
     birth_date = None
     if user.birth_date:
@@ -53,6 +70,7 @@ def _user_to_proto(user: User, pb2):
         gender=_gender_map.get(user.gender, pb2.Gender.GENDER_UNSPECIFIED),
         birth_date=birth_date,
         socials=socials,
+        league_accounts=league_accounts,
         created_at=int(user.created_at.timestamp()),
         last_updated=int(user.last_updated.timestamp()),
     )
@@ -144,6 +162,23 @@ class UserGrpc:
                 for k, v in request.socials.items()
             }
 
+        league_accounts = None
+        if request.league_accounts:
+            league_accounts = [
+                LeagueAccount(
+                    status=account.status,
+                    username=account.username,
+                    tagline=account.tagline,
+                    server=account.server,
+                    profile_image_url=account.profile_image_url or None,
+                    solo_tier=account.solo_tier or None,
+                    solo_division=account.solo_division or None,
+                    solo_lp=account.solo_lp or None,
+                    solo_tier_image_url=account.solo_tier_image_url or None,
+                )
+                for account in request.league_accounts
+            ]
+
         user = await UserService.update(
             UUID(request.user_id),
             nickname=request.nickname if request.HasField("nickname") else None,
@@ -153,6 +188,7 @@ class UserGrpc:
             user_type=_type_reverse.get(request.user_type),
             birth_date=birth_date,
             socials=socials,
+            league_accounts=league_accounts,
         )
         return _user_to_proto(user, pb2)
 

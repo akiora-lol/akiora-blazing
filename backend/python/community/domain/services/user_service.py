@@ -5,7 +5,7 @@ from loguru import logger
 
 from beanie.operators import Set, Push, Pull
 
-from domain.entites.user import User, UserType, Platform, Social, Birthday
+from domain.entites.user import User, UserType, Platform, Social, Birthday, LeagueAccount
 
 
 class UserService:
@@ -35,6 +35,7 @@ class UserService:
         user_type: UserType | None = None,
         birth_date: Birthday | None = None,
         socials: dict[Platform, Social] | None = None,
+        league_accounts: list[LeagueAccount] | None = None,
     ) -> User:
         user = await User.get(user_id)
         if not user:
@@ -55,6 +56,8 @@ class UserService:
             patch["birth_date"] = birth_date.model_dump()
         if socials is not None:
             patch["socials"] = {k: v.model_dump() for k, v in socials.items()}
+        if league_accounts is not None:
+            patch["league_accounts"] = [account.model_dump() for account in league_accounts]
 
         await user.update({"$set": patch})
         logger.info("User updated id={}", user_id)

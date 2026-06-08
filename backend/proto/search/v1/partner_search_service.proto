@@ -1,0 +1,352 @@
+syntax = "proto3";
+
+package akiora.search.partner;
+
+import "google/api/annotations.proto";
+import "google/api/http.proto";
+import "common/types.proto";
+
+option go_package = "akiora/search/partner";
+
+enum Server {
+  SERVER_UNSPECIFIED = 0;
+  SERVER_EUW = 1;
+  SERVER_RU = 2;
+  SERVER_EUNE = 3;
+  SERVER_NA = 4;
+  SERVER_TR = 5;
+}
+
+enum LolRole {
+  LOL_ROLE_UNSPECIFIED = 0;
+  LOL_ROLE_TOP = 1;
+  LOL_ROLE_JG = 2;
+  LOL_ROLE_MID = 3;
+  LOL_ROLE_ADC = 4;
+  LOL_ROLE_SUP = 5;
+}
+
+enum LolRankName {
+  LOL_RANK_NAME_UNSPECIFIED = 0;
+  LOL_RANK_NAME_IRON = 1;
+  LOL_RANK_NAME_BRONZE = 2;
+  LOL_RANK_NAME_SILVER = 3;
+  LOL_RANK_NAME_GOLD = 4;
+  LOL_RANK_NAME_PLATINUM = 5;
+  LOL_RANK_NAME_EMERALD = 6;
+  LOL_RANK_NAME_DIAMOND = 7;
+  LOL_RANK_NAME_MASTER = 8;
+  LOL_RANK_NAME_GRANDMASTER = 9;
+  LOL_RANK_NAME_CHALLENGER = 10;
+}
+
+enum FormStatus {
+  FORM_STATUS_UNSPECIFIED = 0;
+  FORM_STATUS_ACTIVE = 1;
+  FORM_STATUS_FROZEN = 2;
+}
+
+enum SwipeAction {
+  SWIPE_ACTION_UNSPECIFIED = 0;
+  SWIPE_ACTION_LIKE = 1;
+  SWIPE_ACTION_DISLIKE = 2;
+  SWIPE_ACTION_BLOCK = 3;
+}
+
+message LeagueRank {
+  LolRankName rank = 1;
+  int32 division = 2;
+  optional int32 lp = 3;
+}
+
+message RankRange {
+  Server server = 1;
+  LeagueRank min_rank = 2;
+  LeagueRank max_rank = 3;
+}
+
+message OwnerPreview {
+  string user_id = 1;
+  optional string username = 2;
+  optional string avatar_url = 3;
+  optional string riot_game_name = 4;
+  optional string riot_tagline = 5;
+  optional string profile_image_url = 6;
+  optional LeagueRank solo_rank = 7;
+  optional string solo_tier_image_url = 8;
+}
+
+message ShortFormResponse {
+  repeated string blocked_by = 1;
+  repeated RankRange rank_range = 2;
+  repeated LolRole my_roles = 3;
+  repeated LolRole looking_for_roles = 4;
+  string description = 5;
+}
+
+message ColdFormResponse {
+  string id = 1;
+  string owner_id = 2;
+  optional OwnerPreview owner = 3;
+  repeated string liked_by = 4;
+  repeated string disliked_by = 5;
+  repeated string blocked_by = 6;
+  string created_at = 7;
+  repeated RankRange rank_range = 8;
+  repeated LolRole my_roles = 9;
+  repeated LolRole looking_for_roles = 10;
+  string description = 11;
+  FormStatus status = 12;
+  string updated_at = 13;
+  repeated ShortFormResponse history = 14;
+}
+
+message HotFormResponse {
+  string id = 1;
+  string owner_id = 2;
+  optional OwnerPreview owner = 3;
+  repeated string liked_by = 4;
+  repeated string disliked_by = 5;
+  string created_at = 6;
+  repeated RankRange rank_range = 7;
+  repeated LolRole my_roles = 8;
+  repeated LolRole looking_for_roles = 9;
+  string description = 10;
+  optional string expires_at = 11;
+}
+
+message PaginationRequest {
+  optional int32 page = 1;
+  optional int32 page_size = 2;
+  optional int32 skip = 3;
+  optional int32 limit = 4;
+}
+
+message SearchFormsFilter {
+  repeated RankRange rank_range = 1;
+  repeated LolRole my_roles = 2;
+  repeated LolRole looking_for_roles = 3;
+  repeated Server servers = 4;
+  optional string owner_id = 5;
+  optional string exclude_owner_id = 6;
+  optional string exclude_blocked_by = 7;
+  optional FormStatus status = 8;
+  optional int32 min_likes = 9;
+  optional string query = 10;
+}
+
+message CreateColdFormRequest {
+  string owner_id = 1;
+  repeated RankRange rank_range = 2;
+  repeated LolRole my_roles = 3;
+  repeated LolRole looking_for_roles = 4;
+  string description = 5;
+  optional FormStatus status = 6;
+}
+
+message UpdateColdFormRequest {
+  string form_id = 1;
+  string actor_id = 2;
+  repeated RankRange rank_range = 3;
+  repeated LolRole my_roles = 4;
+  repeated LolRole looking_for_roles = 5;
+  optional string description = 6;
+  optional FormStatus status = 7;
+}
+
+message GetFormRequest {
+  string form_id = 1;
+}
+
+message DeleteFormRequest {
+  string form_id = 1;
+  string actor_id = 2;
+}
+
+message GetOwnerFormsRequest {
+  string owner_id = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+message SetColdFormStatusRequest {
+  string form_id = 1;
+  string actor_id = 2;
+  FormStatus status = 3;
+}
+
+message SwipeFormRequest {
+  string form_id = 1;
+  string user_id = 2;
+  SwipeAction action = 3;
+}
+
+message SwipeFormResponse {
+  bool matched = 1;
+  ColdFormResponse form = 2;
+  optional string matched_user_id = 3;
+}
+
+message ColdDeckRequest {
+  string actor_id = 1;
+  optional SearchFormsFilter filter = 2;
+  optional int32 limit = 3;
+}
+
+message ColdDeckResponse {
+  repeated ColdFormResponse forms = 1;
+}
+
+message ListColdFormsRequest {
+  optional SearchFormsFilter filter = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+message ListColdFormsResponse {
+  repeated ColdFormResponse forms = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  bool has_next = 5;
+}
+
+message ColdFormHistoryResponse {
+  repeated ShortFormResponse history = 1;
+}
+
+message CreateHotFormRequest {
+  string owner_id = 1;
+  repeated RankRange rank_range = 2;
+  repeated LolRole my_roles = 3;
+  repeated LolRole looking_for_roles = 4;
+  string description = 5;
+}
+
+message ListHotFormsRequest {
+  optional SearchFormsFilter filter = 1;
+  optional PaginationRequest pagination = 2;
+}
+
+message ListHotFormsResponse {
+  repeated HotFormResponse forms = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  bool has_next = 5;
+}
+
+message HotFormSwipeRequest {
+  string form_id = 1;
+  string user_id = 2;
+  SwipeAction action = 3;
+}
+
+message HotFormSwipeResponse {
+  bool matched = 1;
+  HotFormResponse form = 2;
+  optional string matched_user_id = 3;
+}
+
+message PopularColdFormsRequest {
+  optional int32 limit = 1;
+}
+
+service PartnerSearchService {
+  rpc CreateColdForm(CreateColdFormRequest) returns (ColdFormResponse) {
+    option (google.api.http) = {
+      post: "/v1/search/cold-forms"
+      body: "*"
+    };
+  }
+
+  rpc UpdateColdForm(UpdateColdFormRequest) returns (ColdFormResponse) {
+    option (google.api.http) = {
+      patch: "/v1/search/cold-forms/{form_id}"
+      body: "*"
+    };
+  }
+
+  rpc GetColdForm(GetFormRequest) returns (ColdFormResponse) {
+    option (google.api.http) = {
+      get: "/v1/search/cold-forms/{form_id}"
+    };
+  }
+
+  rpc DeleteColdForm(DeleteFormRequest) returns (common.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/search/cold-forms/{form_id}"
+    };
+  }
+
+  rpc GetOwnerColdForms(GetOwnerFormsRequest) returns (ListColdFormsResponse) {
+    option (google.api.http) = {
+      get: "/v1/search/users/{owner_id}/cold-forms"
+    };
+  }
+
+  rpc SetColdFormStatus(SetColdFormStatusRequest) returns (ColdFormResponse) {
+    option (google.api.http) = {
+      patch: "/v1/search/cold-forms/{form_id}/status"
+      body: "*"
+    };
+  }
+
+  rpc SwipeColdForm(SwipeFormRequest) returns (SwipeFormResponse) {
+    option (google.api.http) = {
+      post: "/v1/search/cold-forms/{form_id}/swipe"
+      body: "*"
+    };
+  }
+
+  rpc GetColdDeck(ColdDeckRequest) returns (ColdDeckResponse) {
+    option (google.api.http) = {
+      post: "/v1/search/cold-forms/deck"
+      body: "*"
+    };
+  }
+
+  rpc SearchColdForms(ListColdFormsRequest) returns (ListColdFormsResponse) {
+    option (google.api.http) = {
+      post: "/v1/search/cold-forms/search"
+      body: "*"
+    };
+  }
+
+  rpc GetPopularColdForms(PopularColdFormsRequest) returns (ListColdFormsResponse) {
+    option (google.api.http) = {
+      get: "/v1/search/cold-forms/popular"
+    };
+  }
+
+  rpc GetColdFormHistory(GetFormRequest) returns (ColdFormHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v1/search/cold-forms/{form_id}/history"
+    };
+  }
+
+  rpc CreateHotForm(CreateHotFormRequest) returns (HotFormResponse) {
+    option (google.api.http) = {
+      post: "/v1/search/hot-forms"
+      body: "*"
+    };
+  }
+
+  rpc GetHotForm(GetFormRequest) returns (HotFormResponse) {
+    option (google.api.http) = {
+      get: "/v1/search/hot-forms/{form_id}"
+    };
+  }
+
+  rpc SearchHotForms(ListHotFormsRequest) returns (ListHotFormsResponse) {
+    option (google.api.http) = {
+      post: "/v1/search/hot-forms/search"
+      body: "*"
+    };
+  }
+
+  rpc SwipeHotForm(HotFormSwipeRequest) returns (HotFormSwipeResponse) {
+    option (google.api.http) = {
+      post: "/v1/search/hot-forms/{form_id}/swipe"
+      body: "*"
+    };
+  }
+}

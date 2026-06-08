@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from uuid import UUID
 
@@ -13,10 +13,18 @@ class Match(BaseModel):
     round: int
     match_number: int
     next_match_id: int | None
+    best_of: int = 1
+
+
+class BracketRoundSettings(BaseModel):
+    round: int
+    label: str = ""
+    best_of: int = 1
 
 
 class Bracket(BaseModel):
     rounds: list[list[Match]]
+    round_settings: list[BracketRoundSettings] = Field(default_factory=list)
 
     def swap_teams(self, t1: Actor, t2: Actor) -> tuple[UUID, UUID]:
         m1, m2 = None, None

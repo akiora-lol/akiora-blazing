@@ -4,7 +4,7 @@ import { FiPlus, FiX, FiUsers, FiClock, FiAward, FiChevronRight } from 'react-ic
 import { useAuthContext } from '../contexts/AuthContext'
 import {
     useTournaments, useCreateTournamentMutation,
-    type TournamentResponse, type TournamentStatus, type BracketType, type DraftType,
+    type TournamentResponse, type TournamentStatus, type TournamentType, type BracketType, type DraftType,
     type LolTournamentSettings,
 } from '../lib/api'
 
@@ -37,6 +37,11 @@ const DRAFT_LABELS: Record<DraftType, string> = {
     iron_man: 'Iron Man',
     classic: 'Classic',
     all_random: 'All Random',
+}
+
+const TOURNAMENT_TYPE_LABELS: Record<TournamentType, string> = {
+    draft: 'Captain Draft',
+    presigned: 'Team Signup',
 }
 
 function formatTournamentDate(ts: number) {
@@ -89,6 +94,9 @@ function TournamentCard({ tournament, onClick }: { tournament: TournamentRespons
 
             <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '10px', background: 'rgba(166,0,255,0.1)', border: '1px solid rgba(166,0,255,0.15)', color: 'rgba(255,255,255,0.6)', fontFamily: "'Chakra Petch', monospace" }}>
+                    {TOURNAMENT_TYPE_LABELS[tournament.settings.tournament_type]}
+                </span>
+                <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '10px', background: 'rgba(166,0,255,0.1)', border: '1px solid rgba(166,0,255,0.15)', color: 'rgba(255,255,255,0.6)', fontFamily: "'Chakra Petch', monospace" }}>
                     {tournament.settings.game_settings.team_size}v{tournament.settings.game_settings.team_size}
                 </span>
                 <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '10px', background: 'rgba(166,0,255,0.1)', border: '1px solid rgba(166,0,255,0.15)', color: 'rgba(255,255,255,0.6)', fontFamily: "'Chakra Petch', monospace" }}>
@@ -108,6 +116,7 @@ function CreateTournamentModal({ onClose }: { onClose: () => void }) {
     const { user } = useAuthContext()
     const createMutation = useCreateTournamentMutation()
     const [prizepool, setPrizepool] = useState('')
+    const [tournamentType, setTournamentType] = useState<TournamentType>('draft')
     const [teamSize, setTeamSize] = useState(5)
     const [bracketType, setBracketType] = useState<BracketType>('single_elimination')
     const [draftType, setDraftType] = useState<DraftType>('classic')
@@ -115,17 +124,43 @@ function CreateTournamentModal({ onClose }: { onClose: () => void }) {
     const [isOpen, setIsOpen] = useState(true)
     const [startDate, setStartDate] = useState('')
     const [startTime, setStartTime] = useState('')
+    const [draftDate, setDraftDate] = useState('')
+    const [draftTime, setDraftTime] = useState('')
+    const [formError, setFormError] = useState('')
 
     const handleCreate = async () => {
         if (!prizepool.trim() || !startDate || !startTime || !user) return
+        setFormError('')
         const startTs = Math.floor(new Date(`${startDate}T${startTime}`).getTime() / 1000)
+        const draftStartTs = tournamentType === 'draft' && draftDate && draftTime
+            ? Math.floor(new Date(`${draftDate}T${draftTime}`).getTime() / 1000)
+            : null
+        if (tournamentType === 'draft') {
+            if (!draftStartTs) {
+                setFormError('Draft date is required for captain draft tournaments.')
+                return
+            }
+            if (startTs - draftStartTs < 2 * 24 * 60 * 60) {
+                setFormError('Tournament start must be at least 2 days after the draft.')
+                return
+            }
+        }
         const settings: LolTournamentSettings = {
+            tournament_type: tournamentType,
             game_settings: { team_size: teamSize, map: 11 },
             game_series_settings: { game_settings: { team_size: teamSize, map: 11 }, forbidden_champions: [], best_of: bestOf, draft_type: draftType },
             best_of: [bestOf],
             bracket_type: bracketType,
+            draft_start: draftStartTs,
         }
-        await createMutation.mutateAsync({ start: startTs, is_open: isOpen, prizepool: prizepool.trim(), settings })
+        await createMutation.mutateAsync({
+            host: { id: user.id, type: 'user' },
+            start: startTs,
+            is_open: isOpen,
+            prizepool: prizepool.trim(),
+            settings,
+            draft_start: draftStartTs,
+        })
         onClose()
     }
 
@@ -154,6 +189,19 @@ function CreateTournamentModal({ onClose }: { onClose: () => void }) {
                         </label>
                     </div>
 
+                    {tournamentType === 'draft' && (
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <span className="form-label">Draft Date</span>
+                                <input className="form-input" type="date" value={draftDate} onChange={e => setDraftDate(e.target.value)} />
+                            </label>
+                            <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <span className="form-label">Draft Time</span>
+                                <input className="form-input" type="time" value={draftTime} onChange={e => setDraftTime(e.target.value)} />
+                            </label>
+                        </div>
+                    )}
+
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             <span className="form-label">Team Size</span>
@@ -175,6 +223,13 @@ function CreateTournamentModal({ onClose }: { onClose: () => void }) {
                     </div>
 
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span className="form-label">Tournament Type</span>
+                        <select className="form-input" value={tournamentType} onChange={e => setTournamentType(e.target.value as TournamentType)}>
+                            {Object.entries(TOURNAMENT_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                        </select>
+                    </label>
+
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <span className="form-label">Bracket Type</span>
                         <select className="form-input" value={bracketType} onChange={e => setBracketType(e.target.value as BracketType)}>
                             {Object.entries(BRACKET_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -193,8 +248,10 @@ function CreateTournamentModal({ onClose }: { onClose: () => void }) {
                         <span className="form-label" style={{ margin: 0 }}>Open registration</span>
                     </label>
 
-                    <button onClick={handleCreate} disabled={!prizepool.trim() || !startDate || !startTime || createMutation.isPending} className="create-btn">
-                        {createMutation.isPending ? 'Creating...' : 'Create Tournament'}
+                    {formError && <p style={{ margin: 0, color: '#FF6B7A', fontFamily: "'Chakra Petch', monospace", fontSize: '11px' }}>{formError}</p>}
+
+                    <button onClick={handleCreate} disabled={!user || !prizepool.trim() || !startDate || !startTime || (tournamentType === 'draft' && (!draftDate || !draftTime)) || createMutation.isPending} className="create-btn">
+                        {!user ? 'Sign in to create' : createMutation.isPending ? 'Creating...' : 'Create Tournament'}
                     </button>
                 </div>
             </div>
@@ -204,7 +261,7 @@ function CreateTournamentModal({ onClose }: { onClose: () => void }) {
 
 function TournamentsPage() {
     const navigate = useNavigate()
-    const { data: tournaments, isLoading } = useTournaments()
+    const { data: tournaments, isLoading, isError } = useTournaments()
     const [statusFilter, setStatusFilter] = useState<TournamentStatus | 'all'>('all')
     const [showCreate, setShowCreate] = useState(false)
 
@@ -291,6 +348,8 @@ function TournamentsPage() {
                 <div className="tournaments-grid">
                     {isLoading ? (
                         <p className="empty-state">Loading...</p>
+                    ) : isError ? (
+                        <p className="empty-state">Could not load tournaments</p>
                     ) : filtered.length > 0 ? (
                         filtered.map(t => (
                             <TournamentCard key={t.id} tournament={t} onClick={() => navigate({ to: '/tournaments/$id', params: { id: t.id } })} />

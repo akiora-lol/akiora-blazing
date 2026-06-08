@@ -24,6 +24,7 @@ from shared.contracts.user import (
     UserType,
     Birthday,
     Social,
+    LeagueAccount,
 )
 
 
@@ -79,6 +80,21 @@ class UserMapper:
         for key, social_pb in grpc_response.socials.items():
             socials[key] = Social(link=social_pb.link, hidden=social_pb.hidden)
 
+        league_accounts = [
+            LeagueAccount(
+                status=account.status,
+                username=account.username,
+                tagline=account.tagline,
+                server=account.server,
+                profile_image_url=account.profile_image_url or None,
+                solo_tier=account.solo_tier or None,
+                solo_division=account.solo_division or None,
+                solo_lp=account.solo_lp or None,
+                solo_tier_image_url=account.solo_tier_image_url or None,
+            )
+            for account in grpc_response.league_accounts
+        ]
+
         birth_date = None
         if grpc_response.HasField("birth_date"):
             birth_date = Birthday(
@@ -98,6 +114,7 @@ class UserMapper:
             gender=cls.GENDER_MAP.get(grpc_response.gender, Gender.UNSPECIFIED),
             birth_date=birth_date,
             socials=socials,
+            league_accounts=league_accounts,
             created_at=grpc_response.created_at,
             last_updated=grpc_response.last_updated,
         )
@@ -177,6 +194,21 @@ class UserMapper:
             for key, social in request.socials.items():
                 grpc_request.socials[key].link = social.link
                 grpc_request.socials[key].hidden = social.hidden
+        if request.league_accounts is not None:
+            for account in request.league_accounts:
+                grpc_request.league_accounts.append(
+                    pb2_module.LeagueAccount(
+                        status=account.status,
+                        username=account.username,
+                        tagline=account.tagline,
+                        server=account.server,
+                        profile_image_url=account.profile_image_url or "",
+                        solo_tier=account.solo_tier or "",
+                        solo_division=account.solo_division or 0,
+                        solo_lp=account.solo_lp or 0,
+                        solo_tier_image_url=account.solo_tier_image_url or "",
+                    )
+                )
 
         return grpc_request
 

@@ -29,19 +29,31 @@ class Birthday(BaseModel):
     hidden: bool = Field(default=True)
 
 
+class LeagueAccount(BaseModel):
+    status: Literal["done", "pending"] = "pending"
+    username: str
+    tagline: str
+    server: str
+    profile_image_url: str | None = None
+    solo_tier: str | None = None
+    solo_division: int | None = None
+    solo_lp: int | None = None
+    solo_tier_image_url: str | None = None
+
+
 class User(Document):
     id: UUID = Field(default_factory=uuid4)
     email: Annotated[EmailStr, Indexed(unique=True)]
     user_type: UserType = "default"
     avatar: str | None = None
     bio: str | None = Field(default=None, max_length=500)
-    nickname: str = Field(default_factory=default_name)
+    nickname: Annotated[str, Indexed(unique=True)] = Field(default_factory=default_name)
     gender: Literal["male", "female"] | None = None
     birth_date: Birthday | None = None
     socials: dict[Platform, Social] | None = None
+    league_accounts: list[LeagueAccount] | None = None
     created_at: datetime = Field(default_factory=time_now)
     last_updated: datetime = Field(default_factory=time_now)
-    
 
     @field_serializer("id")
     def serialize_id(self, id: UUID):

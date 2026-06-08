@@ -34,8 +34,10 @@ from stubs.user_stub import UserStub
 from dependencies import get_community_channel
 
 from redis_invalidator import RedisInvalidator
+from shared.redis import RedisService
 
 router = APIRouter(prefix="/v1/users", tags=["users"], route_class=DishkaRoute)
+NOTIFICATION_STREAM = "notification_stream"
 
 
 async def verify_cookie(
@@ -48,6 +50,20 @@ async def verify_cookie(
 
 def _get_stub() -> UserStub:
     return UserStub(get_community_channel())
+
+
+async def _publish_friend_event(redis: RedisService, event_type: str, user_ids: list[UUID], friendship: FriendResponse):
+    try:
+        await redis.publish_stream(
+            NOTIFICATION_STREAM,
+            {
+                "type": event_type,
+                "user_ids": [str(user_id) for user_id in user_ids],
+                "friendship": friendship.model_dump(mode="json"),
+            },
+        )
+    except Exception as e:
+        logger.warning("Failed to publish {} for friendship={}: {}", event_type, friendship.id, e)
 
 
 @router.post(
@@ -152,18 +168,38 @@ async def update_user(
 
 
 @router.post(path="/friend-requests", response_model=FriendResponse)
-async def send_friend_request(request: SendFriendRequestRequest):
+async def send_friend_request(
+    request: SendFriendRequestRequest,
+    redis: FromDishka[RedisService],
+):
     try:
-        return await _get_stub().send_friend_request(request)
+        friendship = await _get_stub().send_friend_request(request)
+        await _publish_friend_event(
+            redis,
+            "friend.request.created",
+            [request.request.receiver_id],
+            friendship,
+        )
+        return friendship
     except grpc.RpcError as e:
         logger.warning("gRPC error in send_friend_request: {} {}", e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
 @router.post(path="/friend-requests/respond", response_model=FriendResponse)
-async def respond_friend_request(request: RespondFriendRequestRequest):
+async def respond_friend_request(
+    request: RespondFriendRequestRequest,
+    redis: FromDishka[RedisService],
+):
     try:
-        return await _get_stub().respond_friend_request(request)
+        friendship = await _get_stub().respond_friend_request(request)
+        await _publish_friend_event(
+            redis,
+            "friend.request.accepted" if request.response.accept else "friend.request.rejected",
+            [friendship.user_id_1, friendship.user_id_2],
+            friendship,
+        )
+        return friendship
     except grpc.RpcError as e:
         logger.warning("gRPC error in respond_friend_request: {} {}", e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())

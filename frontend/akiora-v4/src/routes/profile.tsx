@@ -8,7 +8,13 @@ import {
 import { PageShell } from '../components/PageShell'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useLogout } from '../lib/auth'
-import { useUpdateProfileMutation, type UpdateProfileData } from '../lib/api'
+import {
+    useFinishLolVerificationMutation,
+    useStartLolVerificationMutation,
+    useUpdateProfileMutation,
+    type LolVerificationStartResponse,
+    type UpdateProfileData,
+} from '../lib/api'
 
 export const Route = createFileRoute('/profile')({
     component: ProfilePage,
@@ -52,6 +58,16 @@ const T = {
         avatarFile: 'Upload file',
         avatarUrlPlaceholder: 'https://example.com/avatar.jpg',
         changeAvatar: 'Change avatar',
+        leagueAccounts: 'League Accounts',
+        linkLeague: 'Link League account',
+        server: 'Server',
+        riotName: 'Riot name',
+        tagline: 'Tag',
+        checkAccount: 'Check account',
+        confirmAccount: 'Confirm',
+        targetIcon: 'Set profile icon',
+        linkedAccountsEmpty: 'No linked League accounts',
+        verificationReady: 'Change your League profile icon, then confirm here.',
     },
     ru: {
         profile: 'Профиль', settings: 'Настройки', security: 'Безопасность',
@@ -90,6 +106,16 @@ const T = {
         avatarFile: 'Загрузить файл',
         avatarUrlPlaceholder: 'https://example.com/avatar.jpg',
         changeAvatar: 'Изменить аватарку',
+        leagueAccounts: 'League аккаунты',
+        linkLeague: 'Привязать League аккаунт',
+        server: 'Сервер',
+        riotName: 'Riot никнейм',
+        tagline: 'Тэг',
+        checkAccount: 'Проверить аккаунт',
+        confirmAccount: 'Подтвердить',
+        targetIcon: 'Поставьте иконку',
+        linkedAccountsEmpty: 'Нет привязанных League аккаунтов',
+        verificationReady: 'Смените иконку профиля League, затем подтвердите здесь.',
     },
 } as const
 
@@ -132,6 +158,8 @@ function ProfilePage() {
     const navigate = useNavigate()
     const logout = useLogout()
     const updateProfile = useUpdateProfileMutation()
+    const startLolVerification = useStartLolVerificationMutation()
+    const finishLolVerification = useFinishLolVerificationMutation()
     const t = T[lang]
 
     const [activeTab, setActiveTab] = useState<Tab>('profile')
@@ -141,6 +169,14 @@ function ProfilePage() {
     const [editingSocials, setEditingSocials] = useState(false)
     const [editingAvatar, setEditingAvatar] = useState(false)
     const [avatarMode, setAvatarMode] = useState<'url' | 'file'>('url')
+    const [lolForm, setLolForm] = useState({
+        server: 'na',
+        username: '',
+        tagline: '',
+    })
+    const [lolChallenge, setLolChallenge] = useState<LolVerificationStartResponse | null>(null)
+    const [lolError, setLolError] = useState('')
+    const [lolSuccess, setLolSuccess] = useState(false)
     const [form, setForm] = useState({
         nickname: user?.nickname ?? '',
         bio: user?.bio ?? '',
@@ -225,6 +261,40 @@ function ProfilePage() {
         }))
     }
 
+    const handleStartLolVerification = async () => {
+        setLolError('')
+        setLolSuccess(false)
+        setLolChallenge(null)
+
+        try {
+            const challenge = await startLolVerification.mutateAsync({
+                server: lolForm.server.trim().toLowerCase(),
+                username: lolForm.username.trim(),
+                tagline: lolForm.tagline.trim(),
+            })
+            if (challenge) {
+                setLolChallenge(challenge)
+            }
+        } catch (error) {
+            setLolError(error instanceof Error ? error.message : 'Failed to start verification')
+        }
+    }
+
+    const handleFinishLolVerification = async () => {
+        if (!lolChallenge) return
+        setLolError('')
+
+        try {
+            await finishLolVerification.mutateAsync(lolChallenge.verification_id)
+            setLolSuccess(true)
+            setLolChallenge(null)
+            setLolForm({ server: 'na', username: '', tagline: '' })
+            setTimeout(() => setLolSuccess(false), 2500)
+        } catch (error) {
+            setLolError(error instanceof Error ? error.message : 'Failed to confirm account')
+        }
+    }
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -240,11 +310,16 @@ function ProfilePage() {
         const imageUrl = URL.createObjectURL(file)
         setForm(f => ({ ...f, avatar: imageUrl }))
     }
-    console.log(user);
     const onboarded = typeof window !== 'undefined' && localStorage.getItem('akiora_onboarded')
     const joinDate = new Date(user.created_at * 1000).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-US', {
         year: 'numeric', month: 'long', day: 'numeric',
     })
+    const formatRank = (account: typeof user.league_accounts[number]) => {
+        if (!account.solo_tier) return lang === 'ru' ? 'Ранг не найден' : 'Rank unavailable'
+        const division = account.solo_division ? ` ${account.solo_division}` : ''
+        const lp = typeof account.solo_lp === 'number' ? ` · ${account.solo_lp} LP` : ''
+        return `${account.solo_tier}${division}${lp}`
+    }
 
     return (
         <>
@@ -444,6 +519,39 @@ function ProfilePage() {
           letter-spacing: 0.06em; margin-top: 4px;
         }
 
+        .profile-quick-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
+          margin-bottom: 26px;
+        }
+        .profile-quick-card {
+          min-height: 78px;
+          border: 1px solid rgba(255,255,255,0.09);
+          border-radius: 8px;
+          padding: 14px;
+          background:
+            linear-gradient(135deg, rgba(45,212,191,0.08), rgba(192,132,252,0.06)),
+            rgba(255,255,255,0.025);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+        .profile-quick-label {
+          color: rgba(255,255,255,0.42);
+          font-family: 'Chakra Petch', monospace;
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+        .profile-quick-value {
+          color: #fff;
+          font-family: 'Russo One', sans-serif;
+          font-size: 18px;
+          letter-spacing: 0;
+          overflow-wrap: anywhere;
+        }
+
         /* ─── Success toast ──────────────────────────── */
         .save-success {
           display: flex; align-items: center; gap: 8px;
@@ -563,6 +671,127 @@ function ProfilePage() {
           transition: all 160ms; cursor: default;
         }
         .social-chip:hover { background: rgba(255,255,255,0.06); color: #fff; }
+
+        .league-account-list {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+          margin-bottom: 14px;
+        }
+        .league-account-item {
+          display: grid;
+          grid-template-columns: 46px minmax(0, 1fr);
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          border: 1px solid rgba(166,0,255,0.18);
+          border-radius: 8px;
+          background:
+            linear-gradient(135deg, rgba(166,0,255,0.1), rgba(255,255,255,0.03)),
+            rgba(255,255,255,0.025);
+        }
+        .league-account-icon {
+          width: 46px; height: 46px;
+          border-radius: 8px;
+          object-fit: cover;
+          border: 1px solid rgba(255,255,255,0.16);
+          background: rgba(255,255,255,0.06);
+        }
+        .league-account-main {
+          min-width: 0;
+          display: flex; flex-direction: column; gap: 3px;
+        }
+        .league-account-name {
+          color: #fff;
+          font-family: 'Chakra Petch', monospace;
+          font-size: 13px;
+          letter-spacing: 0.03em;
+          overflow-wrap: anywhere;
+        }
+        .league-account-meta {
+          color: rgba(255,255,255,0.38);
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .league-rank-row {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          min-height: 24px;
+          margin-top: 4px;
+        }
+        .league-rank-icon {
+          width: 22px; height: 22px;
+          object-fit: contain;
+        }
+        .league-rank-text {
+          color: rgba(255,255,255,0.78);
+          font-size: 11px;
+          line-height: 1.25;
+        }
+        .league-rank-lp {
+          color: rgba(255,255,255,0.38);
+          font-size: 10px;
+        }
+        .league-status {
+          width: fit-content;
+          color: rgba(0,220,110,0.92);
+          border: 1px solid rgba(0,200,100,0.28);
+          background: rgba(0,200,100,0.1);
+          border-radius: 999px;
+          padding: 4px 9px;
+          font-size: 9px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+        .league-link-grid {
+          display: grid;
+          grid-template-columns: 92px 1fr 92px;
+          gap: 10px;
+          margin-top: 12px;
+        }
+        .league-challenge {
+          display: grid;
+          grid-template-columns: 54px minmax(0, 1fr) auto;
+          align-items: center;
+          gap: 12px;
+          margin-top: 12px;
+          padding: 12px;
+          border: 1px solid rgba(166,0,255,0.24);
+          border-radius: 8px;
+          background: rgba(166,0,255,0.08);
+        }
+        .league-challenge img {
+          width: 54px; height: 54px;
+          border-radius: 8px;
+          object-fit: cover;
+          border: 1px solid rgba(255,255,255,0.12);
+        }
+        .league-challenge-text {
+          flex: 1; min-width: 0;
+          color: rgba(255,255,255,0.66);
+          font-size: 12px;
+          line-height: 1.5;
+        }
+        .league-icon-number {
+          color: #fff;
+          font-family: 'Russo One', sans-serif;
+          font-size: 13px;
+          letter-spacing: 0.02em;
+        }
+        .form-error {
+          margin-top: 10px;
+          color: rgba(255,90,90,0.9);
+          font-size: 11px;
+          line-height: 1.45;
+        }
+        .form-success {
+          margin-top: 10px;
+          color: rgba(0,220,110,0.92);
+          font-size: 11px;
+          line-height: 1.45;
+        }
         .social-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
         /* ─── Action buttons ─────────────────────────── */
@@ -872,6 +1101,11 @@ function ProfilePage() {
           .profile-tab span { display: none; }
           .profile-content { padding: 24px 20px; }
           .field-grid { grid-template-columns: 1fr; }
+          .profile-quick-grid { grid-template-columns: 1fr; }
+          .league-account-list { grid-template-columns: 1fr; }
+          .league-link-grid { grid-template-columns: 1fr; }
+          .league-challenge { grid-template-columns: 54px minmax(0, 1fr); }
+          .league-challenge .btn { grid-column: 1 / -1; }
           .field-group.span2 { grid-column: auto; }
         }
       `}</style>
@@ -953,6 +1187,22 @@ function ProfilePage() {
                                     {!editing && !editingSocials && !editingAvatar ? (
                                         <>
                                             <div className="field-grid">
+                                                <div className="field-group span2">
+                                                    <div className="profile-quick-grid">
+                                                        <div className="profile-quick-card">
+                                                            <span className="profile-quick-label">{t.leagueAccounts}</span>
+                                                            <span className="profile-quick-value">{user.league_accounts?.length ?? 0}</span>
+                                                        </div>
+                                                        <div className="profile-quick-card">
+                                                            <span className="profile-quick-label">{t.socials}</span>
+                                                            <span className="profile-quick-value">{Object.keys(user.socials ?? {}).length}</span>
+                                                        </div>
+                                                        <div className="profile-quick-card">
+                                                            <span className="profile-quick-label">{t.memberSince}</span>
+                                                            <span className="profile-quick-value">{joinDate}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div className="field-group">
                                                     <span className="field-label">{t.nickname}</span>
                                                     <span className="field-value">{user.nickname}</span>
@@ -1003,6 +1253,137 @@ function ProfilePage() {
                                                 </div>
                                             ) : (
                                                 <div className="field-value empty">{t.noData}</div>
+                                            )}
+
+                                            <div className="section-divider" />
+                                            <div className="section-title">
+                                                <FiShield size={11} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                                                {t.leagueAccounts}
+                                            </div>
+
+                                            {user.league_accounts && user.league_accounts.length > 0 ? (
+                                                <div className="league-account-list">
+                                                    {user.league_accounts.map((account) => (
+                                                        <div
+                                                            key={`${account.server}:${account.username}:${account.tagline}`}
+                                                            className="league-account-item"
+                                                        >
+                                                            {account.profile_image_url ? (
+                                                                <img
+                                                                    className="league-account-icon"
+                                                                    src={account.profile_image_url}
+                                                                    alt=""
+                                                                />
+                                                            ) : (
+                                                                <div className="league-account-icon" />
+                                                            )}
+                                                            <div className="league-account-main">
+                                                                <span className="league-account-name">
+                                                                    {account.username}#{account.tagline}
+                                                                </span>
+                                                                <span className="league-account-meta">
+                                                                    {account.server}
+                                                                </span>
+                                                                <div className="league-rank-row">
+                                                                    {account.solo_tier_image_url && (
+                                                                        <img
+                                                                            className="league-rank-icon"
+                                                                            src={account.solo_tier_image_url}
+                                                                            alt=""
+                                                                        />
+                                                                    )}
+                                                                    <div>
+                                                                        <div className="league-rank-text">
+                                                                            {formatRank(account)}
+                                                                        </div>
+                                                                        {account.solo_tier && (
+                                                                            <div className="league-rank-lp">
+                                                                                Solo/Duo
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <span className="league-status">{account.status}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="field-value empty">{t.linkedAccountsEmpty}</div>
+                                            )}
+
+                                            <div className="league-link-grid">
+                                                <div className="field-group">
+                                                    <label className="field-label" htmlFor="lol-server">{t.server}</label>
+                                                    <input
+                                                        id="lol-server"
+                                                        className="field-input"
+                                                        value={lolForm.server}
+                                                        onChange={(e) => setLolForm(f => ({ ...f, server: e.target.value }))}
+                                                        placeholder="na"
+                                                    />
+                                                </div>
+                                                <div className="field-group">
+                                                    <label className="field-label" htmlFor="lol-name">{t.riotName}</label>
+                                                    <input
+                                                        id="lol-name"
+                                                        className="field-input"
+                                                        value={lolForm.username}
+                                                        onChange={(e) => setLolForm(f => ({ ...f, username: e.target.value }))}
+                                                        placeholder="HandOfTheCouncil"
+                                                    />
+                                                </div>
+                                                <div className="field-group">
+                                                    <label className="field-label" htmlFor="lol-tagline">{t.tagline}</label>
+                                                    <input
+                                                        id="lol-tagline"
+                                                        className="field-input"
+                                                        value={lolForm.tagline}
+                                                        onChange={(e) => setLolForm(f => ({ ...f, tagline: e.target.value }))}
+                                                        placeholder="NA1"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="action-row" style={{ marginTop: 12 }}>
+                                                <button
+                                                    className="btn"
+                                                    disabled={
+                                                        startLolVerification.isPending ||
+                                                        !lolForm.server.trim() ||
+                                                        !lolForm.username.trim() ||
+                                                        !lolForm.tagline.trim()
+                                                    }
+                                                    onClick={handleStartLolVerification}
+                                                >
+                                                    <FiLink size={13} /> {startLolVerification.isPending ? '...' : t.checkAccount}
+                                                </button>
+                                            </div>
+
+                                            {lolChallenge && (
+                                                <div className="league-challenge">
+                                                    <img src={lolChallenge.target_profile_image_url} alt="" />
+                                                    <div className="league-challenge-text">
+                                                        <div>{t.verificationReady}</div>
+                                                        <div>
+                                                            <span className="league-icon-number">{t.targetIcon}</span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        className="btn primary"
+                                                        disabled={finishLolVerification.isPending}
+                                                        onClick={handleFinishLolVerification}
+                                                    >
+                                                        <FiCheck size={13} /> {finishLolVerification.isPending ? '...' : t.confirmAccount}
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {lolError && <div className="form-error">{lolError}</div>}
+                                            {lolSuccess && (
+                                                <div className="form-success">
+                                                    {lang === 'ru' ? 'League аккаунт привязан' : 'League account linked'}
+                                                </div>
                                             )}
 
                                             <div className="action-row">

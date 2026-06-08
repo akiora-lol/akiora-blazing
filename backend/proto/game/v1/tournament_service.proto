@@ -13,8 +13,29 @@ option go_package = "akiora/game/tournament";
 // ============= ENUMS =============
 enum TournamentType {
   UNSPECIFIED = 0;
-  PRESIGN = 1;
-  PICKEM = 2;
+  PRESIGNED = 1;
+  DRAFT = 2;
+}
+
+enum TournamentLifecycle {
+  TOURNAMENT_LIFECYCLE_UNSPECIFIED = 0;
+  REGISTRATION_OPEN = 1;
+  REGISTRATION_LOCKED = 2;
+  CAPTAIN_SETUP = 3;
+  DRAFT_READY = 4;
+  DRAFT_IN_PROGRESS = 5;
+  DRAFT_FINISHED = 6;
+  BRACKET_READY = 7;
+  TOURNAMENT_ACTIVE = 8;
+  TOURNAMENT_FINISHED = 9;
+  TOURNAMENT_CANCELLED = 10;
+}
+
+enum DraftPickDirection {
+  DRAFT_PICK_DIRECTION_UNSPECIFIED = 0;
+  LINEAR = 1;
+  SNAKE = 2;
+  MANUAL = 3;
 }
 
 // ============= SETTINGS MESSAGES =============
@@ -26,6 +47,7 @@ message LolTournamentSettings {
   uint32 map = 5;
   repeated uint32 forbidden_champions = 6;
   repeated uint32 series_best_of = 7;
+  optional int64 draft_start = 8;
 }
 
 message TftTournamentSettings {
@@ -65,12 +87,56 @@ message ParticipantInfo {
   common.Actor participant = 1;
   repeated string user_ids = 2;
   int64 joined_at = 3;
+  repeated string draft_roles = 4;
+  optional bool is_captain = 5;
+  optional int32 captain_order = 6;
+}
+
+message DraftCaptainInfo {
+  common.Actor captain = 1;
+  int32 order = 2;
+  repeated common.Actor picked_players = 3;
+}
+
+message DraftConfig {
+  uint32 captain_count = 1;
+  repeated DraftCaptainInfo captains = 2;
+  repeated string pick_order_captain_ids = 3;
+  DraftPickDirection pick_direction = 4;
+  uint32 max_extra_players_per_team = 5;
+}
+
+message DraftState {
+  DraftConfig config = 1;
+  int32 current_pick_index = 2;
+  optional string current_captain_id = 3;
+  repeated string available_player_ids = 4;
+  bool finished = 5;
+}
+
+message BracketRoundSettings {
+  int32 round = 1;
+  string label = 2;
+  uint32 best_of = 3;
+}
+
+message BracketMatchInfo {
+  string game_series_id = 1;
+  optional common.Actor team1 = 2;
+  optional common.Actor team2 = 3;
+  optional common.Actor winner = 4;
+  int32 round = 5;
+  int32 match_number = 6;
+  optional int32 next_match_id = 7;
+  uint32 best_of = 8;
 }
 
 message BracketInfo {
   string bracket_id = 1;
   repeated string participant_ids = 2;
   int32 round = 3;
+  repeated BracketRoundSettings round_settings = 4;
+  repeated BracketMatchInfo matches = 5;
 }
 
 // ============= REQUEST/RESPONSE MESSAGES =============
@@ -124,6 +190,7 @@ message CreateTournamentRequest {
   optional string name = 6;
   optional string description = 7;
   optional string avatar = 8;
+  optional int64 draft_start = 9;
 }
 
 message GetTournamentRequest {
@@ -140,6 +207,7 @@ message UpdateTournamentRequest {
   optional common.Status status = 6;
   optional string name = 7;
   optional string description = 8;
+  optional int64 draft_start = 9;
 }
 
 message DeleteTournamentRequest {
@@ -151,6 +219,7 @@ message AddParticipantRequest {
   string tournament_id = 1;
   common.Actor participant = 2;
   optional string team_name = 3;
+  repeated string draft_roles = 4;
 }
 
 message AddTeamParticipantRequest {
@@ -162,6 +231,18 @@ message RemoveParticipantRequest {
   string tournament_id = 1;
   string participant_id = 2;
   string actor_id = 3;
+}
+
+message LockRegistrationRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+}
+
+message RescheduleTournamentRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  int64 start = 3;
+  optional int64 draft_start = 4;
 }
 
 message UpdateParticipantRequest {
@@ -185,12 +266,44 @@ message FinishTournamentRequest {
 message PreBuildBracketRequest {
   string tournament_id = 1;
   string actor_id = 2;
+  repeated BracketRoundSettings round_settings = 3;
 }
 
 message ChangeBracketRequest {
   string tournament_id = 1;
   common.Actor swap_initiator = 2;
   common.Actor swap_victim = 3;
+}
+
+message UpdateBracketMatchRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  string game_series_id = 3;
+  optional common.Actor team1 = 4;
+  optional common.Actor team2 = 5;
+  optional uint32 best_of = 6;
+}
+
+message SetDraftCaptainsRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  uint32 captain_count = 3;
+  repeated string captain_ids = 4;
+  DraftPickDirection pick_direction = 5;
+  uint32 max_extra_players_per_team = 6;
+}
+
+message UpdateDraftPickOrderRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  repeated string captain_ids = 3;
+}
+
+message DraftPickPlayerRequest {
+  string tournament_id = 1;
+  string actor_id = 2;
+  string captain_id = 3;
+  string player_id = 4;
 }
 
 message AddParticipantToWaitListRequest {
@@ -225,6 +338,12 @@ message TournamentResponse {
   optional int64 end = 7;
   common.Status status = 8;
   string prizepool = 9;
+  bool is_open = 10;
+  TournamentLifecycle lifecycle = 11;
+  optional int64 draft_start = 12;
+  optional int64 registration_locked_at = 13;
+  optional DraftState draft_state = 14;
+  optional BracketInfo bracket = 15;
 }
 
 message ManyTournamentsResponse {
@@ -282,6 +401,20 @@ service TournamentService {
     };
   }
 
+  rpc LockRegistration(LockRegistrationRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/lock-registration"
+      body: "*"
+    };
+  }
+
+  rpc RescheduleTournament(RescheduleTournamentRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/reschedule"
+      body: "*"
+    };
+  }
+
   rpc FinishTournament(FinishTournamentRequest) returns (TournamentResponse) {
     option (google.api.http) = {
       post: "/v1/tournaments/{tournament_id}/finish"
@@ -292,6 +425,27 @@ service TournamentService {
   rpc PreBuildBracket(PreBuildBracketRequest) returns (TournamentResponse) {
     option (google.api.http) = {
       post: "/v1/tournaments/{tournament_id}/prebuild-bracket"
+      body: "*"
+    };
+  }
+
+  rpc SetDraftCaptains(SetDraftCaptainsRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/draft/captains"
+      body: "*"
+    };
+  }
+
+  rpc UpdateDraftPickOrder(UpdateDraftPickOrderRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/draft/pick-order"
+      body: "*"
+    };
+  }
+
+  rpc DraftPickPlayer(DraftPickPlayerRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      post: "/v1/tournaments/{tournament_id}/draft/picks"
       body: "*"
     };
   }
@@ -339,6 +493,13 @@ service TournamentService {
   rpc ChangeBracket(ChangeBracketRequest) returns (TournamentResponse) {
     option (google.api.http) = {
       post: "/v1/tournaments/{tournament_id}/bracket/swap"
+      body: "*"
+    };
+  }
+
+  rpc UpdateBracketMatch(UpdateBracketMatchRequest) returns (TournamentResponse) {
+    option (google.api.http) = {
+      patch: "/v1/tournaments/{tournament_id}/bracket/matches/{game_series_id}"
       body: "*"
     };
   }

@@ -3,6 +3,7 @@ from uuid import UUID
 from typing import Optional
 import grpc
 from loguru import logger
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
 
 from shared.contracts.messenger import (
     ChatFilter,
@@ -44,14 +45,33 @@ from shared.contracts.messenger import (
     GetUserChatsResponse,
     MessageResponse,
 )
+from shared.redis import RedisService
 from stubs.messenger_stub import MessengerStub
 from dependencies import get_messenger_channel
 
-router = APIRouter(tags=["messenger"])
+router = APIRouter(tags=["messenger"], route_class=DishkaRoute)
+NOTIFICATION_STREAM = "notification_stream"
 
 
 def _get_stub() -> MessengerStub:
     return MessengerStub(get_messenger_channel())
+
+
+async def _publish_chat_message(redis: RedisService, chat_id: UUID, message: MessageResponse):
+    try:
+        chat = await _get_stub().get_chat(GetChatRequest(chat_id=chat_id))
+        user_ids = {str(chat.owner_id), *[str(user_id) for user_id in chat.allowed_users]}
+        await redis.publish_stream(
+            NOTIFICATION_STREAM,
+            {
+                "type": "chat.message.created",
+                "user_ids": sorted(user_ids),
+                "chat_id": str(chat_id),
+                "message": message.model_dump(mode="json"),
+            },
+        )
+    except Exception as e:
+        logger.warning("Failed to publish chat.message.created(chat={}): {}", chat_id, e)
 
 
 # Chat endpoints
@@ -225,14 +245,20 @@ async def unfreeze_chat(chat_id: UUID, actor_id: Optional[UUID] = None):
     response_model=MessageResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def send_message(chat_id: UUID, request: SendMessageRequest):
+async def send_message(
+    chat_id: UUID,
+    request: SendMessageRequest,
+    redis: FromDishka[RedisService],
+):
     if request.chat_id != chat_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Chat ID in path does not match request body",
         )
     try:
-        return await _get_stub().send_message(request)
+        message = await _get_stub().send_message(request)
+        await _publish_chat_message(redis, chat_id, message)
+        return message
     except grpc.RpcError as e:
         logger.warning("gRPC error in send_message(chat={}): {} {}", chat_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())

@@ -6,9 +6,16 @@ from shared.contracts.tournament import (
     AddParticipantToWaitListRequest,
     AddTeamParticipantRequest,
     BracketInfo,
+    BracketMatchInfo,
+    BracketRoundSettings,
     ChangeBracketRequest,
     CreateTournamentRequest,
     DeleteTournamentRequest,
+    DraftCaptainInfo,
+    DraftConfig,
+    DraftPickDirection,
+    DraftPickPlayerRequest,
+    DraftState,
     FinishTournamentRequest,
     GetBracketRequest,
     GetBracketResponse,
@@ -25,11 +32,15 @@ from shared.contracts.tournament import (
     ManyTournamentsResponse,
     ParticipantInfo,
     PreBuildBracketRequest,
+    RescheduleTournamentRequest,
     RemoveFromWaitListRequest,
     RemoveParticipantRequest,
     StartTournamentRequest,
     TournamentResponse,
     TournamentStatsResponse,
+    TournamentLifecycle,
+    UpdateBracketMatchRequest,
+    UpdateDraftPickOrderRequest,
     UpdateParticipantRequest,
     UpdateTournamentRequest,
     ChangeBracketRequest,
@@ -85,11 +96,36 @@ class TournamentMapper:
 
     TOURNAMENT_TYPE_MAP = {
         0: TournamentType.UNSPECIFIED,
-        1: TournamentType.PRESIGN,
-        2: TournamentType.PICKEM,
+        1: TournamentType.PRESIGNED,
+        2: TournamentType.DRAFT,
     }
 
     TOURNAMENT_TYPE_TO_PROTO = {v: k for k, v in TOURNAMENT_TYPE_MAP.items()}
+    TOURNAMENT_TYPE_TO_PROTO[TournamentType.PRESIGN] = 1
+    TOURNAMENT_TYPE_TO_PROTO[TournamentType.PICKEM] = 2
+
+    LIFECYCLE_MAP = {
+        0: TournamentLifecycle.TOURNAMENT_LIFECYCLE_UNSPECIFIED,
+        1: TournamentLifecycle.REGISTRATION_OPEN,
+        2: TournamentLifecycle.REGISTRATION_LOCKED,
+        3: TournamentLifecycle.CAPTAIN_SETUP,
+        4: TournamentLifecycle.DRAFT_READY,
+        5: TournamentLifecycle.DRAFT_IN_PROGRESS,
+        6: TournamentLifecycle.DRAFT_FINISHED,
+        7: TournamentLifecycle.BRACKET_READY,
+        8: TournamentLifecycle.TOURNAMENT_ACTIVE,
+        9: TournamentLifecycle.TOURNAMENT_FINISHED,
+        10: TournamentLifecycle.TOURNAMENT_CANCELLED,
+    }
+    LIFECYCLE_TO_PROTO = {v: k for k, v in LIFECYCLE_MAP.items()}
+
+    DRAFT_PICK_DIRECTION_MAP = {
+        0: DraftPickDirection.DRAFT_PICK_DIRECTION_UNSPECIFIED,
+        1: DraftPickDirection.LINEAR,
+        2: DraftPickDirection.SNAKE,
+        3: DraftPickDirection.MANUAL,
+    }
+    DRAFT_PICK_DIRECTION_TO_PROTO = {v: k for k, v in DRAFT_PICK_DIRECTION_MAP.items()}
 
     LOL_BRACKET_MODE_MAP = {
         0: LolBracketMode.LOL_BRACKET_MODE_UNSPECIFIED,
@@ -163,6 +199,11 @@ class TournamentMapper:
                 map=grpc_settings.lol.map,
                 forbidden_champions=list(grpc_settings.lol.forbidden_champions),
                 series_best_of=list(grpc_settings.lol.series_best_of),
+                draft_start=(
+                    grpc_settings.lol.draft_start
+                    if grpc_settings.lol.HasField("draft_start")
+                    else None
+                ),
             )
 
         tft = None
@@ -190,35 +231,113 @@ class TournamentMapper:
             game_type=cls.GAME_TYPE_TO_PROTO.get(settings.game_type, 0)
         )
         if settings.lol:
-            grpc_settings.lol.CopyFrom(
-                pb2_module.LolTournamentSettings(
-                    tournament_type=cls.TOURNAMENT_TYPE_TO_PROTO.get(
-                        settings.lol.tournament_type, 0
-                    ),
-                    bracket_mode=cls.LOL_BRACKET_MODE_TO_PROTO.get(
-                        settings.lol.bracket_mode, 0
-                    ),
-                    draft_mode=[
-                        cls.LOL_GAME_MODE_TO_PROTO.get(mode, 0)
-                        for mode in settings.lol.draft_mode
-                    ],
-                    team_size=settings.lol.team_size,
-                    map=settings.lol.map,
-                    forbidden_champions=settings.lol.forbidden_champions,
-                    series_best_of=settings.lol.series_best_of,
-                )
+            lol_settings = pb2_module.LolTournamentSettings(
+                tournament_type=cls.TOURNAMENT_TYPE_TO_PROTO.get(
+                    settings.lol.tournament_type, 0
+                ),
+                bracket_mode=cls.LOL_BRACKET_MODE_TO_PROTO.get(
+                    settings.lol.bracket_mode, 0
+                ),
+                draft_mode=[
+                    cls.LOL_GAME_MODE_TO_PROTO.get(mode, 0)
+                    for mode in settings.lol.draft_mode
+                ],
+                team_size=settings.lol.team_size,
+                map=settings.lol.map,
+                forbidden_champions=settings.lol.forbidden_champions,
+                series_best_of=settings.lol.series_best_of,
             )
+            if settings.lol.draft_start:
+                lol_settings.draft_start = settings.lol.draft_start
+            grpc_settings.lol.CopyFrom(lol_settings)
         if settings.tft:
             grpc_settings.tft.CopyFrom(
                 pb2_module.TftTournamentSettings(todo=settings.tft.todo or "")
             )
         if settings.valorant:
             grpc_settings.valorant.CopyFrom(
-                pb2_module.ValorantTournamentSettings(
-                    todo=settings.valorant.todo or ""
-                )
+                pb2_module.ValorantTournamentSettings(todo=settings.valorant.todo or "")
             )
         return grpc_settings
+
+    @classmethod
+    def _to_pydantic_round_setting(cls, grpc_setting) -> BracketRoundSettings:
+        return BracketRoundSettings(
+            round=grpc_setting.round,
+            label=grpc_setting.label,
+            best_of=grpc_setting.best_of,
+        )
+
+    @classmethod
+    def _to_grpc_round_setting(cls, setting: BracketRoundSettings):
+        return pb2_module.BracketRoundSettings(
+            round=setting.round,
+            label=setting.label,
+            best_of=setting.best_of,
+        )
+
+    @classmethod
+    def _to_pydantic_bracket_match(cls, grpc_match) -> BracketMatchInfo:
+        return BracketMatchInfo(
+            game_series_id=grpc_match.game_series_id,
+            team1=cls._to_pydantic_actor(grpc_match.team1)
+            if grpc_match.HasField("team1")
+            else None,
+            team2=cls._to_pydantic_actor(grpc_match.team2)
+            if grpc_match.HasField("team2")
+            else None,
+            winner=cls._to_pydantic_actor(grpc_match.winner)
+            if grpc_match.HasField("winner")
+            else None,
+            round=grpc_match.round,
+            match_number=grpc_match.match_number,
+            next_match_id=grpc_match.next_match_id
+            if grpc_match.HasField("next_match_id")
+            else None,
+            best_of=grpc_match.best_of,
+        )
+
+    @classmethod
+    def _to_pydantic_bracket_info(cls, grpc_bracket) -> BracketInfo:
+        return BracketInfo(
+            bracket_id=grpc_bracket.bracket_id,
+            participant_ids=list(grpc_bracket.participant_ids),
+            round=grpc_bracket.round,
+            round_settings=[
+                cls._to_pydantic_round_setting(x) for x in grpc_bracket.round_settings
+            ],
+            matches=[cls._to_pydantic_bracket_match(x) for x in grpc_bracket.matches],
+        )
+
+    @classmethod
+    def _to_pydantic_draft_state(cls, grpc_state) -> DraftState:
+        return DraftState(
+            config=DraftConfig(
+                captain_count=grpc_state.config.captain_count,
+                captains=[
+                    DraftCaptainInfo(
+                        captain=cls._to_pydantic_actor(c.captain),
+                        order=c.order,
+                        picked_players=[
+                            cls._to_pydantic_actor(p) for p in c.picked_players
+                        ],
+                    )
+                    for c in grpc_state.config.captains
+                ],
+                pick_order_captain_ids=list(grpc_state.config.pick_order_captain_ids),
+                pick_direction=cls.DRAFT_PICK_DIRECTION_MAP.get(
+                    grpc_state.config.pick_direction,
+                    DraftPickDirection.DRAFT_PICK_DIRECTION_UNSPECIFIED,
+                ),
+                max_extra_players_per_team=grpc_state.config.max_extra_players_per_team,
+            ),
+            current_pick_index=grpc_state.current_pick_index,
+            current_captain_id=grpc_state.current_captain_id
+            if grpc_state.HasField("current_captain_id")
+            else None,
+            available_player_ids=list(grpc_state.available_player_ids),
+            finished=grpc_state.finished,
+        )
 
     @classmethod
     def to_pydantic_response(cls, grpc_response) -> TournamentResponse:
@@ -234,6 +353,29 @@ class TournamentMapper:
             end=grpc_response.end if grpc_response.end else None,
             status=cls.STATUS_MAP.get(grpc_response.status, Status.STATUS_UNSPECIFIED),
             prizepool=grpc_response.prizepool if grpc_response.prizepool else None,
+            is_open=grpc_response.is_open,
+            lifecycle=cls.LIFECYCLE_MAP.get(
+                grpc_response.lifecycle,
+                TournamentLifecycle.TOURNAMENT_LIFECYCLE_UNSPECIFIED,
+            ),
+            draft_start=grpc_response.draft_start
+            if grpc_response.HasField("draft_start")
+            else None,
+            registration_locked_at=(
+                grpc_response.registration_locked_at
+                if grpc_response.HasField("registration_locked_at")
+                else None
+            ),
+            draft_state=(
+                cls._to_pydantic_draft_state(grpc_response.draft_state)
+                if grpc_response.HasField("draft_state")
+                else None
+            ),
+            bracket=(
+                cls._to_pydantic_bracket_info(grpc_response.bracket)
+                if grpc_response.HasField("bracket")
+                else None
+            ),
         )
 
     @classmethod
@@ -259,6 +401,17 @@ class TournamentMapper:
                     participant=cls._to_pydantic_actor(participant.participant),
                     user_ids=list(participant.user_ids),
                     joined_at=participant.joined_at,
+                    draft_roles=list(getattr(participant, "draft_roles", [])),
+                    is_captain=(
+                        participant.is_captain
+                        if participant.HasField("is_captain")
+                        else None
+                    ),
+                    captain_order=(
+                        participant.captain_order
+                        if participant.HasField("captain_order")
+                        else None
+                    ),
                 )
                 for participant in grpc_response.participants
             ],
@@ -280,11 +433,7 @@ class TournamentMapper:
         if not grpc_response.HasField("bracket"):
             return GetBracketResponse()
         return GetBracketResponse(
-            bracket=BracketInfo(
-                bracket_id=grpc_response.bracket.bracket_id,
-                participant_ids=list(grpc_response.bracket.participant_ids),
-                round=grpc_response.bracket.round,
-            )
+            bracket=cls._to_pydantic_bracket_info(grpc_response.bracket)
         )
 
     @classmethod
@@ -303,6 +452,8 @@ class TournamentMapper:
             grpc_request.description = request.description
         if request.avatar:
             grpc_request.avatar = request.avatar
+        if request.draft_start:
+            grpc_request.draft_start = request.draft_start
         return grpc_request
 
     @classmethod
@@ -336,6 +487,8 @@ class TournamentMapper:
             grpc_request.name = request.name
         if request.description:
             grpc_request.description = request.description
+        if request.draft_start:
+            grpc_request.draft_start = request.draft_start
         return grpc_request
 
     @classmethod
@@ -370,10 +523,14 @@ class TournamentMapper:
 
     @classmethod
     def to_grpc_add_participant_request(cls, request: AddParticipantRequest):
+        team_name = request.team_name or ""
+        if request.draft_roles and not team_name:
+            team_name = "draft_roles:" + ":".join(request.draft_roles[:2])
         return pb2_module.AddParticipantRequest(
             tournament_id=str(request.tournament_id),
             participant=cls._to_grpc_actor(request.participant),
-            team_name=request.team_name or "",
+            team_name=team_name,
+            draft_roles=request.draft_roles,
         )
 
     @classmethod
@@ -420,7 +577,77 @@ class TournamentMapper:
         return pb2_module.PreBuildBracketRequest(
             tournament_id=str(request.tournament_id),
             actor_id=str(request.actor_id or ""),
+            round_settings=[
+                cls._to_grpc_round_setting(setting)
+                for setting in request.round_settings
+            ],
         )
+
+    @classmethod
+    def to_grpc_lock_registration_request(cls, request: LockRegistrationRequest):
+        return pb2_module.LockRegistrationRequest(
+            tournament_id=str(request.tournament_id),
+            actor_id=str(request.actor_id),
+        )
+
+    @classmethod
+    def to_grpc_reschedule_request(cls, request: RescheduleTournamentRequest):
+        grpc_request = pb2_module.RescheduleTournamentRequest(
+            tournament_id=str(request.tournament_id),
+            actor_id=str(request.actor_id),
+            start=request.start,
+        )
+        if request.draft_start:
+            grpc_request.draft_start = request.draft_start
+        return grpc_request
+
+    @classmethod
+    def to_grpc_set_draft_captains_request(cls, request: SetDraftCaptainsRequest):
+        return pb2_module.SetDraftCaptainsRequest(
+            tournament_id=str(request.tournament_id),
+            actor_id=str(request.actor_id),
+            captain_count=request.captain_count,
+            captain_ids=request.captain_ids,
+            pick_direction=cls.DRAFT_PICK_DIRECTION_TO_PROTO.get(
+                request.pick_direction,
+                1,
+            ),
+            max_extra_players_per_team=request.max_extra_players_per_team,
+        )
+
+    @classmethod
+    def to_grpc_update_draft_pick_order_request(
+        cls, request: UpdateDraftPickOrderRequest
+    ):
+        return pb2_module.UpdateDraftPickOrderRequest(
+            tournament_id=str(request.tournament_id),
+            actor_id=str(request.actor_id),
+            captain_ids=request.captain_ids,
+        )
+
+    @classmethod
+    def to_grpc_draft_pick_player_request(cls, request: DraftPickPlayerRequest):
+        return pb2_module.DraftPickPlayerRequest(
+            tournament_id=str(request.tournament_id),
+            actor_id=str(request.actor_id),
+            captain_id=request.captain_id,
+            player_id=request.player_id,
+        )
+
+    @classmethod
+    def to_grpc_update_bracket_match_request(cls, request: UpdateBracketMatchRequest):
+        grpc_request = pb2_module.UpdateBracketMatchRequest(
+            tournament_id=str(request.tournament_id),
+            actor_id=str(request.actor_id),
+            game_series_id=request.game_series_id,
+        )
+        if request.team1:
+            grpc_request.team1.CopyFrom(cls._to_grpc_actor(request.team1))
+        if request.team2:
+            grpc_request.team2.CopyFrom(cls._to_grpc_actor(request.team2))
+        if request.best_of is not None:
+            grpc_request.best_of = request.best_of
+        return grpc_request
 
     @classmethod
     def to_grpc_change_bracket_request(cls, request: ChangeBracketRequest):
@@ -526,6 +753,20 @@ class TournamentStub:
         response = await self.stub.StartTournament(grpc_request)
         return self.mapper.to_pydantic_response(response)
 
+    async def lock_registration(
+        self, request: LockRegistrationRequest
+    ) -> TournamentResponse:
+        grpc_request = self.mapper.to_grpc_lock_registration_request(request)
+        response = await self.stub.LockRegistration(grpc_request)
+        return self.mapper.to_pydantic_response(response)
+
+    async def reschedule_tournament(
+        self, request: RescheduleTournamentRequest
+    ) -> TournamentResponse:
+        grpc_request = self.mapper.to_grpc_reschedule_request(request)
+        response = await self.stub.RescheduleTournament(grpc_request)
+        return self.mapper.to_pydantic_response(response)
+
     async def finish_tournament(
         self, request: FinishTournamentRequest
     ) -> TournamentResponse:
@@ -538,6 +779,27 @@ class TournamentStub:
     ) -> TournamentResponse:
         grpc_request = self.mapper.to_grpc_prebuild_bracket_request(request)
         response = await self.stub.PreBuildBracket(grpc_request)
+        return self.mapper.to_pydantic_response(response)
+
+    async def set_draft_captains(
+        self, request: SetDraftCaptainsRequest
+    ) -> TournamentResponse:
+        grpc_request = self.mapper.to_grpc_set_draft_captains_request(request)
+        response = await self.stub.SetDraftCaptains(grpc_request)
+        return self.mapper.to_pydantic_response(response)
+
+    async def update_draft_pick_order(
+        self, request: UpdateDraftPickOrderRequest
+    ) -> TournamentResponse:
+        grpc_request = self.mapper.to_grpc_update_draft_pick_order_request(request)
+        response = await self.stub.UpdateDraftPickOrder(grpc_request)
+        return self.mapper.to_pydantic_response(response)
+
+    async def draft_pick_player(
+        self, request: DraftPickPlayerRequest
+    ) -> TournamentResponse:
+        grpc_request = self.mapper.to_grpc_draft_pick_player_request(request)
+        response = await self.stub.DraftPickPlayer(grpc_request)
         return self.mapper.to_pydantic_response(response)
 
     async def add_participant(
@@ -583,6 +845,13 @@ class TournamentStub:
     async def change_bracket(self, request: ChangeBracketRequest) -> TournamentResponse:
         grpc_request = self.mapper.to_grpc_change_bracket_request(request)
         response = await self.stub.ChangeBracket(grpc_request)
+        return self.mapper.to_pydantic_response(response)
+
+    async def update_bracket_match(
+        self, request: UpdateBracketMatchRequest
+    ) -> TournamentResponse:
+        grpc_request = self.mapper.to_grpc_update_bracket_match_request(request)
+        response = await self.stub.UpdateBracketMatch(grpc_request)
         return self.mapper.to_pydantic_response(response)
 
     async def get_bracket(self, request: GetBracketRequest) -> GetBracketResponse:

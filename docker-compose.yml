@@ -88,7 +88,7 @@ services:
       context: ./backend/python
       dockerfile: draft/Dockerfile
     ports:
-      - "50054:50051"
+      - "50055:50051"
     env_file:
       - .env
     environment:
@@ -107,7 +107,7 @@ services:
       context: ./backend/python
       dockerfile: search/Dockerfile
     ports:
-      - "50055:50051"
+      - "50054:50051"
     env_file:
       - .env
     environment:
@@ -134,6 +134,7 @@ services:
       COMMUNITY_SERVICE_ADDRESS: community:50051
       MESSENGER_SERVICE_ADDRESS: messenger:50051
       GAME_SERVICE_ADDRESS: game:50051
+      search_service_address: search:50051
       mongo_url: mongodb://mongodb:27017/?replicaSet=rs0
       redis_url: redis://redis:6379/0
     depends_on:
@@ -142,6 +143,23 @@ services:
       - game
     networks:
       - backend_akiora
+    restart: unless-stopped
+
+  socketgw:
+    build:
+      context: ./backend/python
+      dockerfile: socketgw/Dockerfile
+    ports:
+      - "8002:8000"
+    env_file:
+      - .env
+    environment:
+      APP_NAME: socketgw
+      redis_url: redis://redis:6379/0
+    networks:
+      - backend_akiora
+    depends_on:
+      - redis
     restart: unless-stopped
 
 

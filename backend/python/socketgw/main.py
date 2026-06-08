@@ -1,11 +1,12 @@
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from redis.asyncio import Redis
 
-from routes import router
+from routes import notification_stream_worker, router
 from settings import Settings
 from shared.redis import RedisService
 
@@ -23,10 +24,14 @@ async def lifespan(app: FastAPI):
     )
     app.state.redis_client = redis_client
     app.state.redis = RedisService(redis_client, settings.redis_ttl)
+    app.state.notification_worker = asyncio.create_task(notification_stream_worker(app.state.redis))
     try:
         yield
     finally:
         logger.info("SocketGW shutting down...")
+        app.state.notification_worker.cancel()
+        with suppress(asyncio.CancelledError):
+            await app.state.notification_worker
         await redis_client.close()
 
 
@@ -54,6 +59,6 @@ if __name__ == "__main__":
     Granian(
         "main:app",
         address="0.0.0.0",
-        port=8001,
+        port=8000,
         interface="asgi",
     ).serve()

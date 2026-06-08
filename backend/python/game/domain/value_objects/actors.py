@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Literal
 from uuid import UUID
 
@@ -14,3 +14,4 @@ class Actor(BaseModel):
 class TeamParticipant(BaseModel):
     actor: Actor | None
     players: list[UUID]
+    draft_roles: list[str] = Field(default_factory=list)

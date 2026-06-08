@@ -9,16 +9,24 @@ import { getLocale } from '#/paraglide/runtime'
 
 import appCss from '../styles.css?url'
 
-import type { QueryClient } from '@tanstack/react-query'
+import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 
 import { useState, useRef, useCallback, useEffect, createContext, useContext } from 'react'
 import {
     FiHome, FiBarChart2, FiUsers, FiInfo, FiList, FiUser, FiMessageSquare,
-    FiSettings, FiZap, FiChevronRight, FiSend, FiSearch, FiPlay
+    FiSettings, FiZap, FiChevronRight, FiSend, FiSearch, FiPlay, FiBell, FiCheck, FiX, FiExternalLink
 } from 'react-icons/fi'
 import { GiCrossedSwords } from 'react-icons/gi'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { AuthProvider, useAuthContext } from '../contexts/AuthContext'
+import {
+    useFriends,
+    useGetOrCreatePrivateChatMutation,
+    useMessages,
+    usePendingFriendRequests,
+    useRespondFriendRequestMutation,
+    useSendMessage,
+} from '../lib/api'
 
 interface MyRouterContext {
     queryClient: QueryClient
@@ -38,19 +46,12 @@ const NAV_ITEMS = [
 ]
 
 const HIDDEN_ROUTES = new Set(['/', '/login', '/onboarding'])
+const SOCKETGW_BASE = import.meta.env.VITE_SOCKETGW_BASE_URL ?? 'ws://localhost:8002'
 
 // ─── Social Dock Data ─────────────────────────────────────────────
-interface DummyFriend { id: string; name: string; tag: string; online: boolean; inGame: boolean }
+interface DockFriend { id: string; name: string; tag: string; online: boolean; inGame: boolean }
 interface DummyClub { id: string; name: string; tag: string; members: number; rank: string }
 interface DummyGroup { id: string; name: string; members: number; activity: string }
-
-const DUMMY_FRIENDS: DummyFriend[] = [
-    { id: 'f1', name: 'ProGamer99', tag: '#7731', online: true, inGame: false },
-    { id: 'f2', name: 'NightOwl', tag: '#4402', online: true, inGame: true },
-    { id: 'f3', name: 'DragonSlayer', tag: '#1190', online: true, inGame: false },
-    { id: 'f4', name: 'ShadowStrike', tag: '#8821', online: false, inGame: false },
-    { id: 'f5', name: 'CyberNinja', tag: '#3310', online: false, inGame: false },
-]
 
 const DUMMY_CLUBS: DummyClub[] = [
     { id: 'c1', name: 'Elite Players', tag: 'ELTP', members: 128, rank: 'Diamond' },
@@ -72,7 +73,82 @@ const RANK_COLORS: Record<string, string> = {
 }
 
 // Social dock toggle context
-export const SocialDockContext = createContext<{ open: boolean; toggle: () => void }>({ open: true, toggle: () => {} })
+export const SocialDockContext = createContext<{ open: boolean; toggle: () => void }>({ open: true, toggle: () => { } })
+
+function buildSocketUrl(path: string) {
+    const base = SOCKETGW_BASE.replace(/^http/i, 'ws').replace(/\/$/, '')
+    return `${base}${path}`
+}
+
+function useNotificationStream(userId?: string, enabled = true) {
+    const queryClient = useQueryClient()
+
+    useEffect(() => {
+        if (!enabled || !userId) return
+
+        let socket: WebSocket | null = null
+        let retryTimer: number | undefined
+        let closed = false
+
+        const invalidateFriendQueries = () => {
+            queryClient.invalidateQueries({ queryKey: ['users', 'friend-requests', 'pending', userId] })
+            queryClient.invalidateQueries({ queryKey: ['users', 'friends', userId] })
+        }
+
+        const connect = () => {
+            socket = new WebSocket(buildSocketUrl('/ws/v1/notifications'))
+
+            socket.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data)
+                    if (payload.type === 'notification.connected') return
+
+                    if (payload.type === 'chat.message.created') {
+                        const chatId = payload.chat_id ?? payload.message?.chat_id
+                        queryClient.invalidateQueries({ queryKey: ['messenger', 'chats'] })
+                        if (chatId) {
+                            queryClient.invalidateQueries({ queryKey: ['messenger', 'messages', chatId] })
+                        }
+                        return
+                    }
+
+                    if (
+                        payload.type === 'friend.request.created' ||
+                        payload.type === 'friend.request.accepted' ||
+                        payload.type === 'friend.request.rejected'
+                    ) {
+                        invalidateFriendQueries()
+                    }
+                } catch (error) {
+                    console.warn('Failed to process notification event', error)
+                }
+            }
+
+            socket.onclose = () => {
+                if (closed) return
+                retryTimer = window.setTimeout(connect, 2500)
+            }
+
+            socket.onerror = () => {
+                socket?.close()
+            }
+        }
+
+        connect()
+
+        return () => {
+            closed = true
+            if (retryTimer) window.clearTimeout(retryTimer)
+            socket?.close()
+        }
+    }, [enabled, queryClient, userId])
+}
+
+function RealtimeBridge() {
+    const { user, isAuthenticated } = useAuthContext()
+    useNotificationStream(user?.id, isAuthenticated)
+    return null
+}
 
 // Magnification config
 const BASE_SIZE = 16   // icon px at rest
@@ -89,6 +165,10 @@ function TopDock() {
     const navRef = useRef<HTMLElement>(null)
     const { open: dockOpen, toggle: toggleDock } = useContext(SocialDockContext)
     const { user, isAuthenticated } = useAuthContext()
+    const [notificationsOpen, setNotificationsOpen] = useState(false)
+    const { data: pendingRequests = [] } = usePendingFriendRequests(user?.id)
+    const respondFriendRequest = useRespondFriendRequestMutation(user?.id)
+    const notificationCount = pendingRequests.length
 
     const getScale = useCallback((i: number): number => {
         if (mouseIdx === null) return 1
@@ -197,6 +277,107 @@ function TopDock() {
           border-color: rgba(166,0,255,0.35);
           box-shadow: 0 0 12px rgba(166,0,255,0.25);
         }
+        .dock-icon-btn {
+          position: relative;
+          width: 32px; height: 32px; border-radius: 50%;
+          background: rgba(255,255,255,0.035);
+          border: 1px solid rgba(255,255,255,0.07);
+          color: rgba(255,255,255,0.55);
+          cursor: pointer;
+          display: inline-flex; align-items: center; justify-content: center;
+          transition: background 150ms, color 150ms, border-color 150ms, box-shadow 150ms;
+          flex-shrink: 0;
+        }
+        .dock-icon-btn:hover,
+        .dock-icon-btn--active {
+          color: #fff;
+          background: rgba(166,0,255,0.12);
+          border-color: rgba(166,0,255,0.28);
+          box-shadow: 0 0 12px rgba(166,0,255,0.18);
+        }
+        .dock-notification-dot {
+          position: absolute; top: -3px; right: -4px;
+          min-width: 16px; height: 16px; padding: 0 4px;
+          border-radius: 999px;
+          background: #FF002A;
+          border: 2px solid rgba(0,0,0,0.9);
+          color: #fff;
+          font-family: 'Chakra Petch', monospace;
+          font-size: 9px; font-weight: 700;
+          display: inline-flex; align-items: center; justify-content: center;
+          line-height: 1;
+        }
+        .notifications-popover {
+          position: absolute;
+          top: 44px;
+          right: 48px;
+          width: 300px;
+          padding: 10px;
+          border-radius: 12px;
+          background: rgba(0,0,0,0.9);
+          border: 1px solid rgba(166,0,255,0.16);
+          box-shadow: 0 18px 60px rgba(0,0,0,0.55), 0 0 20px rgba(166,0,255,0.08);
+          backdrop-filter: blur(22px);
+        }
+        .notifications-title {
+          margin: 2px 2px 10px;
+          font-family: 'Russo One', sans-serif;
+          font-size: 11px;
+          color: rgba(255,255,255,0.78);
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+        .notification-empty {
+          margin: 0;
+          padding: 18px 8px;
+          color: rgba(255,255,255,0.28);
+          font-family: 'Chakra Petch', monospace;
+          font-size: 11px;
+          text-align: center;
+        }
+        .notification-item {
+          display: grid;
+          grid-template-columns: 32px minmax(0, 1fr);
+          gap: 9px;
+          padding: 9px;
+          border-radius: 9px;
+          background: rgba(255,255,255,0.035);
+          border: 1px solid rgba(255,255,255,0.06);
+        }
+        .notification-name {
+          margin: 0;
+          color: rgba(255,255,255,0.84);
+          font-family: 'Chakra Petch', monospace;
+          font-size: 12px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .notification-meta {
+          margin: 2px 0 8px;
+          color: rgba(255,255,255,0.35);
+          font-family: 'Chakra Petch', monospace;
+          font-size: 10px;
+        }
+        .notification-actions {
+          display: flex;
+          gap: 6px;
+        }
+        .notification-action {
+          min-height: 28px;
+          padding: 5px 8px;
+          border-radius: 7px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.04);
+          color: rgba(255,255,255,0.65);
+          cursor: pointer;
+          display: inline-flex; align-items: center; gap: 5px;
+          font-family: 'Chakra Petch', monospace; font-size: 10px;
+        }
+        .notification-action.accept { border-color: rgba(16,185,129,0.25); background: rgba(16,185,129,0.08); }
+        .notification-action.decline { border-color: rgba(255,0,42,0.22); background: rgba(255,0,42,0.07); }
+        .notification-action:hover:not(:disabled) { color: #fff; }
+        .notification-action:disabled { opacity: 0.45; cursor: not-allowed; }
         .dock-avatar-initials {
           font-family: 'Russo One', sans-serif;
           font-size: 11px;
@@ -288,6 +469,50 @@ function TopDock() {
                 {isAuthenticated && (
                     <>
                         <div className="dock-divider" />
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                className={`dock-icon-btn ${notificationsOpen ? 'dock-icon-btn--active' : ''}`}
+                                onClick={() => setNotificationsOpen(v => !v)}
+                                aria-label="Notifications"
+                            >
+                                <FiBell size={15} />
+                                {notificationCount > 0 && <span className="dock-notification-dot">{notificationCount}</span>}
+                            </button>
+                            {notificationsOpen && (
+                                <div className="notifications-popover">
+                                    <h2 className="notifications-title">Notifications</h2>
+                                    {pendingRequests.length === 0 ? (
+                                        <p className="notification-empty">No new notifications</p>
+                                    ) : pendingRequests.map(({ friendship, user: requestUser }) => (
+                                        <div key={friendship.id} className="notification-item">
+                                            <div className="dock-avatar" style={{ background: 'linear-gradient(135deg, rgba(166,0,255,0.5), rgba(6,182,212,0.55))' }}>
+                                                {(requestUser.nickname || requestUser.email || '?')[0]}
+                                            </div>
+                                            <div style={{ minWidth: 0 }}>
+                                                <p className="notification-name">{requestUser.nickname || requestUser.email}</p>
+                                                <p className="notification-meta">Sent you a friend request</p>
+                                                <div className="notification-actions">
+                                                    <button
+                                                        className="notification-action accept"
+                                                        disabled={respondFriendRequest.isPending}
+                                                        onClick={() => respondFriendRequest.mutate({ request_id: friendship.id, responder_id: user?.id ?? '', accept: true })}
+                                                    >
+                                                        <FiCheck size={12} /> Accept
+                                                    </button>
+                                                    <button
+                                                        className="notification-action decline"
+                                                        disabled={respondFriendRequest.isPending}
+                                                        onClick={() => respondFriendRequest.mutate({ request_id: friendship.id, responder_id: user?.id ?? '', accept: false })}
+                                                    >
+                                                        <FiX size={12} /> Decline
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                         <button
                             className={`dock-avatar-btn ${dockOpen ? 'dock-avatar-btn--active' : ''}`}
                             onClick={toggleDock}
@@ -439,6 +664,7 @@ function SectionHeader({ icon, label, count, open, onToggle }: { icon: React.Rea
 
 function SocialDock() {
     const { user, isAuthenticated } = useAuthContext()
+    const navigate = useNavigate()
     const location = useRouterState({ select: s => s.location.pathname })
     const isSplat = useRouterState({ select: s => s.matches.some(m => m.routeId === '/$') })
     const hasError = useRouterState({ select: s => s.matches.some(m => m.status === 'error') })
@@ -446,38 +672,76 @@ function SocialDock() {
     const [openFriends, setOpenFriends] = useState(true)
     const [openClubs, setOpenClubs] = useState(true)
     const [openGroups, setOpenGroups] = useState(true)
-    const [miniChat, setMiniChat] = useState<{ id: string; name: string; type: 'friend' | 'club' | 'group' } | null>(null)
-    const [miniMessages, setMiniMessages] = useState<{ id: number; text: string; own: boolean; time: string }[]>([])
+    const [miniChat, setMiniChat] = useState<{ id: string; name: string; type: 'friend' | 'club' | 'group'; chatId?: string } | null>(null)
+    const [demoMiniMessages, setDemoMiniMessages] = useState<{ id: number; text: string; own: boolean; time: string }[]>([])
     const [miniInput, setMiniInput] = useState('')
+    const getOrCreatePrivateChat = useGetOrCreatePrivateChatMutation()
+    const sendMessage = useSendMessage()
+    const {
+        data: friendItems = [],
+        isError: friendsError,
+        isLoading: friendsLoading,
+    } = useFriends(user?.id)
+    const {
+        data: pendingRequests = [],
+        isLoading: pendingRequestsLoading,
+    } = usePendingFriendRequests(user?.id)
+    const respondFriendRequest = useRespondFriendRequestMutation(user?.id)
+    const { data: miniApiMessages = [], isLoading: miniMessagesLoading } = useMessages(miniChat?.chatId ?? '', 40)
 
     if (!isAuthenticated || !dockOpen || HIDDEN_ROUTES.has(location) || isSplat || hasError) return null
 
-    const onlineFriends = DUMMY_FRIENDS.filter(f => f.online)
-    const offlineFriends = DUMMY_FRIENDS.filter(f => !f.online)
+    const friends: DockFriend[] = friendItems.map(({ user: friendUser }) => ({
+        id: friendUser.id,
+        name: friendUser.nickname || friendUser.email,
+        tag: friendUser.email ? `#${friendUser.email.split('@')[0]}` : '',
+        online: false,
+        inGame: false,
+    }))
+    const onlineFriends = friends.filter(f => f.online)
+    const offlineFriends = friends.filter(f => !f.online)
 
-    const toggleMiniChat = (id: string, name: string, type: 'friend' | 'club' | 'group') => {
+    const toggleMiniChat = async (id: string, name: string, type: 'friend' | 'club' | 'group') => {
         if (miniChat?.id === id) {
             setMiniChat(null)
         } else {
-            setMiniChat({ id, name, type })
-            setMiniMessages([
-                { id: 1, text: 'Hey! How are you?', own: false, time: '12:30' },
-                { id: 2, text: 'All good, just grinding ranked', own: true, time: '12:31' },
-                { id: 3, text: 'Nice, want to duo?', own: false, time: '12:32' },
-            ])
+            if (type === 'friend' && user?.id) {
+                const chat = await getOrCreatePrivateChat.mutateAsync({ userId: user.id, friendId: id })
+                setMiniChat({ id, name, type, chatId: chat.id })
+            } else {
+                setMiniChat({ id, name, type })
+                setDemoMiniMessages([
+                    { id: 1, text: 'Hey! How are you?', own: false, time: '12:30' },
+                    { id: 2, text: 'All good, just checking this chat', own: true, time: '12:31' },
+                ])
+            }
             setMiniInput('')
         }
     }
 
-    const handleMiniSend = () => {
+    const handleMiniSend = async () => {
         if (!miniInput.trim()) return
-        setMiniMessages(prev => [...prev, {
-            id: Date.now(),
-            text: miniInput.trim(),
-            own: true,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        }])
+        if (miniChat?.chatId && user?.id) {
+            await sendMessage.mutateAsync({
+                chat_id: miniChat.chatId,
+                creator_id: user.id,
+                body: miniInput.trim(),
+            })
+        } else {
+            setDemoMiniMessages(prev => [...prev, {
+                id: Date.now(),
+                text: miniInput.trim(),
+                own: true,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            }])
+        }
         setMiniInput('')
+    }
+
+    const openFullMessenger = () => {
+        const chatId = miniChat?.chatId
+        setMiniChat(null)
+        navigate({ to: '/messenger', search: chatId ? { chat: chatId } : undefined })
     }
 
     return (
@@ -553,13 +817,38 @@ function SocialDock() {
                     font-family: 'Chakra Petch', monospace; font-size: 9px;
                     color: rgba(255,255,255,0.3); white-space: nowrap;
                 }
-                .dock-offline { opacity: 0.35; }
+                .dock-offline { opacity: 0.48; }
+                .dock-offline:hover { opacity: 0.82; }
                 .dock-badge {
                     margin-left: auto; padding: 2px 5px;
                     border-radius: 4px; font-family: 'Chakra Petch', monospace;
                     font-size: 8px; font-weight: 600; letter-spacing: 0.03em;
                     flex-shrink: 0;
                 }
+                .friend-request-card {
+                    display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px;
+                    padding: 8px 10px; margin: 0 6px 6px;
+                    border-radius: 9px;
+                    background: rgba(166,0,255,0.055);
+                    border: 1px solid rgba(166,0,255,0.12);
+                }
+                .friend-request-actions {
+                    display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 7px;
+                }
+                .friend-request-action {
+                    min-height: 30px; border-radius: 7px;
+                    border: 1px solid rgba(255,255,255,0.08);
+                    background: rgba(255,255,255,0.035);
+                    color: rgba(255,255,255,0.65);
+                    cursor: pointer;
+                    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+                    font-family: 'Chakra Petch', monospace; font-size: 10px;
+                    transition: color 150ms, border-color 150ms, background 150ms;
+                }
+                .friend-request-action.accept { border-color: rgba(16,185,129,0.26); background: rgba(16,185,129,0.08); }
+                .friend-request-action.decline { border-color: rgba(255,0,42,0.22); background: rgba(255,0,42,0.07); }
+                .friend-request-action:hover:not(:disabled) { color: #fff; }
+                .friend-request-action:disabled { opacity: 0.45; cursor: not-allowed; }
                 .section-label {
                     margin: 8px 14px 3px;
                     font-family: 'Chakra Petch', monospace;
@@ -590,7 +879,6 @@ function SocialDock() {
                     gap: 8px;
                     padding: 10px 14px;
                     border-bottom: 1px solid rgba(166,0,255,0.08);
-                    cursor: pointer;
                 }
                 .mini-chat-header:hover { background: rgba(166,0,255,0.04); }
                 .mini-chat-title {
@@ -606,6 +894,26 @@ function SocialDock() {
                     transition: color 150ms;
                 }
                 .mini-chat-close:hover { color: #fff; }
+                .mini-chat-open {
+                    min-height: 28px;
+                    padding: 5px 8px;
+                    border-radius: 7px;
+                    background: rgba(166,0,255,0.1);
+                    border: 1px solid rgba(166,0,255,0.18);
+                    color: rgba(255,255,255,0.66);
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;
+                    font-family: 'Chakra Petch', monospace;
+                    font-size: 10px;
+                    transition: color 150ms, background 150ms, border-color 150ms;
+                }
+                .mini-chat-open:hover {
+                    color: #fff;
+                    background: rgba(166,0,255,0.18);
+                    border-color: rgba(166,0,255,0.32);
+                }
                 .mini-chat-messages {
                     flex: 1;
                     overflow-y: auto;
@@ -688,14 +996,56 @@ function SocialDock() {
                     <SectionHeader
                         icon={<FiUser size={11} />}
                         label="Friends"
-                        count={DUMMY_FRIENDS.length}
+                        count={friends.length + pendingRequests.length}
                         open={openFriends}
                         onToggle={() => setOpenFriends(v => !v)}
                     />
                     {openFriends && (
                         <>
+                            {(pendingRequestsLoading || pendingRequests.length > 0) && (
+                                <p className="section-label">Incoming requests</p>
+                            )}
+                            {pendingRequestsLoading && (
+                                <p className="section-label">Loading requests...</p>
+                            )}
+                            {pendingRequests.map(({ friendship, user: requestUser }) => (
+                                <div key={friendship.id} className="friend-request-card">
+                                    <div className="dock-avatar" style={{ background: 'linear-gradient(135deg, rgba(166,0,255,0.5), rgba(6,182,212,0.55))' }}>
+                                        {(requestUser.nickname || requestUser.email || '?')[0]}
+                                    </div>
+                                    <div style={{ minWidth: 0 }}>
+                                        <p className="dock-name">{requestUser.nickname || requestUser.email}</p>
+                                        <p className="dock-meta">Wants to add you</p>
+                                        <div className="friend-request-actions">
+                                            <button
+                                                className="friend-request-action accept"
+                                                disabled={respondFriendRequest.isPending}
+                                                onClick={() => respondFriendRequest.mutate({ request_id: friendship.id, responder_id: user?.id ?? '', accept: true })}
+                                            >
+                                                <FiCheck size={12} /> Accept
+                                            </button>
+                                            <button
+                                                className="friend-request-action decline"
+                                                disabled={respondFriendRequest.isPending}
+                                                onClick={() => respondFriendRequest.mutate({ request_id: friendship.id, responder_id: user?.id ?? '', accept: false })}
+                                            >
+                                                <FiX size={12} /> Decline
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {friendsLoading && (
+                                <p className="section-label">Loading friends...</p>
+                            )}
+                            {friendsError && (
+                                <p className="section-label">Could not load friends</p>
+                            )}
+                            {!friendsLoading && !friendsError && friends.length === 0 && (
+                                <p className="section-label">No friends yet</p>
+                            )}
                             {onlineFriends.map(f => (
-                                <div key={f.id} className="dock-card" onClick={() => toggleMiniChat(f.id, f.name, 'friend')}
+                                <div key={f.id} className="dock-card" onClick={() => void toggleMiniChat(f.id, f.name, 'friend')}
                                     style={miniChat?.id === f.id ? { background: 'rgba(166,0,255,0.1)', borderColor: 'rgba(166,0,255,0.15)' } : undefined}
                                 >
                                     <div
@@ -714,7 +1064,12 @@ function SocialDock() {
                                 <>
                                     <p className="section-label">Offline</p>
                                     {offlineFriends.map(f => (
-                                        <div key={f.id} className="dock-card dock-offline">
+                                        <div
+                                            key={f.id}
+                                            className="dock-card dock-offline"
+                                            onClick={() => void toggleMiniChat(f.id, f.name, 'friend')}
+                                            style={miniChat?.id === f.id ? { background: 'rgba(166,0,255,0.1)', borderColor: 'rgba(166,0,255,0.15)', opacity: 0.86 } : undefined}
+                                        >
                                             <div className="dock-avatar" style={{ background: 'rgba(255,255,255,0.06)' }}>{f.name[0]}</div>
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <p className="dock-name">{f.name}<span style={{ color: 'rgba(255,255,255,0.15)', fontWeight: 400, fontSize: '9px' }}> {f.tag}</span></p>
@@ -738,7 +1093,7 @@ function SocialDock() {
                         onToggle={() => setOpenClubs(v => !v)}
                     />
                     {openClubs && DUMMY_CLUBS.map(c => (
-                        <div key={c.id} className="dock-card" onClick={() => toggleMiniChat(c.id, c.name, 'club')}
+                        <div key={c.id} className="dock-card" onClick={() => void toggleMiniChat(c.id, c.name, 'club')}
                             style={miniChat?.id === c.id ? { background: 'rgba(166,0,255,0.1)', borderColor: 'rgba(166,0,255,0.15)' } : undefined}
                         >
                             <div className="dock-avatar dock-avatar-square" style={{
@@ -774,7 +1129,7 @@ function SocialDock() {
                         onToggle={() => setOpenGroups(v => !v)}
                     />
                     {openGroups && DUMMY_GROUPS.map(g => (
-                        <div key={g.id} className="dock-card" onClick={() => toggleMiniChat(g.id, g.name, 'group')}
+                        <div key={g.id} className="dock-card" onClick={() => void toggleMiniChat(g.id, g.name, 'group')}
                             style={miniChat?.id === g.id ? { background: 'rgba(166,0,255,0.1)', borderColor: 'rgba(166,0,255,0.15)' } : undefined}
                         >
                             <div className="dock-avatar dock-avatar-square" style={{
@@ -803,15 +1158,37 @@ function SocialDock() {
 
             {miniChat && (
                 <div className="mini-chat">
-                    <div className="mini-chat-header" onClick={() => setMiniChat(null)}>
+                    <div className="mini-chat-header">
                         <FiMessageSquare size={13} style={{ color: 'rgba(166,0,255,0.6)' }} />
                         <span className="mini-chat-title">{miniChat.name}</span>
-                        <button className="mini-chat-close" onClick={(e) => { e.stopPropagation(); setMiniChat(null) }}>
+                        {miniChat.type === 'friend' && (
+                            <button className="mini-chat-open" onClick={openFullMessenger}>
+                                <FiExternalLink size={12} /> Open
+                            </button>
+                        )}
+                        <button className="mini-chat-close" onClick={() => setMiniChat(null)} aria-label="Close mini chat">
                             <FiChevronRight size={14} style={{ transform: 'rotate(45deg)' }} />
                         </button>
                     </div>
                     <div className="mini-chat-messages">
-                        {miniMessages.map(m => (
+                        {miniChat.chatId ? (
+                            miniMessagesLoading ? (
+                                <p className="section-label">Loading messages...</p>
+                            ) : miniApiMessages.length > 0 ? (
+                                miniApiMessages.map(m => (
+                                    <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: m.creator_id === user?.id ? 'flex-end' : 'flex-start' }}>
+                                        <div className={`mini-msg ${m.creator_id === user?.id ? 'mini-msg-own' : 'mini-msg-other'}`}>
+                                            {m.body}
+                                        </div>
+                                        <span className="mini-msg-time" style={{ textAlign: m.creator_id === user?.id ? 'right' : 'left' }}>
+                                            {new Date(m.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="section-label">No messages yet</p>
+                            )
+                        ) : demoMiniMessages.map(m => (
                             <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: m.own ? 'flex-end' : 'flex-start' }}>
                                 <div className={`mini-msg ${m.own ? 'mini-msg-own' : 'mini-msg-other'}`}>
                                     {m.text}
@@ -826,9 +1203,9 @@ function SocialDock() {
                             placeholder="Message..."
                             value={miniInput}
                             onChange={e => setMiniInput(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') handleMiniSend() }}
+                            onKeyDown={e => { if (e.key === 'Enter') void handleMiniSend() }}
                         />
-                        <button className="mini-chat-send" onClick={handleMiniSend}>
+                        <button className="mini-chat-send" onClick={() => void handleMiniSend()} disabled={sendMessage.isPending || getOrCreatePrivateChat.isPending}>
                             <FiSend size={12} />
                         </button>
                     </div>
@@ -857,8 +1234,8 @@ function GlobalBackground() {
     const location = useRouterState({ select: s => s.location.pathname })
 
     let variant = 'center'
-    if (location === '/') return null
-    if (location === '/login' || location === '/onboarding') variant = 'center'
+    if (location === '/' || location === '/login' || location === '/onboarding') return null
+
 
     return (
         <>
@@ -892,6 +1269,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <body>
                 <AuthProvider>
                     <SocialDockContext.Provider value={{ open: dockOpen, toggle: toggleDock }}>
+                        <RealtimeBridge />
                         <GlobalBackground />
                         <TopDock />
                         <SocialDock />
@@ -905,5 +1283,3 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         </html>
     )
 }
-
-

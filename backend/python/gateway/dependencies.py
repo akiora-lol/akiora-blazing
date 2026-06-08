@@ -24,6 +24,12 @@ def get_game_channel() -> grpc.aio.Channel:
     return _channels["game"]
 
 
+def get_search_channel() -> grpc.aio.Channel:
+    if "search" not in _channels:
+        _channels["search"] = grpc.aio.insecure_channel(settings.search_service_address)
+    return _channels["search"]
+
+
 async def close_all_channels():
     for channel in _channels.values():
         await channel.close()

@@ -12,11 +12,15 @@ from domain.services.lol.tournament_serivce import TournamentService
 from domain.value_objects.actors import Actor
 from domain.value_objects.settings import (
     BracketType,
+    DraftPickDirection,
     DraftType,
     LolGameSeriesSettings,
     LolGameSettings,
     LolTournamentSettings,
+    TournamentType,
+    TournamentLifecycle,
 )
+from domain.value_objects.bracket import BracketRoundSettings
 from domain.value_objects.statuses import TournamentStatus
 from game.v1 import tournament_service_pb2 as pb2
 from game.v1.tournament_service_pb2_grpc import TournamentServiceServicer
@@ -39,6 +43,36 @@ _DRAFT_MODE_MAP = {
     4: DraftType.ALL_RANDOM,
 }
 _DRAFT_MODE_REVERSE = {value: key for key, value in _DRAFT_MODE_MAP.items()}
+_TOURNAMENT_TYPE_MAP = {
+    1: TournamentType.PRESIGNED,
+    2: TournamentType.DRAFT,
+}
+_TOURNAMENT_TYPE_REVERSE = {
+    TournamentType.PRESIGNED: 1,
+    TournamentType.DRAFT: 2,
+}
+_LIFECYCLE_REVERSE = {
+    TournamentLifecycle.REGISTRATION_OPEN: pb2.REGISTRATION_OPEN,
+    TournamentLifecycle.REGISTRATION_LOCKED: pb2.REGISTRATION_LOCKED,
+    TournamentLifecycle.CAPTAIN_SETUP: pb2.CAPTAIN_SETUP,
+    TournamentLifecycle.DRAFT_READY: pb2.DRAFT_READY,
+    TournamentLifecycle.DRAFT_IN_PROGRESS: pb2.DRAFT_IN_PROGRESS,
+    TournamentLifecycle.DRAFT_FINISHED: pb2.DRAFT_FINISHED,
+    TournamentLifecycle.BRACKET_READY: pb2.BRACKET_READY,
+    TournamentLifecycle.TOURNAMENT_ACTIVE: pb2.TOURNAMENT_ACTIVE,
+    TournamentLifecycle.TOURNAMENT_FINISHED: pb2.TOURNAMENT_FINISHED,
+    TournamentLifecycle.TOURNAMENT_CANCELLED: pb2.TOURNAMENT_CANCELLED,
+}
+_DRAFT_PICK_DIRECTION_MAP = {
+    pb2.LINEAR: DraftPickDirection.LINEAR,
+    pb2.SNAKE: DraftPickDirection.SNAKE,
+    pb2.MANUAL: DraftPickDirection.MANUAL,
+}
+_DRAFT_PICK_DIRECTION_REVERSE = {
+    DraftPickDirection.LINEAR: pb2.LINEAR,
+    DraftPickDirection.SNAKE: pb2.SNAKE,
+    DraftPickDirection.MANUAL: pb2.MANUAL,
+}
 _STATUS_REVERSE = {
     TournamentStatus.SCHEDULED: types_pb2.SCHEDULED,
     TournamentStatus.ACTIVE: types_pb2.ACTIVE,
@@ -95,27 +129,35 @@ def _proto_lol_settings_to_domain(lol_settings) -> LolTournamentSettings:
         BracketType.SINGLE_ELIMINATION,
     )
     return LolTournamentSettings(
+        tournament_type=_TOURNAMENT_TYPE_MAP.get(
+            lol_settings.tournament_type,
+            TournamentType.PRESIGNED,
+        ),
         game_settings=game_settings,
         game_series_settings=game_series_settings,
         best_of=list(lol_settings.series_best_of),
         bracket_type=bracket_type,
+        draft_start=lol_settings.draft_start if lol_settings.HasField("draft_start") else None,
     )
 
 
 def _domain_settings_to_proto(settings: LolTournamentSettings):
+    lol = pb2.LolTournamentSettings(
+        tournament_type=_TOURNAMENT_TYPE_REVERSE.get(settings.tournament_type, 1),
+        bracket_mode=_BRACKET_MODE_REVERSE.get(settings.bracket_type, 0),
+        draft_mode=[
+            _DRAFT_MODE_REVERSE.get(settings.game_series_settings.draft_type, 0)
+        ],
+        team_size=settings.game_settings.team_size,
+        map=settings.game_settings.map,
+        forbidden_champions=settings.game_series_settings.forbidden_champions,
+        series_best_of=settings.best_of,
+    )
+    if settings.draft_start:
+        lol.draft_start = settings.draft_start
     return pb2.TournamentSettings(
         game_type=1,
-        lol=pb2.LolTournamentSettings(
-            tournament_type=1,
-            bracket_mode=_BRACKET_MODE_REVERSE.get(settings.bracket_type, 0),
-            draft_mode=[
-                _DRAFT_MODE_REVERSE.get(settings.game_series_settings.draft_type, 0)
-            ],
-            team_size=settings.game_settings.team_size,
-            map=settings.game_settings.map,
-            forbidden_champions=settings.game_series_settings.forbidden_champions,
-            series_best_of=settings.best_of,
-        ),
+        lol=lol,
     )
 
 
@@ -123,8 +165,95 @@ def _team_participant_to_actor(team_participant):
     return team_participant.actor
 
 
+def _parse_draft_roles(raw: str) -> list[str]:
+    if not raw.startswith("draft_roles:"):
+        return []
+    return [role for role in raw.split(":")[1:3] if role]
+
+
+def _draft_state_to_proto(tournament: Tournament):
+    state = tournament.draft_state
+    if not state:
+        return None
+    captains = []
+    participant_by_id = {
+        participant.actor.id: participant.actor
+        for participant in tournament.participant_pool
+        if participant.actor
+    }
+    for captain in state.config.captains:
+        captains.append(
+            pb2.DraftCaptainInfo(
+                captain=_domain_actor_to_proto(Actor(id=captain.captain, type="user")),
+                order=captain.order,
+                picked_players=[
+                    _domain_actor_to_proto(Actor(id=player_id, type="user"))
+                    for player_id in captain.picked_players
+                ],
+            )
+        )
+    config = pb2.DraftConfig(
+        captain_count=state.config.captain_count,
+        captains=captains,
+        pick_order_captain_ids=[str(x) for x in state.config.pick_order_captain_ids],
+        pick_direction=_DRAFT_PICK_DIRECTION_REVERSE.get(state.config.pick_direction, pb2.LINEAR),
+        max_extra_players_per_team=state.config.max_extra_players_per_team,
+    )
+    draft_state = pb2.DraftState(
+        config=config,
+        current_pick_index=state.current_pick_index,
+        available_player_ids=[str(x) for x in state.available_player_ids],
+        finished=state.finished,
+    )
+    if state.current_captain_id:
+        draft_state.current_captain_id = str(state.current_captain_id)
+    return draft_state
+
+
+def _bracket_to_proto(tournament: Tournament):
+    if not tournament.bracket:
+        return None
+    participant_ids = []
+    matches = []
+    for round_matches in tournament.bracket.rounds:
+        for match in round_matches:
+            if match.team1:
+                participant_ids.append(str(match.team1.id))
+            if match.team2:
+                participant_ids.append(str(match.team2.id))
+            proto_match = pb2.BracketMatchInfo(
+                game_series_id=str(match.game_series_id),
+                round=match.round,
+                match_number=match.match_number,
+                best_of=match.best_of,
+            )
+            if match.team1:
+                proto_match.team1.CopyFrom(_domain_actor_to_proto(match.team1))
+            if match.team2:
+                proto_match.team2.CopyFrom(_domain_actor_to_proto(match.team2))
+            if match.winner:
+                proto_match.winner.CopyFrom(_domain_actor_to_proto(match.winner))
+            if match.next_match_id is not None:
+                proto_match.next_match_id = match.next_match_id
+            matches.append(proto_match)
+    return pb2.BracketInfo(
+        bracket_id=str(tournament.id),
+        participant_ids=participant_ids,
+        round=len(tournament.bracket.rounds),
+        round_settings=[
+            pb2.BracketRoundSettings(
+                round=setting.round,
+                label=setting.label,
+                best_of=setting.best_of,
+            )
+            for setting in tournament.bracket.round_settings
+        ],
+        matches=matches,
+    )
+
+
 def _tournament_to_proto(tournament: Tournament):
-    return pb2.TournamentResponse(
+    response = pb2.TournamentResponse(
         id=str(tournament.id),
         host=_domain_actor_to_proto(tournament.host),
         participants=[
@@ -138,7 +267,23 @@ def _tournament_to_proto(tournament: Tournament):
         end=int(tournament.end.timestamp()) if tournament.end else 0,
         status=_STATUS_REVERSE.get(tournament.status, types_pb2.STATUS_UNSPECIFIED),
         prizepool=tournament.prizepool or "",
+        is_open=tournament.is_open,
+        lifecycle=_LIFECYCLE_REVERSE.get(
+            tournament.lifecycle,
+            pb2.TOURNAMENT_LIFECYCLE_UNSPECIFIED,
+        ),
     )
+    if tournament.draft_start:
+        response.draft_start = int(tournament.draft_start.timestamp())
+    if tournament.registration_locked_at:
+        response.registration_locked_at = int(tournament.registration_locked_at.timestamp())
+    draft_state = _draft_state_to_proto(tournament)
+    if draft_state:
+        response.draft_state.CopyFrom(draft_state)
+    bracket = _bracket_to_proto(tournament)
+    if bracket:
+        response.bracket.CopyFrom(bracket)
+    return response
 
 
 class TournamentGrpc(TournamentServiceServicer):
@@ -157,6 +302,7 @@ class TournamentGrpc(TournamentServiceServicer):
             prize_pool=request.prizepool,
             start=request.start,
             settings=settings,
+            draft_start=request.draft_start if request.HasField("draft_start") else None,
         )
         return _tournament_to_proto(tournament)
 
@@ -188,6 +334,8 @@ class TournamentGrpc(TournamentServiceServicer):
             tournament.is_open = request.is_open
         if request.HasField("status"):
             tournament.status = _STATUS_MAP.get(request.status, tournament.status)
+        if request.HasField("draft_start"):
+            tournament.reschedule(int(tournament.start.timestamp()), request.draft_start)
         await tournament.save()
         return _tournament_to_proto(tournament)
 
@@ -245,22 +393,78 @@ class TournamentGrpc(TournamentServiceServicer):
         return _tournament_to_proto(tournament)
 
     @inject
+    async def LockRegistration(self, request, context, tournament_service: FromDishka[TournamentService]):
+        tournament = await tournament_service.lock_registration(UUID(request.tournament_id))
+        return _tournament_to_proto(tournament)
+
+    @inject
+    async def RescheduleTournament(self, request, context, tournament_service: FromDishka[TournamentService]):
+        tournament = await tournament_service.reschedule(
+            UUID(request.tournament_id),
+            request.start,
+            request.draft_start if request.HasField("draft_start") else None,
+        )
+        return _tournament_to_proto(tournament)
+
+    @inject
     async def FinishTournament(self, request, context, tournament_service: FromDishka[TournamentService]):
         tournament = await tournament_service.finish_tournament(UUID(request.tournament_id))
         return _tournament_to_proto(tournament)
 
     @inject
     async def PreBuildBracket(self, request, context, tournament_service: FromDishka[TournamentService]):
-        tournament = await tournament_service.prebuild_bracket(UUID(request.tournament_id))
+        tournament = await tournament_service.prebuild_bracket(
+            UUID(request.tournament_id),
+            [
+                BracketRoundSettings(
+                    round=setting.round,
+                    label=setting.label,
+                    best_of=setting.best_of,
+                )
+                for setting in request.round_settings
+            ],
+        )
+        return _tournament_to_proto(tournament)
+
+    @inject
+    async def SetDraftCaptains(self, request, context, tournament_service: FromDishka[TournamentService]):
+        tournament = await tournament_service.set_draft_captains(
+            UUID(request.tournament_id),
+            request.captain_count,
+            [UUID(captain_id) for captain_id in request.captain_ids],
+            _DRAFT_PICK_DIRECTION_MAP.get(request.pick_direction, DraftPickDirection.LINEAR),
+            request.max_extra_players_per_team or 4,
+        )
+        return _tournament_to_proto(tournament)
+
+    @inject
+    async def UpdateDraftPickOrder(self, request, context, tournament_service: FromDishka[TournamentService]):
+        tournament = await tournament_service.update_draft_pick_order(
+            UUID(request.tournament_id),
+            [UUID(captain_id) for captain_id in request.captain_ids],
+        )
+        return _tournament_to_proto(tournament)
+
+    @inject
+    async def DraftPickPlayer(self, request, context, tournament_service: FromDishka[TournamentService]):
+        tournament = await tournament_service.draft_pick_player(
+            UUID(request.tournament_id),
+            UUID(request.captain_id),
+            UUID(request.player_id),
+        )
         return _tournament_to_proto(tournament)
 
     @inject
     async def AddParticipant(self, request, context, tournament_service: FromDishka[TournamentService]):
         actor = _proto_actor_to_domain(request.participant)
+        draft_roles = list(getattr(request, "draft_roles", []))
+        if not draft_roles and request.team_name:
+            draft_roles = _parse_draft_roles(request.team_name)
         tournament = await tournament_service.add_participant(
             UUID(request.tournament_id),
             actor,
             [],
+            draft_roles=draft_roles,
         )
         return _tournament_to_proto(tournament)
 
@@ -320,26 +524,24 @@ class TournamentGrpc(TournamentServiceServicer):
         return _tournament_to_proto(tournament)
 
     @inject
+    async def UpdateBracketMatch(self, request, context, tournament_service: FromDishka[TournamentService]):
+        tournament = await tournament_service.update_bracket_match(
+            UUID(request.tournament_id),
+            UUID(request.game_series_id),
+            _proto_actor_to_domain(request.team1) if request.HasField("team1") else None,
+            _proto_actor_to_domain(request.team2) if request.HasField("team2") else None,
+            request.best_of if request.HasField("best_of") else None,
+        )
+        return _tournament_to_proto(tournament)
+
+    @inject
     async def GetBracket(self, request, context):
         tournament = await Tournament.get(UUID(request.tournament_id))
         if not tournament:
             await context.abort(grpc.StatusCode.NOT_FOUND, "Tournament not found")
         if not tournament.bracket:
             return pb2.GetBracketResponse()
-        participant_ids = []
-        for round_matches in tournament.bracket.rounds:
-            for match in round_matches:
-                if match.team1:
-                    participant_ids.append(str(match.team1.id))
-                if match.team2:
-                    participant_ids.append(str(match.team2.id))
-        return pb2.GetBracketResponse(
-            bracket=pb2.BracketInfo(
-                bracket_id=str(tournament.id),
-                participant_ids=participant_ids,
-                round=len(tournament.bracket.rounds),
-            )
-        )
+        return pb2.GetBracketResponse(bracket=_bracket_to_proto(tournament))
 
     @inject
     async def GetParticipants(self, request, context):
@@ -347,16 +549,32 @@ class TournamentGrpc(TournamentServiceServicer):
         if not tournament:
             await context.abort(grpc.StatusCode.NOT_FOUND, "Tournament not found")
         participants, _, _, _ = _paginate(tournament.participant_pool, request.pagination)
-        return pb2.GetParticipantsResponse(
-            participants=[
-                pb2.ParticipantInfo(
+        participant_infos = []
+        for participant in participants:
+            if not participant.actor:
+                continue
+            info = pb2.ParticipantInfo(
                     participant=_domain_actor_to_proto(participant.actor),
                     user_ids=[str(user_id) for user_id in participant.players],
                     joined_at=0,
                 )
-                for participant in participants
-                if participant.actor
-            ],
+            if hasattr(info, "draft_roles"):
+                info.draft_roles.extend(participant.draft_roles)
+            if tournament.draft_state and participant.actor:
+                captain = next(
+                    (
+                        captain
+                        for captain in tournament.draft_state.config.captains
+                        if captain.captain == participant.actor.id
+                    ),
+                    None,
+                )
+                if captain:
+                    info.is_captain = True
+                    info.captain_order = captain.order
+            participant_infos.append(info)
+        return pb2.GetParticipantsResponse(
+            participants=participant_infos,
             total_count=len(tournament.participant_pool),
         )
 

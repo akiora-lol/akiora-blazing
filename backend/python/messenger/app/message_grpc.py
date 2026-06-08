@@ -64,7 +64,11 @@ class MessageGrpc(MessageServiceServicer):
         request: SendMessageRequest,
         context: grpc.aio.ServicerContext,
     ) -> MessageResponse:
-        reply_to = UUID(request.reply_to) if request.HasField("reply_to") else None
+        reply_to = (
+            UUID(request.reply_to)
+            if request.HasField("reply_to") and request.reply_to
+            else None
+        )
         msg = await MessageService.create_message(
             chat_id=UUID(request.chat_id),
             creator_id=UUID(request.creator_id),

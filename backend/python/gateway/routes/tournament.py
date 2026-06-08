@@ -21,18 +21,24 @@ from shared.contracts.tournament import (
     IsParticipantResponse,
     ListTournamentsRequest,
     ListTournamentsResponse,
+    LockRegistrationRequest,
     PaginationRequest,
     PreBuildBracketRequest,
     RemoveFromWaitListRequest,
     StartTournamentRequest,
+    RescheduleTournamentRequest,
     TournamentFilter,
     TournamentStatsResponse,
     UpdateParticipantRequest,
+    UpdateBracketMatchRequest,
+    UpdateDraftPickOrderRequest,
     UpdateTournamentRequest,
     ChangeBracketRequest,
     AddParticipantRequest,
     AddTeamParticipantRequest,
+    DraftPickPlayerRequest,
     RemoveParticipantRequest,
+    SetDraftCaptainsRequest,
     TournamentResponse,
     ManyTournamentsResponse,
     GameType,
@@ -149,14 +155,69 @@ async def start_tournament(tournament_id: str, actor_id: Optional[UUID] = None):
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
-@router.post(path="/{tournament_id}/prebuild-bracket", response_model=TournamentResponse)
-async def prebuild_bracket(tournament_id: str, actor_id: Optional[UUID] = None):
+@router.post(path="/{tournament_id}/lock-registration", response_model=TournamentResponse)
+async def lock_registration(tournament_id: str, request: LockRegistrationRequest):
+    if str(request.tournament_id) != tournament_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tournament ID in path does not match request body")
     try:
-        return await _get_stub().prebuild_bracket(
-            PreBuildBracketRequest(tournament_id=tournament_id, actor_id=actor_id)
-        )
+        return await _get_stub().lock_registration(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in lock_registration({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/{tournament_id}/reschedule", response_model=TournamentResponse)
+async def reschedule_tournament(tournament_id: str, request: RescheduleTournamentRequest):
+    if str(request.tournament_id) != tournament_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tournament ID in path does not match request body")
+    try:
+        return await _get_stub().reschedule_tournament(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in reschedule_tournament({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/{tournament_id}/prebuild-bracket", response_model=TournamentResponse)
+async def prebuild_bracket(tournament_id: str, request: PreBuildBracketRequest):
+    if str(request.tournament_id) != tournament_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tournament ID in path does not match request body")
+    try:
+        return await _get_stub().prebuild_bracket(request)
     except grpc.RpcError as e:
         logger.warning("gRPC error in prebuild_bracket({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/{tournament_id}/draft/captains", response_model=TournamentResponse)
+async def set_draft_captains(tournament_id: str, request: SetDraftCaptainsRequest):
+    if str(request.tournament_id) != tournament_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tournament ID in path does not match request body")
+    try:
+        return await _get_stub().set_draft_captains(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in set_draft_captains({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/{tournament_id}/draft/pick-order", response_model=TournamentResponse)
+async def update_draft_pick_order(tournament_id: str, request: UpdateDraftPickOrderRequest):
+    if str(request.tournament_id) != tournament_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tournament ID in path does not match request body")
+    try:
+        return await _get_stub().update_draft_pick_order(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in update_draft_pick_order({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.post(path="/{tournament_id}/draft/picks", response_model=TournamentResponse)
+async def draft_pick_player(tournament_id: str, request: DraftPickPlayerRequest):
+    if str(request.tournament_id) != tournament_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tournament ID in path does not match request body")
+    try:
+        return await _get_stub().draft_pick_player(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in draft_pick_player({}): {} {}", tournament_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 
@@ -282,6 +343,17 @@ async def change_bracket(tournament_id: str, request: ChangeBracketRequest):
         return await _get_stub().change_bracket(request)
     except grpc.RpcError as e:
         logger.warning("gRPC error in change_bracket({}): {} {}", tournament_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.patch(path="/{tournament_id}/bracket/matches/{game_series_id}", response_model=TournamentResponse)
+async def update_bracket_match(tournament_id: str, game_series_id: str, request: UpdateBracketMatchRequest):
+    if str(request.tournament_id) != tournament_id or request.game_series_id != game_series_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="IDs in path do not match request body")
+    try:
+        return await _get_stub().update_bracket_match(request)
+    except grpc.RpcError as e:
+        logger.warning("gRPC error in update_bracket_match({}, {}): {} {}", tournament_id, game_series_id, e.code(), e.details())
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 

@@ -46,8 +46,31 @@ class Status(str, Enum):
 
 class TournamentType(str, Enum):
     UNSPECIFIED = "UNSPECIFIED"
+    PRESIGNED = "PRESIGNED"
+    DRAFT = "DRAFT"
     PRESIGN = "PRESIGN"
     PICKEM = "PICKEM"
+
+
+class TournamentLifecycle(str, Enum):
+    TOURNAMENT_LIFECYCLE_UNSPECIFIED = "TOURNAMENT_LIFECYCLE_UNSPECIFIED"
+    REGISTRATION_OPEN = "REGISTRATION_OPEN"
+    REGISTRATION_LOCKED = "REGISTRATION_LOCKED"
+    CAPTAIN_SETUP = "CAPTAIN_SETUP"
+    DRAFT_READY = "DRAFT_READY"
+    DRAFT_IN_PROGRESS = "DRAFT_IN_PROGRESS"
+    DRAFT_FINISHED = "DRAFT_FINISHED"
+    BRACKET_READY = "BRACKET_READY"
+    TOURNAMENT_ACTIVE = "TOURNAMENT_ACTIVE"
+    TOURNAMENT_FINISHED = "TOURNAMENT_FINISHED"
+    TOURNAMENT_CANCELLED = "TOURNAMENT_CANCELLED"
+
+
+class DraftPickDirection(str, Enum):
+    DRAFT_PICK_DIRECTION_UNSPECIFIED = "DRAFT_PICK_DIRECTION_UNSPECIFIED"
+    LINEAR = "LINEAR"
+    SNAKE = "SNAKE"
+    MANUAL = "MANUAL"
 
 
 class Actor(BaseModel):
@@ -90,6 +113,7 @@ class LolTournamentSettings(BaseModel):
     map: int = 11
     forbidden_champions: List[int] = Field(default_factory=list)
     series_best_of: List[int] = Field(default_factory=list)
+    draft_start: Optional[int] = None
 
 
 class TftTournamentSettings(BaseModel):
@@ -117,6 +141,12 @@ class TournamentResponse(BaseModel):
     end: Optional[int] = None
     status: Status = Status.STATUS_UNSPECIFIED
     prizepool: Optional[str] = None
+    is_open: bool = False
+    lifecycle: TournamentLifecycle = TournamentLifecycle.TOURNAMENT_LIFECYCLE_UNSPECIFIED
+    draft_start: Optional[int] = None
+    registration_locked_at: Optional[int] = None
+    draft_state: Optional["DraftState"] = None
+    bracket: Optional["BracketInfo"] = None
 
     class Config:
         from_attributes = True
@@ -135,6 +165,7 @@ class CreateTournamentRequest(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     avatar: Optional[str] = None
+    draft_start: Optional[int] = None
 
 
 class GetTournamentRequest(BaseModel):
@@ -148,10 +179,50 @@ class ChangeBracketRequest(BaseModel):
     swap_victim: Actor
 
 
+class BracketRoundSettings(BaseModel):
+    round: int
+    label: str = ""
+    best_of: int = 1
+
+
+class BracketMatchInfo(BaseModel):
+    game_series_id: str
+    team1: Optional[Actor] = None
+    team2: Optional[Actor] = None
+    winner: Optional[Actor] = None
+    round: int = 0
+    match_number: int = 0
+    next_match_id: Optional[int] = None
+    best_of: int = 1
+
+
+class DraftCaptainInfo(BaseModel):
+    captain: Actor
+    order: int = 0
+    picked_players: List[Actor] = Field(default_factory=list)
+
+
+class DraftConfig(BaseModel):
+    captain_count: int = 0
+    captains: List[DraftCaptainInfo] = Field(default_factory=list)
+    pick_order_captain_ids: List[str] = Field(default_factory=list)
+    pick_direction: DraftPickDirection = DraftPickDirection.LINEAR
+    max_extra_players_per_team: int = 4
+
+
+class DraftState(BaseModel):
+    config: DraftConfig = Field(default_factory=DraftConfig)
+    current_pick_index: int = 0
+    current_captain_id: Optional[str] = None
+    available_player_ids: List[str] = Field(default_factory=list)
+    finished: bool = False
+
+
 class AddParticipantRequest(BaseModel):
     tournament_id: UUID
     participant: Actor
     team_name: Optional[str] = None
+    draft_roles: List[str] = Field(default_factory=list)
 
 
 class AddTeamParticipantRequest(BaseModel):
@@ -174,6 +245,7 @@ class UpdateTournamentRequest(BaseModel):
     status: Optional[Status] = None
     name: Optional[str] = None
     description: Optional[str] = None
+    draft_start: Optional[int] = None
 
 
 class DeleteTournamentRequest(BaseModel):
@@ -195,6 +267,50 @@ class FinishTournamentRequest(BaseModel):
 class PreBuildBracketRequest(BaseModel):
     tournament_id: UUID
     actor_id: Optional[UUID] = None
+    round_settings: List[BracketRoundSettings] = Field(default_factory=list)
+
+
+class LockRegistrationRequest(BaseModel):
+    tournament_id: UUID
+    actor_id: UUID
+
+
+class RescheduleTournamentRequest(BaseModel):
+    tournament_id: UUID
+    actor_id: UUID
+    start: int
+    draft_start: Optional[int] = None
+
+
+class SetDraftCaptainsRequest(BaseModel):
+    tournament_id: UUID
+    actor_id: UUID
+    captain_count: int
+    captain_ids: List[str] = Field(default_factory=list)
+    pick_direction: DraftPickDirection = DraftPickDirection.LINEAR
+    max_extra_players_per_team: int = 4
+
+
+class UpdateDraftPickOrderRequest(BaseModel):
+    tournament_id: UUID
+    actor_id: UUID
+    captain_ids: List[str] = Field(default_factory=list)
+
+
+class DraftPickPlayerRequest(BaseModel):
+    tournament_id: UUID
+    actor_id: UUID
+    captain_id: str
+    player_id: str
+
+
+class UpdateBracketMatchRequest(BaseModel):
+    tournament_id: UUID
+    actor_id: UUID
+    game_series_id: str
+    team1: Optional[Actor] = None
+    team2: Optional[Actor] = None
+    best_of: Optional[int] = None
 
 
 class UpdateParticipantRequest(BaseModel):
@@ -246,12 +362,17 @@ class ParticipantInfo(BaseModel):
     participant: Actor
     user_ids: List[str] = Field(default_factory=list)
     joined_at: int = 0
+    draft_roles: List[str] = Field(default_factory=list)
+    is_captain: Optional[bool] = None
+    captain_order: Optional[int] = None
 
 
 class BracketInfo(BaseModel):
     bracket_id: str = ""
     participant_ids: List[str] = Field(default_factory=list)
     round: int = 0
+    round_settings: List[BracketRoundSettings] = Field(default_factory=list)
+    matches: List[BracketMatchInfo] = Field(default_factory=list)
 
 
 class GetParticipantsRequest(BaseModel):

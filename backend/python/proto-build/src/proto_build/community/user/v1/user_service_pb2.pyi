@@ -50,8 +50,30 @@ class Birthday(_message.Message):
     hidden: bool
     def __init__(self, day: _Optional[str] = ..., hidden: bool = ...) -> None: ...
 
+class LeagueAccount(_message.Message):
+    __slots__ = ("status", "username", "tagline", "server", "profile_image_url", "solo_tier", "solo_division", "solo_lp", "solo_tier_image_url")
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    USERNAME_FIELD_NUMBER: _ClassVar[int]
+    TAGLINE_FIELD_NUMBER: _ClassVar[int]
+    SERVER_FIELD_NUMBER: _ClassVar[int]
+    PROFILE_IMAGE_URL_FIELD_NUMBER: _ClassVar[int]
+    SOLO_TIER_FIELD_NUMBER: _ClassVar[int]
+    SOLO_DIVISION_FIELD_NUMBER: _ClassVar[int]
+    SOLO_LP_FIELD_NUMBER: _ClassVar[int]
+    SOLO_TIER_IMAGE_URL_FIELD_NUMBER: _ClassVar[int]
+    status: str
+    username: str
+    tagline: str
+    server: str
+    profile_image_url: str
+    solo_tier: str
+    solo_division: int
+    solo_lp: int
+    solo_tier_image_url: str
+    def __init__(self, status: _Optional[str] = ..., username: _Optional[str] = ..., tagline: _Optional[str] = ..., server: _Optional[str] = ..., profile_image_url: _Optional[str] = ..., solo_tier: _Optional[str] = ..., solo_division: _Optional[int] = ..., solo_lp: _Optional[int] = ..., solo_tier_image_url: _Optional[str] = ...) -> None: ...
+
 class UserResponse(_message.Message):
-    __slots__ = ("id", "email", "nickname", "user_type", "avatar", "bio", "gender", "birth_date", "socials", "created_at", "last_updated")
+    __slots__ = ("id", "email", "nickname", "user_type", "avatar", "bio", "gender", "birth_date", "socials", "created_at", "last_updated", "league_accounts")
     class SocialsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -70,6 +92,7 @@ class UserResponse(_message.Message):
     SOCIALS_FIELD_NUMBER: _ClassVar[int]
     CREATED_AT_FIELD_NUMBER: _ClassVar[int]
     LAST_UPDATED_FIELD_NUMBER: _ClassVar[int]
+    LEAGUE_ACCOUNTS_FIELD_NUMBER: _ClassVar[int]
     id: str
     email: str
     nickname: str
@@ -81,7 +104,8 @@ class UserResponse(_message.Message):
     socials: _containers.MessageMap[str, Social]
     created_at: int
     last_updated: int
-    def __init__(self, id: _Optional[str] = ..., email: _Optional[str] = ..., nickname: _Optional[str] = ..., user_type: _Optional[_Union[UserType, str]] = ..., avatar: _Optional[str] = ..., bio: _Optional[str] = ..., gender: _Optional[_Union[Gender, str]] = ..., birth_date: _Optional[_Union[Birthday, _Mapping]] = ..., socials: _Optional[_Mapping[str, Social]] = ..., created_at: _Optional[int] = ..., last_updated: _Optional[int] = ...) -> None: ...
+    league_accounts: _containers.RepeatedCompositeFieldContainer[LeagueAccount]
+    def __init__(self, id: _Optional[str] = ..., email: _Optional[str] = ..., nickname: _Optional[str] = ..., user_type: _Optional[_Union[UserType, str]] = ..., avatar: _Optional[str] = ..., bio: _Optional[str] = ..., gender: _Optional[_Union[Gender, str]] = ..., birth_date: _Optional[_Union[Birthday, _Mapping]] = ..., socials: _Optional[_Mapping[str, Social]] = ..., created_at: _Optional[int] = ..., last_updated: _Optional[int] = ..., league_accounts: _Optional[_Iterable[_Union[LeagueAccount, _Mapping]]] = ...) -> None: ...
 
 class PaginationRequest(_message.Message):
     __slots__ = ("page", "page_size", "before_timestamp")
@@ -214,7 +238,7 @@ class GetUserByEmailRequest(_message.Message):
     def __init__(self, email: _Optional[str] = ...) -> None: ...
 
 class UpdateUserRequest(_message.Message):
-    __slots__ = ("user_id", "nickname", "bio", "avatar", "gender", "user_type", "birth_date", "socials")
+    __slots__ = ("user_id", "nickname", "bio", "avatar", "gender", "user_type", "birth_date", "socials", "league_accounts")
     class SocialsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -230,6 +254,7 @@ class UpdateUserRequest(_message.Message):
     USER_TYPE_FIELD_NUMBER: _ClassVar[int]
     BIRTH_DATE_FIELD_NUMBER: _ClassVar[int]
     SOCIALS_FIELD_NUMBER: _ClassVar[int]
+    LEAGUE_ACCOUNTS_FIELD_NUMBER: _ClassVar[int]
     user_id: str
     nickname: str
     bio: str
@@ -238,7 +263,8 @@ class UpdateUserRequest(_message.Message):
     user_type: UserType
     birth_date: Birthday
     socials: _containers.MessageMap[str, Social]
-    def __init__(self, user_id: _Optional[str] = ..., nickname: _Optional[str] = ..., bio: _Optional[str] = ..., avatar: _Optional[str] = ..., gender: _Optional[_Union[Gender, str]] = ..., user_type: _Optional[_Union[UserType, str]] = ..., birth_date: _Optional[_Union[Birthday, _Mapping]] = ..., socials: _Optional[_Mapping[str, Social]] = ...) -> None: ...
+    league_accounts: _containers.RepeatedCompositeFieldContainer[LeagueAccount]
+    def __init__(self, user_id: _Optional[str] = ..., nickname: _Optional[str] = ..., bio: _Optional[str] = ..., avatar: _Optional[str] = ..., gender: _Optional[_Union[Gender, str]] = ..., user_type: _Optional[_Union[UserType, str]] = ..., birth_date: _Optional[_Union[Birthday, _Mapping]] = ..., socials: _Optional[_Mapping[str, Social]] = ..., league_accounts: _Optional[_Iterable[_Union[LeagueAccount, _Mapping]]] = ...) -> None: ...
 
 class DeleteUserRequest(_message.Message):
     __slots__ = ("user_id", "actor_id")

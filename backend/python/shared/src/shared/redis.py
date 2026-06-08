@@ -1,4 +1,4 @@
-from typing import TypeVar, overload
+from typing import Any, TypeVar, overload
 
 import msgspec
 from pydantic import BaseModel
@@ -54,3 +54,25 @@ class RedisService:
 
     async def publish_pubsub(self, channel: str, message: dict):
         await self.redis.publish(channel, msgspec.json.encode(message))
+
+    async def publish_stream(self, stream: str, message: dict[str, Any]):
+        await self.redis.xadd(stream, {"payload": msgspec.json.encode(message)})
+
+    async def read_stream(
+        self,
+        stream: str,
+        last_id: str = "$",
+        block_ms: int = 30000,
+        count: int = 50,
+    ) -> list[tuple[str, dict[str, Any]]]:
+        entries = await self.redis.xread({stream: last_id}, block=block_ms, count=count)
+        messages: list[tuple[str, dict[str, Any]]] = []
+        for _, stream_messages in entries:
+            for message_id, fields in stream_messages:
+                payload = fields.get("payload")
+                if payload is None:
+                    continue
+                if isinstance(payload, str):
+                    payload = payload.encode()
+                messages.append((message_id, msgspec.json.decode(payload)))
+        return messages

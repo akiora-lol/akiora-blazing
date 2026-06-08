@@ -1,25 +1,17 @@
-# test_imports.py
-import sys
+import asyncio
 
-# Проверяем protobuf
-try:
-    import google.protobuf
-
-    print(f"✅ protobuf version: {google.protobuf.__version__}")
-except ImportError:
-    print("❌ protobuf not installed")
-    sys.exit(1)
+from app import app
+from ioc import container
+from setup import setup
 
 
-# Проверяем ваши сгенерированные файлы
-try:
-    from game.v1.gameseries_service_pb2 import (
-        ChampLockRequest as ChampLockRequest,
-        DESCRIPTOR as DESCRIPTOR,
-        DraftActionRequest as DraftActionRequest,
-        ToggleReadyRequest as ToggleReadyRequest,
-    )
+async def main():
+    await setup()
+    try:
+        await app.run()
+    finally:
+        await container.close()
 
-    print("✅ Generated protobuf imports work!")
-except ImportError as e:
-    print(f"❌ Generated imports failed: {e}")
+
+if __name__ == "__main__":
+    asyncio.run(main())

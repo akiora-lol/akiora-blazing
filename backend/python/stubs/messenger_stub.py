@@ -313,13 +313,15 @@ class MessengerMapper:
 
     @classmethod
     def to_grpc_send_message_request(cls, request: SendMessageRequest):
-        return pb2_module.SendMessageRequest(
+        grpc_request = pb2_module.SendMessageRequest(
             chat_id=str(request.chat_id),
             creator_id=str(request.creator_id),
             body=request.body,
-            reply_to=request.reply_to or "",
             spoiler=request.spoiler,
         )
+        if request.reply_to:
+            grpc_request.reply_to = request.reply_to
+        return grpc_request
 
     @classmethod
     def to_grpc_get_message_request(cls, request: GetMessageRequest):

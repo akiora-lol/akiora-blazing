@@ -33,6 +33,18 @@ message Birthday {
   bool hidden = 2;
 }
 
+message LeagueAccount {
+  string status = 1;
+  string username = 2;
+  string tagline = 3;
+  string server = 4;
+  optional string profile_image_url = 5;
+  optional string solo_tier = 6;
+  optional int32 solo_division = 7;
+  optional int32 solo_lp = 8;
+  optional string solo_tier_image_url = 9;
+}
+
 message UserResponse {
   string id = 1;
   string email = 2;
@@ -45,6 +57,7 @@ message UserResponse {
   map<string, Social> socials = 9;
   int64 created_at = 10;
   int64 last_updated = 11;
+  repeated LeagueAccount league_accounts = 12;
 }
 
 // Pagination request
@@ -142,6 +155,7 @@ message UpdateUserRequest {
   UserType user_type = 6;
   optional Birthday birth_date = 7;
   map<string, Social> socials = 8;
+  repeated LeagueAccount league_accounts = 9;
 }
 
 message DeleteUserRequest {
