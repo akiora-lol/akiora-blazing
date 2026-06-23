@@ -1,0 +1,37 @@
+@startuml
+title Community service - update user profile and session sync
+
+actor User
+participant "Profile page" as FE
+participant "gRPC Gateway\nUserRoutes" as Gateway
+participant "RedisInvalidator" as Invalidator
+participant "Community UserGrpc" as UserGrpc
+participant "UserService" as UserService
+database "MongoDB" as Mongo
+database "Redis sessions" as Redis
+
+User -> FE : edits nickname/avatar/bio/socials
+FE -> Gateway : PATCH /v1/users/{user_id}
+Gateway -> Gateway : validate path user_id == body.user_id
+Gateway -> UserGrpc : UpdateUser(UpdateUserRequest)
+UserGrpc -> UserService : update_user(request)
+UserService -> Mongo : find User by id
+
+alt user exists and actor is allowed
+  UserService -> UserService : merge profile fields
+  UserService -> Mongo : save updated User
+  Mongo --> UserService : updated document
+  UserService --> UserGrpc : UserResponse
+  UserGrpc --> Gateway : UserResponse
+  Gateway -> Invalidator : update_session_user(cookie.sid, user)
+  Invalidator -> Redis : get sid:<sid>
+  Invalidator -> Redis : set sid:<sid>.custom_data.user
+  Gateway --> FE : 200 UserResponse
+  FE -> FE : invalidate ['auth','me'] and profile queries
+else user not found or invalid request
+  UserService --> UserGrpc : gRPC NOT_FOUND / INVALID_ARGUMENT
+  UserGrpc --> Gateway : RpcError
+  Gateway --> FE : HTTP 404 / 400
+end
+
+@enduml

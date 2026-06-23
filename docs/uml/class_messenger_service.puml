@@ -1,0 +1,77 @@
+@startuml
+allowmixing
+title Messenger service - class diagram
+
+skinparam classAttributeIconSize 0
+hide empty methods
+
+class MessengerGrpc {
+  +CreateChat()
+  +GetChat()
+  +GetUserChats()
+  +AddAllowedUser()
+  +RemoveAllowedUser()
+  +SendMessage()
+  +GetMessages()
+  +UpdateMessage()
+  +DeleteMessage()
+  +MarkAsRead()
+  +AddReaction()
+  +RemoveReaction()
+}
+
+class MessengerService {
+  +create_chat()
+  +get_user_chats()
+  +send_message()
+  +get_messages()
+  +update_message()
+  +delete_message()
+  +mark_as_read()
+}
+
+class Chat {
+  +id: UUID
+  +owner_id: UUID
+  +owner_type: ChatOwnerType
+  +type: ChatType
+  +status: ChatStatus
+  +timestamp: int
+  +allowed_users: UUID[]
+}
+
+class Message {
+  +id: UUID
+  +chat_id: UUID
+  +creator_id: UUID
+  +body: str
+  +status: MessageStatus
+  +read_by: UUID[]
+  +timestamp: int
+  +history: MessageShort[]
+  +reply_to: UUID?
+  +reactions: Reaction[]
+  +spoiler: bool
+}
+
+class MessageShort {
+  +body: str
+  +timestamp: int
+}
+
+class Reaction {
+  +emote_id: str
+  +user_id: UUID
+}
+
+database "MongoDB" as Mongo
+
+MessengerGrpc --> MessengerService
+MessengerService --> Chat
+MessengerService --> Message
+Chat "1" o-- "*" Message
+Message "1" o-- "*" MessageShort
+Message "1" o-- "*" Reaction
+MessengerService --> Mongo
+
+@enduml

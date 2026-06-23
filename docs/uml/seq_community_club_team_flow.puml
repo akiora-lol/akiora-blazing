@@ -1,0 +1,57 @@
+@startuml
+title Community service - club and team creation/member flow
+
+actor User
+participant "Community/Profile UI" as FE
+participant "gRPC Gateway\nClub/Team routes" as Gateway
+participant "Community ClubGrpc" as ClubGrpc
+participant "Community TeamGrpc" as TeamGrpc
+participant "ClubService" as ClubService
+participant "TeamService" as TeamService
+database "MongoDB" as Mongo
+
+alt create club
+  User -> FE : submits club name
+  FE -> Gateway : POST /v1/clubs
+  Gateway -> ClubGrpc : CreateClub(owner_id, name)
+  ClubGrpc -> ClubService : create_club()
+  ClubService -> Mongo : insert Club(owner_id, members=[owner_id])
+  Mongo --> ClubService : Club document
+  ClubService --> ClubGrpc : ClubResponse
+  ClubGrpc --> Gateway : ClubResponse
+  Gateway --> FE : ClubResponse
+  FE -> FE : invalidate clubs query
+else create team
+  User -> FE : submits team name and tag
+  FE -> Gateway : POST /v1/teams
+  Gateway -> TeamGrpc : CreateTeam(owner_id, name, tag)
+  TeamGrpc -> TeamService : create_team()
+  TeamService -> Mongo : insert Team(owner_id, members=[owner_id])
+  Mongo --> TeamService : Team document
+  TeamService --> TeamGrpc : TeamResponse
+  TeamGrpc --> Gateway : TeamResponse
+  Gateway --> FE : TeamResponse
+  FE -> FE : invalidate teams query
+end
+
+User -> FE : clicks Join club/team
+
+alt join club
+  FE -> Gateway : POST /v1/clubs/{club_id}/members
+  Gateway -> ClubGrpc : JoinClub(club_id, user_id, actor_id)
+  ClubGrpc -> ClubService : join_club()
+  ClubService -> Mongo : add user_id to Club.members
+  ClubService --> ClubGrpc : ClubResponse
+  ClubGrpc --> Gateway : ClubResponse
+  Gateway --> FE : updated club
+else join team
+  FE -> Gateway : POST /v1/teams/{team_id}/members
+  Gateway -> TeamGrpc : AddMember(team_id, user_id, actor_id)
+  TeamGrpc -> TeamService : add_member()
+  TeamService -> Mongo : add user_id to Team.members
+  TeamService --> TeamGrpc : TeamResponse
+  TeamGrpc --> Gateway : TeamResponse
+  Gateway --> FE : updated team
+end
+
+@enduml

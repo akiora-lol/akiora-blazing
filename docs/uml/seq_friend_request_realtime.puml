@@ -1,0 +1,45 @@
+@startuml
+title Friend request with realtime notification - sequence diagram
+
+actor "Sender" as Sender
+actor "Receiver" as Receiver
+participant "Sender WebFrontend" as SenderFE
+participant "Receiver WebFrontend" as ReceiverFE
+participant "gRPC Gateway" as Gateway
+participant "Community UserService" as Community
+database "MongoDB" as Mongo
+database "Redis notification_stream" as Stream
+participant "SocketGateway worker" as SocketWorker
+participant "NotificationConnectionManager" as ConnMgr
+
+ReceiverFE -> SocketWorker : WS /ws/v1/notifications
+SocketWorker -> ConnMgr : connect(receiver_id, connection_id, websocket)
+
+Sender -> SenderFE : clicks Add friend
+SenderFE -> Gateway : POST /v1/users/friend-requests
+Gateway -> Community : SendFriendRequest(sender_id, receiver_id)
+Community -> Mongo : insert Friend(status=pending)
+Community --> Gateway : FriendResponse
+Gateway -> Stream : XADD friend.request.created(user_ids=[receiver_id])
+Gateway --> SenderFE : FriendResponse
+
+SocketWorker -> Stream : XREAD notification_stream
+Stream --> SocketWorker : friend.request.created
+SocketWorker -> ConnMgr : dispatch(event)
+ConnMgr -> ReceiverFE : websocket.send_json(event)
+ReceiverFE -> ReceiverFE : invalidate pending requests query
+ReceiverFE -> Gateway : GET /v1/users/{id}/friend-requests/pending
+Gateway -> Community : GetPendingFriendRequests(receiver_id)
+Community -> Mongo : find pending requests
+Community --> Gateway : ListFriendsResponse
+Gateway --> ReceiverFE : pending requests
+
+Receiver -> ReceiverFE : clicks Accept
+ReceiverFE -> Gateway : POST /v1/users/friend-requests/respond
+Gateway -> Community : RespondFriendRequest(accept=true)
+Community -> Mongo : update Friend(status=accepted)
+Community --> Gateway : FriendResponse
+Gateway -> Stream : XADD friend.request.accepted(user_ids=[sender_id, receiver_id])
+Gateway --> ReceiverFE : FriendResponse
+
+@enduml

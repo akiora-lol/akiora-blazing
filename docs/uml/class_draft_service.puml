@@ -1,0 +1,61 @@
+@startuml
+allowmixing
+title Draft service - class diagram
+
+skinparam classAttributeIconSize 0
+hide empty methods
+
+class DraftService {
+  +prepare_draft(data)
+  +execute_command(game_id, command)
+  +get_draft(game_id)
+  -validate_turn()
+  -validate_champion_available()
+  -advance_stage()
+}
+
+class Draft {
+  +game_id: UUID
+  +history: Command[]
+  +deadline: int
+  +teams: Team[]
+  +forbidden_champions: int[]
+  +stage: int
+  +team_size: int
+  +seconds_per_action: int
+}
+
+class PrepareDraft {
+  +game_id: UUID
+  +teams: Team[]
+  +forbidden_champions: int[]
+  +team_size: int
+  +seconds_per_action: int
+}
+
+class Team {
+  +type: str
+  +id: UUID
+}
+
+class Command {
+  +team: Team
+  +action: Action
+}
+
+class Action {
+  +type: str
+  +champion_id: int
+}
+
+database "MongoDB" as Mongo
+
+DraftService --> Draft
+DraftService --> PrepareDraft
+Draft "1" o-- "*" Command
+Draft "1" o-- "2" Team
+Command --> Team
+Command --> Action
+DraftService --> Mongo
+
+@enduml

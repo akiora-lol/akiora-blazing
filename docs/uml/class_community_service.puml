@@ -1,0 +1,116 @@
+@startuml
+allowmixing
+title Community service - class diagram
+
+skinparam classAttributeIconSize 0
+hide empty methods
+
+class UserGrpc {
+  +CreateUser()
+  +GetUser()
+  +GetUserByEmail()
+  +ListUsers()
+  +UpdateUser()
+  +DeleteUser()
+  +SendFriendRequest()
+  +RespondFriendRequest()
+  +GetFriends()
+  +GetPendingFriendRequests()
+}
+
+class UserService {
+  +create_user()
+  +get_user()
+  +get_user_by_email()
+  +list_users()
+  +update_user()
+  +delete_user()
+  +send_friend_request()
+  +respond_friend_request()
+  +get_friends()
+}
+
+class User {
+  +id: UUID
+  +email: str
+  +nickname: str
+  +avatar: str?
+  +bio: str?
+  +gender: Gender?
+  +birth_date: HiddenDate?
+  +socials: dict
+  +league_accounts: LeagueAccount[]
+  +user_type: UserType
+  +created_at: datetime
+  +last_updated: datetime
+}
+
+class LeagueAccount {
+  +status: str
+  +username: str
+  +tagline: str
+  +server: str
+  +profile_image_url: str?
+  +solo_tier: str?
+  +solo_division: int?
+  +solo_lp: int?
+  +solo_tier_image_url: str?
+}
+
+class Friend {
+  +id: UUID
+  +user_id_1: UUID
+  +user_id_2: UUID
+  +status: str
+  +created_at: int
+  +updated_at: int
+}
+
+class ClubGrpc {
+  +CreateClub()
+  +GetClub()
+  +ListClubs()
+  +JoinClub()
+}
+
+class Club {
+  +id: UUID
+  +owner_id: UUID
+  +name: str
+  +avatar: str?
+  +description: str?
+  +members: UUID[]
+  +created_at: int
+}
+
+class TeamGrpc {
+  +CreateTeam()
+  +GetTeam()
+  +ListTeams()
+  +AddMember()
+}
+
+class Team {
+  +id: UUID
+  +owner_id: UUID
+  +name: str
+  +tag: str
+  +avatar: str?
+  +members: UUID[]
+  +created_at: int
+}
+
+database "MongoDB" as Mongo
+
+UserGrpc --> UserService
+ClubGrpc --> Club
+TeamGrpc --> Team
+UserService --> Mongo
+User "1" o-- "*" LeagueAccount
+User "1" -- "*" Friend
+User "1" -- "*" Club : owns / joins
+User "1" -- "*" Team : owns / joins
+Club "*" -- "*" User : members
+Team "*" -- "*" User : members
+
+@enduml

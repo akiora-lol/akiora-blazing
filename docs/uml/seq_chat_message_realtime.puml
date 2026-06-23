@@ -1,0 +1,42 @@
+@startuml
+title Chat message send and realtime delivery - sequence diagram
+
+actor "User A" as A
+actor "User B" as B
+participant "User A frontend" as AFE
+participant "User B frontend" as BFE
+participant "gRPC Gateway" as Gateway
+participant "MessengerService" as Messenger
+database "MongoDB" as Mongo
+database "Redis notification_stream" as Stream
+participant "SocketGateway worker" as SocketWorker
+participant "NotificationConnectionManager" as ConnMgr
+
+BFE -> SocketWorker : WS /ws/v1/notifications
+SocketWorker -> ConnMgr : connect(user_b, connection_id, websocket)
+
+A -> AFE : types message and clicks Send
+AFE -> Gateway : POST /v1/chats/{chat_id}/messages
+Gateway -> Gateway : validate path chat_id == body.chat_id
+Gateway -> Messenger : SendMessage(chat_id, creator_id, body)
+Messenger -> Mongo : insert Message
+Messenger --> Gateway : MessageResponse
+Gateway -> Messenger : GetChat(chat_id)
+Messenger -> Mongo : load Chat(owner_id, allowed_users)
+Messenger --> Gateway : ChatResponse
+Gateway -> Stream : XADD chat.message.created(user_ids=chat members)
+Gateway --> AFE : MessageResponse
+AFE -> AFE : invalidate ['messenger','messages',chat_id]
+
+SocketWorker -> Stream : XREAD notification_stream
+Stream --> SocketWorker : chat.message.created
+SocketWorker -> ConnMgr : dispatch(event)
+ConnMgr -> BFE : websocket.send_json(event)
+BFE -> BFE : invalidate chat list and messages query
+BFE -> Gateway : GET /v1/chats/{chat_id}/messages
+Gateway -> Messenger : GetMessages(chat_id)
+Messenger -> Mongo : find messages
+Messenger --> Gateway : GetMessagesResponse
+Gateway --> BFE : updated message list
+
+@enduml

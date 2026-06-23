@@ -1,0 +1,65 @@
+@startuml
+title DRAFT tournament lifecycle - sequence diagram
+
+actor "Organizer" as Org
+actor "Player" as Player
+participant "Tournament page" as FE
+participant "gRPC Gateway" as Gateway
+participant "TournamentService" as Tournament
+database "MongoDB" as Mongo
+
+Org -> FE : creates DRAFT tournament
+FE -> Gateway : POST /v1/tournaments
+Gateway -> Tournament : CreateTournament(type=DRAFT, draft_start, start)
+Tournament -> Tournament : validate draft_start + 2 days <= start
+Tournament -> Mongo : insert Tournament(lifecycle=REGISTRATION_OPEN)
+Tournament --> Gateway : TournamentResponse
+Gateway --> FE : TournamentResponse
+
+Player -> FE : clicks Join draft
+FE -> FE : open role selection modal
+Player -> FE : selects primary and secondary role
+FE -> Gateway : POST /v1/tournaments/{id}/participants
+Gateway -> Tournament : AddParticipant(actor=user, draft roles)
+Tournament -> Mongo : append participant
+Tournament --> Gateway : TournamentResponse
+Gateway --> FE : updated tournament
+
+Org -> FE : clicks Lock registration
+FE -> Gateway : POST /v1/tournaments/{id}/lock-registration
+Gateway -> Tournament : LockRegistration(actor_id)
+Tournament -> Tournament : verify organizer permissions
+Tournament -> Mongo : lifecycle=REGISTRATION_LOCKED
+Tournament --> Gateway : TournamentResponse
+Gateway --> FE : admin controls enabled
+
+Org -> FE : selects captains and pick order
+FE -> Gateway : POST /v1/tournaments/{id}/draft/captains
+Gateway -> Tournament : SetDraftCaptains(captain_ids, pick_direction)
+Tournament -> Tournament : validate captains in participants
+Tournament -> Tournament : validate draft_pool_size <= captains * team_size
+Tournament -> Mongo : create/update DraftState
+Tournament --> Gateway : TournamentResponse
+Gateway --> FE : draft pool ready
+
+loop until draft pool is empty or teams are full
+  Org -> FE : captain picks player
+  FE -> Gateway : POST /v1/tournaments/{id}/draft/picks
+  Gateway -> Tournament : DraftPickPlayer(captain_id, player_id)
+  Tournament -> Tournament : validate current captain turn
+  Tournament -> Tournament : assign player to captain team
+  Tournament -> Mongo : append DraftPick, advance pick index
+  Tournament --> Gateway : TournamentResponse
+  Gateway --> FE : updated draft state
+end
+
+Org -> FE : generate bracket
+FE -> Gateway : POST /v1/tournaments/{id}/prebuild-bracket
+Gateway -> Tournament : PrebuildBracket(round_settings)
+Tournament -> Tournament : convert draft teams to participants
+Tournament -> Tournament : select bracket builder
+Tournament -> Mongo : save bracket and game series
+Tournament --> Gateway : TournamentResponse(lifecycle=BRACKET_READY)
+Gateway --> FE : bracket UI
+
+@enduml

@@ -1,0 +1,59 @@
+@startuml
+allowmixing
+title Akiora platform - service overview
+
+skinparam packageStyle rectangle
+skinparam linetype ortho
+hide empty members
+
+package "Clients" {
+  component "WebFrontend\nReact + TanStack" as WebFrontend
+  component "ALT Desktop Client\nRust + Ratatui" as DesktopClient
+}
+
+package "Edge services" {
+  component "Auth HTTP API" as AuthApi
+  component "gRPC Gateway\nREST -> gRPC" as Gateway
+  component "Socket Gateway\nWebSocket" as SocketGateway
+}
+
+package "Domain services" {
+  component "Community Service" as Community
+  component "Partner Search Service" as Search
+  component "Tournament/Game Service" as Tournament
+  component "Draft Service" as Draft
+  component "Messenger Service" as Messenger
+}
+
+database "MongoDB" as Mongo
+database "Redis\nsessions, challenges" as Redis
+queue "Redis Stream\nnotification_stream" as Stream
+cloud "OP.GG API" as Opgg
+
+WebFrontend --> AuthApi : HTTP
+WebFrontend --> Gateway : REST
+WebFrontend --> SocketGateway : WebSocket
+DesktopClient --> AuthApi : HTTP
+
+AuthApi --> Community : gRPC
+AuthApi --> Redis
+AuthApi --> Opgg
+
+Gateway --> Community : gRPC
+Gateway --> Search : gRPC
+Gateway --> Tournament : gRPC
+Gateway --> Messenger : gRPC
+Gateway --> Stream : publish events
+
+Tournament --> Draft : draft state/actions
+
+SocketGateway --> Redis : session lookup
+SocketGateway --> Stream : read events
+
+Community --> Mongo
+Search --> Mongo
+Tournament --> Mongo
+Draft --> Mongo
+Messenger --> Mongo
+
+@enduml

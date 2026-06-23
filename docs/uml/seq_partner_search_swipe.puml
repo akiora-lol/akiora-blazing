@@ -1,0 +1,32 @@
+@startuml
+title Partner search cold deck and swipe - sequence diagram
+
+actor User
+participant "Search page" as FE
+participant "gRPC Gateway" as Gateway
+participant "PartnerSearchService" as Search
+participant "Community UserService" as Community
+database "MongoDB" as Mongo
+
+User -> FE : opens Search page
+FE -> Gateway : GET /v1/search/cold/deck?user_id=...
+Gateway -> Search : GetColdDeck(user_id, filters)
+Search -> Mongo : query active ColdForms
+Search -> Search : exclude owner_id=user_id
+Search -> Search : exclude liked/disliked/blocked by user
+Search -> Search : apply role, server, rank filters
+Search -> Community : GetUser(owner_id) for previews
+Community --> Search : OwnerPreview data
+Search --> Gateway : ColdDeckResponse(forms)
+Gateway --> FE : card deck
+
+User -> FE : swipes Like / Dislike / Block
+FE -> Gateway : POST /v1/search/cold/{form_id}/swipe
+Gateway -> Search : SwipeColdForm(form_id, user_id, action)
+Search -> Mongo : add user_id to liked_by/disliked_by/blocked_by
+Search --> Gateway : SwipeFormResponse
+Gateway --> FE : success
+FE -> FE : invalidate cold deck query
+FE -> Gateway : GET next cold deck
+
+@enduml

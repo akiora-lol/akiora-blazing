@@ -1,0 +1,98 @@
+@startuml
+allowmixing
+title Partner search service - class diagram
+
+skinparam classAttributeIconSize 0
+hide empty methods
+
+class SearchGrpc {
+  +CreateColdForm()
+  +UpdateColdForm()
+  +GetColdForm()
+  +DeleteColdForm()
+  +GetColdDeck()
+  +SwipeColdForm()
+  +CreateHotForm()
+  +ListHotForms()
+  +SwipeHotForm()
+}
+
+class ColdFormService {
+  +create_form()
+  +update_form()
+  +get_deck()
+  +swipe()
+  +set_status()
+}
+
+class HotFormService {
+  +create_form()
+  +list_forms()
+  +swipe()
+}
+
+class ColdForm {
+  +id: UUID
+  +owner_id: UUID
+  +rank_range: RankRange[]
+  +my_roles: LolRole[]
+  +looking_for_roles: LolRole[]
+  +description: str
+  +status: FormStatus
+  +liked_by: UUID[]
+  +disliked_by: UUID[]
+  +blocked_by: UUID[]
+  +created_at: datetime
+  +updated_at: datetime
+}
+
+class HotForm {
+  +id: UUID
+  +owner_id: UUID
+  +rank_range: RankRange[]
+  +my_roles: LolRole[]
+  +looking_for_roles: LolRole[]
+  +description: str
+  +liked_by: UUID[]
+  +disliked_by: UUID[]
+  +expires_at: datetime
+}
+
+class RankRange {
+  +server: Server
+  +min_rank: LeagueRank
+  +max_rank: LeagueRank
+}
+
+class LeagueRank {
+  +rank: LolRankName
+  +division: int
+  +lp: int?
+}
+
+class SearchFormsFilter {
+  +rank_range: RankRange[]
+  +my_roles: LolRole[]
+  +looking_for_roles: LolRole[]
+  +servers: Server[]
+  +owner_id: UUID?
+  +exclude_owner_id: UUID?
+  +exclude_blocked_by: UUID?
+  +query: str?
+}
+
+database "MongoDB" as Mongo
+
+SearchGrpc --> ColdFormService
+SearchGrpc --> HotFormService
+ColdFormService --> ColdForm
+HotFormService --> HotForm
+ColdForm "1" o-- "*" RankRange
+HotForm "1" o-- "*" RankRange
+RankRange "1" o-- "2" LeagueRank
+ColdFormService --> SearchFormsFilter
+HotFormService --> SearchFormsFilter
+ColdFormService --> Mongo
+HotFormService --> Mongo
+
+@enduml

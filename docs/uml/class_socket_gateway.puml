@@ -1,0 +1,65 @@
+@startuml
+allowmixing
+title Socket gateway - class diagram
+
+skinparam classAttributeIconSize 0
+hide empty methods
+
+class SocketRoutes {
+  +ping(websocket)
+  +echo(websocket)
+  +notifications(websocket)
+}
+
+class NotificationConnectionManager {
+  -connections: dict[user_id, dict[connection_id, WebSocket]]
+  -lock: asyncio.Lock
+  +connect(user_id, connection_id, websocket)
+  +disconnect(user_id, connection_id)
+  +send_to_user(user_id, payload)
+  +dispatch(payload)
+}
+
+class NotificationStreamWorker {
+  +notification_stream_worker(redis)
+  -last_id: str
+}
+
+class SessionResolver {
+  +get_sid(websocket): str?
+  +get_session_by_sid(redis, sid): Session?
+  +require_session(websocket, redis): tuple?
+}
+
+class Session {
+  +email: str
+  +provider: str
+  +custom_data: dict
+}
+
+class NotificationEvent {
+  +event_id: str
+  +type: str
+  +user_id: UUID?
+  +user_ids: UUID[]
+  +payload: dict
+}
+
+class RedisService {
+  +get(key, obj_type)
+  +read_stream(stream, last_id)
+}
+
+queue "notification_stream" as NotificationStream
+
+SocketRoutes --> SessionResolver
+SocketRoutes --> NotificationConnectionManager
+NotificationStreamWorker --> RedisService
+NotificationStreamWorker --> NotificationConnectionManager
+SessionResolver --> RedisService
+SessionResolver --> Session
+RedisService --> NotificationStream
+NotificationStream --> NotificationEvent
+NotificationConnectionManager --> NotificationEvent : dispatch
+
+@enduml
