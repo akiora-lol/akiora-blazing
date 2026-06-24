@@ -345,3 +345,47 @@ a {
     color: var(--foreground);
   }
 }
+
+/* ─── Global native <select> dark styling ───────────────────
+   Most pages render on a dark backdrop. Without this the
+   default user-agent style produces white-on-white selects
+   (closed control AND the dropdown options) on Chromium.
+   color-scheme: dark forces the browser to render the native
+   option list with a dark palette to match. */
+select {
+  color-scheme: dark;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 36px 10px 14px;
+  font-family: 'Chakra Petch', monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3e%3cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23a600ff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 8px;
+  transition: border-color 180ms, box-shadow 180ms, background-color 180ms;
+}
+select:hover {
+  border-color: rgba(166, 0, 255, 0.4);
+}
+select:focus {
+  border-color: rgba(166, 0, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(166, 0, 255, 0.15);
+  background-color: rgba(166, 0, 255, 0.05);
+}
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+select option,
+select optgroup {
+  background-color: #0a0a14;
+  color: #fff;
+}

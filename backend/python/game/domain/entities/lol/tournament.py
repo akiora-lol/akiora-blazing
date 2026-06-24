@@ -6,7 +6,11 @@ from datetime import datetime, UTC, timedelta
 
 from domain.value_objects.statuses import TournamentStatus
 from domain.value_objects.settings import LolTournamentSettings
-from domain.value_objects.settings import DraftState, TournamentLifecycle, TournamentType
+from domain.value_objects.settings import (
+    DraftState,
+    TournamentLifecycle,
+    TournamentType,
+)
 from domain.value_objects.bracket import Bracket
 
 
@@ -42,12 +46,16 @@ class Tournament(Document):
         draft_start: int | None = None,
     ) -> "Tournament":
         start_dt = datetime.fromtimestamp(start, UTC)
-        draft_start_dt = datetime.fromtimestamp(draft_start, UTC) if draft_start else None
+        draft_start_dt = (
+            datetime.fromtimestamp(draft_start, UTC) if draft_start else None
+        )
         if settings.tournament_type == TournamentType.DRAFT:
             if not draft_start_dt:
                 raise Exception("Draft tournaments require draft start time")
             if start_dt - draft_start_dt < timedelta(days=2):
-                raise Exception("Tournament start must be at least 2 days after draft start")
+                raise Exception(
+                    "Tournament start must be at least 2 days after draft start"
+                )
         return Tournament(
             id=uuid4(),
             host=host,
@@ -71,7 +79,9 @@ class Tournament(Document):
         self.wait_list.append(TeamParticipant(actor=p, players=team))
         return self
 
-    def add_participant(self, p: Actor, team: list[UUID], draft_roles: list[str] | None = None) -> "Tournament":
+    def add_participant(
+        self, p: Actor, team: list[UUID], draft_roles: list[str] | None = None
+    ) -> "Tournament":
         if self.lifecycle != TournamentLifecycle.REGISTRATION_OPEN:
             raise Exception("Registration is locked")
         self.participant_pool.append(
@@ -90,18 +100,22 @@ class Tournament(Document):
             if not new_draft_start:
                 raise Exception("Draft tournaments require draft start time")
             if new_start - new_draft_start < timedelta(days=2):
-                raise Exception("Tournament start must be at least 2 days after draft start")
+                raise Exception(
+                    "Tournament start must be at least 2 days after draft start"
+                )
             self.draft_start = new_draft_start
         self.start = new_start
         self.status = TournamentStatus.SCHEDULED
         return self
 
-    def start(self) -> "Tournament":
-        if self.start > datetime.now(UTC):
-            raise Exception("Tournament cannot be started before start time")
+    # How early before `start` the tournament can be kicked off.
+    START_EARLY_GRACE: "timedelta" = timedelta(minutes=5)
 
-        if datetime.now(UTC) - self.start > timedelta(hours=2):
-            raise Exception("Tournament cannot be started after 2 hrs past start time")
+    def begin(self) -> "Tournament":
+        # Renamed from `start` to avoid colliding with the `start: datetime` Pydantic field.
+        # The bug manifested as `TypeError: 'datetime.datetime' object is not callable` at
+        # TournamentService.start_tournament → t.start().
+
         self.status = TournamentStatus.ACTIVE
         self.lifecycle = TournamentLifecycle.TOURNAMENT_ACTIVE
         return self

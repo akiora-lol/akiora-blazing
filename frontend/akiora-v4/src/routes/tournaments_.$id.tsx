@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Fragment, useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
@@ -27,7 +27,7 @@ import {
     useUpdateDraftPickOrderMutation,
 } from '../lib/api'
 
-export const Route = createFileRoute('/tournaments/$id')({ component: TournamentDetailPage })
+export const Route = createFileRoute('/tournaments_/$id')({ component: TournamentDetailPage })
 
 const STATUS_COLORS: Record<string, string> = {
     scheduled: '#06B6D4', active: '#10B981', finished: 'rgba(255,255,255,0.3)', canceled: '#FF002A',
@@ -1194,6 +1194,15 @@ function TournamentDetailPage() {
                             <button className="fullscreen-btn" onClick={() => startTournamentMutation.mutateAsync(user.id)} disabled={!canStartTournament || startTournamentMutation.isPending}>
                                 <FiClock size={12} /> {startTournamentMutation.isPending ? 'Starting...' : 'Start tournament'}
                             </button>
+                            {/* Host-only entry point to the per-game winner screen. */}
+                            <Link
+                                to="/tournaments/$id/results"
+                                params={{ id: tournament.id }}
+                                className="fullscreen-btn"
+                                style={{ textDecoration: 'none' }}
+                            >
+                                <FiAward size={12} /> Set match results
+                            </Link>
                         </div>
                         {isDraftTournament && !isDraftPoolLockable && tournament.lifecycle === 'registration_open' && (
                             <p className="flow-error">Draft pool must contain enough players for at least two {tournamentTeamSize}v{tournamentTeamSize} teams before registration lock.</p>

@@ -3,6 +3,7 @@ from grpc import aio
 from grpc_reflection.v1alpha import reflection
 
 from dishka.integrations.grpcio import DishkaAioInterceptor
+from shared.metrics import PrometheusGrpcInterceptor, start_grpc_metrics_server
 
 from messenger.v1.messenger_service_pb2_grpc import (
     add_ChatServiceServicer_to_server,
@@ -20,7 +21,13 @@ from settings import settings
 async def serve():
     await setup()
 
-    server = aio.server(interceptors=[DishkaAioInterceptor(container)])
+    start_grpc_metrics_server()
+    server = aio.server(
+        interceptors=[
+            PrometheusGrpcInterceptor("messenger"),
+            DishkaAioInterceptor(container),
+        ]
+    )
 
     add_ChatServiceServicer_to_server(ChatGrpc(), server)
     add_MessageServiceServicer_to_server(MessageGrpc(), server)

@@ -1,14 +1,39 @@
 import asyncio
+from contextlib import suppress as contextlib_suppress
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 from loguru import logger
 from shared.redis import RedisService
 
 from session import require_session
+from settings import Settings
 
 
 router = APIRouter()
 NOTIFICATION_STREAM = "notification_stream"
+PRESENCE_KEY_PREFIX = "presence:user:"
+PRESENCE_SET = "presence:online"
+_settings = Settings()
+
+
+def _presence_key(user_id: str) -> str:
+    return f"{PRESENCE_KEY_PREFIX}{user_id}"
+
+
+async def _presence_touch(redis: RedisService, user_id: str) -> None:
+    try:
+        await redis.redis.setex(_presence_key(user_id), _settings.presence_ttl_seconds, "1")
+        await redis.redis.sadd(PRESENCE_SET, user_id)
+    except Exception as e:
+        logger.warning("presence touch failed user={}: {}", user_id, e)
+
+
+async def _presence_clear(redis: RedisService, user_id: str) -> None:
+    try:
+        await redis.redis.delete(_presence_key(user_id))
+        await redis.redis.srem(PRESENCE_SET, user_id)
+    except Exception as e:
+        logger.warning("presence clear failed user={}: {}", user_id, e)
 
 
 class NotificationConnectionManager:
@@ -155,15 +180,38 @@ async def notifications(websocket: WebSocket):
         return
 
     connection_id = f"{sid}:{id(websocket)}"
+    redis: RedisService = websocket.app.state.redis
     await websocket.accept()
     await notification_connections.connect(user_id, connection_id, websocket)
+    await _presence_touch(redis, user_id)
     await websocket.send_json({"type": "notification.connected", "user_id": user_id})
+
+    async def _presence_heartbeat():
+        # Refresh TTL well before it expires (TTL/3 keeps key alive even if client is silent).
+        interval = max(5, _settings.presence_ttl_seconds // 3)
+        try:
+            while True:
+                await asyncio.sleep(interval)
+                await _presence_touch(redis, user_id)
+        except asyncio.CancelledError:
+            raise
+
+    heartbeat_task = asyncio.create_task(_presence_heartbeat())
     try:
         while True:
             await websocket.receive_text()
+            await _presence_touch(redis, user_id)
     except WebSocketDisconnect:
         logger.debug("Notifications websocket disconnected email={}", session.email)
     except Exception as e:
         logger.warning("Notifications websocket failed email={}: {}", session.email, e)
     finally:
+        heartbeat_task.cancel()
+        with contextlib_suppress(asyncio.CancelledError):
+            await heartbeat_task
         await notification_connections.disconnect(user_id, connection_id)
+        # Only drop presence if this was the last connection for the user.
+        async with notification_connections._lock:
+            still_connected = bool(notification_connections._connections.get(user_id))
+        if not still_connected:
+            await _presence_clear(redis, user_id)

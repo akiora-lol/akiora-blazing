@@ -3,6 +3,7 @@ from grpc import aio
 from grpc_reflection.v1alpha import reflection
 
 from dishka.integrations.grpcio import DishkaAioInterceptor
+from shared.metrics import PrometheusGrpcInterceptor, start_grpc_metrics_server
 
 from game.v1.gameseries_service_pb2_grpc import (
     add_GameSeriesServiceServicer_to_server,
@@ -24,7 +25,13 @@ async def serve():
 
     await setup()
 
-    server = aio.server(interceptors=[DishkaAioInterceptor(container)])
+    start_grpc_metrics_server()
+    server = aio.server(
+        interceptors=[
+            PrometheusGrpcInterceptor("game"),
+            DishkaAioInterceptor(container),
+        ]
+    )
 
     add_GameSeriesServiceServicer_to_server(GameSeriesGrpc(), server)
     add_TournamentServiceServicer_to_server(TournamentGrpc(), server)

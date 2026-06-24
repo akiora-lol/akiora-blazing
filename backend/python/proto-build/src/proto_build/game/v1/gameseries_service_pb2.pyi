@@ -32,3 +32,15 @@ class ChampLockRequest(_message.Message):
     series_id: str
     champ_lock: _game_draft_pb2.ChampLock
     def __init__(self, series_id: _Optional[str] = ..., champ_lock: _Optional[_Union[_game_draft_pb2.ChampLock, _Mapping]] = ...) -> None: ...
+
+class SetGameWinnerRequest(_message.Message):
+    __slots__ = ("series_id", "game_id", "actor_id", "winner")
+    SERIES_ID_FIELD_NUMBER: _ClassVar[int]
+    GAME_ID_FIELD_NUMBER: _ClassVar[int]
+    ACTOR_ID_FIELD_NUMBER: _ClassVar[int]
+    WINNER_FIELD_NUMBER: _ClassVar[int]
+    series_id: str
+    game_id: str
+    actor_id: str
+    winner: _game_actors_pb2.Actor
+    def __init__(self, series_id: _Optional[str] = ..., game_id: _Optional[str] = ..., actor_id: _Optional[str] = ..., winner: _Optional[_Union[_game_actors_pb2.Actor, _Mapping]] = ...) -> None: ...

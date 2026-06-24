@@ -16,5 +16,9 @@ class Settings(BaseSettings):
 
     grpc_port: int = 50051
 
+    # How often (in seconds) the background LolRefresher re-queries OP.GG
+    # for every user's verified league accounts. Default: 30 minutes.
+    lol_refresh_interval_seconds: int = 30 * 60
+
 
 settings = Settings()

@@ -39,8 +39,13 @@ class GameSeries(Document):
             draft=None,
         )
 
-    def start(self) -> "GameSeries":
+    def begin(self) -> "GameSeries":
+        # Was previously named `start`, which collided with the `start: datetime | None`
+        # Pydantic field — `gs.start` resolved to the field value, so `gs.start()` raised
+        # `TypeError: 'NoneType' object is not callable`. Renamed; field stays as-is.
         self.start = datetime.now(UTC)
+        if self.status == GameSeriesStatus.SCHEDULED:
+            self.status = GameSeriesStatus.ACTIVE
         return self
 
     def swap_teams(

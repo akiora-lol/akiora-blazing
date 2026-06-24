@@ -4,6 +4,7 @@ from uuid import UUID
 from shared.contracts.gameseries import (
     DraftActionRequest,
     ToggleReadyRequest,
+    SetGameWinnerRequest,
     GameSeriesResponse,
 )
 from shared.contracts.tournament import Actor, ActorType, GameType, GameSettings
@@ -50,6 +51,15 @@ class GameSeriesMapper:
         )
 
     @classmethod
+    def to_grpc_set_game_winner_request(cls, request: SetGameWinnerRequest):
+        return pb2_module.SetGameWinnerRequest(
+            series_id=str(request.series_id),
+            game_id=str(request.game_id),
+            actor_id=str(request.actor_id),
+            winner=cls._to_grpc_actor(request.winner),
+        )
+
+    @classmethod
     def to_grpc_draft_action_request(cls, request: DraftActionRequest):
         action = draft_pb2_module.Action()
         if request.command.action.pick is not None:
@@ -80,6 +90,10 @@ class GameSeriesStub:
     async def draft_action(self, request: DraftActionRequest):
         grpc_request = self.mapper.to_grpc_draft_action_request(request)
         return await self.stub.DraftAction(grpc_request)
+
+    async def set_game_winner(self, request: SetGameWinnerRequest):
+        grpc_request = self.mapper.to_grpc_set_game_winner_request(request)
+        return await self.stub.SetGameWinner(grpc_request)
 
     def toggle_ready_sync(self, request: ToggleReadyRequest):
         grpc_request = self.mapper.to_grpc_toggle_ready_request(request)

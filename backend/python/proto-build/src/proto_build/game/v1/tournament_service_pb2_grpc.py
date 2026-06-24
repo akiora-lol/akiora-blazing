@@ -27,8 +27,7 @@ if _version_not_supported:
 
 
 class TournamentServiceStub(object):
-    """============= SERVICE =============
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -169,8 +168,7 @@ class TournamentServiceStub(object):
 
 
 class TournamentServiceServicer(object):
-    """============= SERVICE =============
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def CreateTournament(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -470,8 +468,7 @@ def add_TournamentServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class TournamentService(object):
-    """============= SERVICE =============
-    """
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
     def CreateTournament(request,

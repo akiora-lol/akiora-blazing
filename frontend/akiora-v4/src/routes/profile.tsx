@@ -3,7 +3,7 @@ import { useState } from 'react'
 import {
     FiUser, FiSettings, FiShield, FiEdit2, FiSave, FiX,
     FiLogOut, FiCalendar, FiLink, FiAlertCircle, FiCheck,
-    FiPlus, FiTrash2, FiImage, FiUpload,
+    FiPlus, FiTrash2, FiImage,
 } from 'react-icons/fi'
 import { PageShell } from '../components/PageShell'
 import { useAuthContext } from '../contexts/AuthContext'
@@ -168,7 +168,6 @@ function ProfilePage() {
     const [notifEmail, setNotifEmail] = useState(true)
     const [editingSocials, setEditingSocials] = useState(false)
     const [editingAvatar, setEditingAvatar] = useState(false)
-    const [avatarMode, setAvatarMode] = useState<'url' | 'file'>('url')
     const [lolForm, setLolForm] = useState({
         server: 'na',
         username: '',
@@ -295,21 +294,6 @@ function ProfilePage() {
         }
     }
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-
-        // Простая проверка размера (макс. 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Файл слишком большой. Максимальный размер: 5MB')
-            return
-        }
-
-        // В реальном приложении здесь был бы запрос на сервер для загрузки файла
-        // Сейчас просто создаем URL для превью
-        const imageUrl = URL.createObjectURL(file)
-        setForm(f => ({ ...f, avatar: imageUrl }))
-    }
     const onboarded = typeof window !== 'undefined' && localStorage.getItem('akiora_onboarded')
     const joinDate = new Date(user.created_at * 1000).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-US', {
         year: 'numeric', month: 'long', day: 'numeric',
@@ -1485,45 +1469,12 @@ function ProfilePage() {
                                                 </div>
 
                                                 <div className="avatar-controls">
-                                                    <div className="avatar-mode-pills">
-                                                        <button
-                                                            className={`avatar-mode-pill${avatarMode === 'url' ? ' active' : ''}`}
-                                                            onClick={() => setAvatarMode('url')}
-                                                        >
-                                                            <FiLink size={10} style={{ marginRight: 4 }} />
-                                                            {t.avatarUrl}
-                                                        </button>
-                                                        <button
-                                                            className={`avatar-mode-pill${avatarMode === 'file' ? ' active' : ''}`}
-                                                            onClick={() => setAvatarMode('file')}
-                                                        >
-                                                            <FiUpload size={10} style={{ marginRight: 4 }} />
-                                                            {t.avatarFile}
-                                                        </button>
-                                                    </div>
-
-                                                    {avatarMode === 'url' ? (
-                                                        <input
-                                                            className="avatar-url-input"
-                                                            value={form.avatar}
-                                                            onChange={(e) => setForm(f => ({ ...f, avatar: e.target.value }))}
-                                                            placeholder={t.avatarUrlPlaceholder}
-                                                        />
-                                                    ) : (
-                                                        <>
-                                                            <input
-                                                                type="file"
-                                                                accept="image/*"
-                                                                onChange={handleFileUpload}
-                                                                className="avatar-file-input"
-                                                                id="avatar-file-input"
-                                                            />
-                                                            <label htmlFor="avatar-file-input" className="avatar-file-btn">
-                                                                <FiUpload size={12} />
-                                                                {lang === 'ru' ? 'Выбрать файл' : 'Choose file'}
-                                                            </label>
-                                                        </>
-                                                    )}
+                                                    <input
+                                                        className="avatar-url-input"
+                                                        value={form.avatar}
+                                                        onChange={(e) => setForm(f => ({ ...f, avatar: e.target.value }))}
+                                                        placeholder={t.avatarUrlPlaceholder}
+                                                    />
                                                 </div>
                                             </div>
 

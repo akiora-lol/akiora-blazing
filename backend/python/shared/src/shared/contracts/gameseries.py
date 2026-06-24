@@ -25,6 +25,13 @@ class DraftActionRequest(BaseModel):
     command: DraftCommand
 
 
+class SetGameWinnerRequest(BaseModel):
+    series_id: UUID
+    game_id: UUID
+    actor_id: UUID  # the host calling this
+    winner: Actor   # which team participant won the game
+
+
 class GameSeriesResponse(BaseModel):
     id: UUID
     tournament_id: Optional[UUID] = None

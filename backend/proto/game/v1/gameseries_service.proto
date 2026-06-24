@@ -30,6 +30,16 @@ message ChampLockRequest{
     common.ChampLock champ_lock = 2;
 }
 
+// Host-only: report the winner of one game in a series. The backend
+// propagates the result through the tournament bracket and finishes the
+// tournament automatically once the final match is decided.
+message SetGameWinnerRequest{
+    string series_id = 1;
+    string game_id = 2;
+    string actor_id = 3;            // caller — must be the tournament host
+    common.Actor winner = 4;        // winning team participant
+}
+
 service GameSeriesService {
 
     // Действие в драфте
@@ -44,6 +54,14 @@ service GameSeriesService {
     rpc ToggleReady(ToggleReadyRequest) returns (common.Empty) {
         option (google.api.http) = {
             post: "/v1/game-series/{series_id}/ready"
+            body: "*"
+        };
+    }
+
+    // Хост турнира выставляет победителя одной игры.
+    rpc SetGameWinner(SetGameWinnerRequest) returns (common.Empty) {
+        option (google.api.http) = {
+            post: "/v1/game-series/{series_id}/games/{game_id}/winner"
             body: "*"
         };
     }

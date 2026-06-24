@@ -28,7 +28,7 @@ from common import game_draft_pb2 as common_dot_game__draft__pb2
 from common import types_pb2 as common_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n game/v1/gameseries_service.proto\x12\x16\x61kiora.game.gameseries\x1a\x1cgoogle/api/annotations.proto\x1a\x18\x63ommon/game_actors.proto\x1a\x17\x63ommon/game_draft.proto\x1a\x12\x63ommon/types.proto\"L\n\x12ToggleReadyRequest\x12\x11\n\tseries_id\x18\x01 \x01(\t\x12#\n\x05\x61\x63tor\x18\x02 \x01(\x0b\x32\x14.akiora.common.Actor\"P\n\x12\x44raftActionRequest\x12\x11\n\tseries_id\x18\x01 \x01(\t\x12\'\n\x07\x63ommand\x18\x02 \x01(\x0b\x32\x16.akiora.common.Command\"S\n\x10\x43hampLockRequest\x12\x11\n\tseries_id\x18\x01 \x01(\t\x12,\n\nchamp_lock\x18\x02 \x01(\x0b\x32\x18.akiora.common.ChampLock2\x99\x02\n\x11GameSeriesService\x12\x84\x01\n\x0b\x44raftAction\x12*.akiora.game.gameseries.DraftActionRequest\x1a\x14.akiora.common.Empty\"3\x82\xd3\xe4\x93\x02-\"(/v1/game-series/{series_id}/draft/action:\x01*\x12}\n\x0bToggleReady\x12*.akiora.game.gameseries.ToggleReadyRequest\x1a\x14.akiora.common.Empty\",\x82\xd3\xe4\x93\x02&\"!/v1/game-series/{series_id}/ready:\x01*B\x18Z\x16\x61kiora/game/gameseriesb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n game/v1/gameseries_service.proto\x12\x16\x61kiora.game.gameseries\x1a\x1cgoogle/api/annotations.proto\x1a\x18\x63ommon/game_actors.proto\x1a\x17\x63ommon/game_draft.proto\x1a\x12\x63ommon/types.proto\"L\n\x12ToggleReadyRequest\x12\x11\n\tseries_id\x18\x01 \x01(\t\x12#\n\x05\x61\x63tor\x18\x02 \x01(\x0b\x32\x14.akiora.common.Actor\"P\n\x12\x44raftActionRequest\x12\x11\n\tseries_id\x18\x01 \x01(\t\x12\'\n\x07\x63ommand\x18\x02 \x01(\x0b\x32\x16.akiora.common.Command\"S\n\x10\x43hampLockRequest\x12\x11\n\tseries_id\x18\x01 \x01(\t\x12,\n\nchamp_lock\x18\x02 \x01(\x0b\x32\x18.akiora.common.ChampLock\"r\n\x14SetGameWinnerRequest\x12\x11\n\tseries_id\x18\x01 \x01(\t\x12\x0f\n\x07game_id\x18\x02 \x01(\t\x12\x10\n\x08\x61\x63tor_id\x18\x03 \x01(\t\x12$\n\x06winner\x18\x04 \x01(\x0b\x32\x14.akiora.common.Actor2\xae\x03\n\x11GameSeriesService\x12\x84\x01\n\x0b\x44raftAction\x12*.akiora.game.gameseries.DraftActionRequest\x1a\x14.akiora.common.Empty\"3\x82\xd3\xe4\x93\x02-\"(/v1/game-series/{series_id}/draft/action:\x01*\x12}\n\x0bToggleReady\x12*.akiora.game.gameseries.ToggleReadyRequest\x1a\x14.akiora.common.Empty\",\x82\xd3\xe4\x93\x02&\"!/v1/game-series/{series_id}/ready:\x01*\x12\x92\x01\n\rSetGameWinner\x12,.akiora.game.gameseries.SetGameWinnerRequest\x1a\x14.akiora.common.Empty\"=\x82\xd3\xe4\x93\x02\x37\"2/v1/game-series/{series_id}/games/{game_id}/winner:\x01*B\x18Z\x16\x61kiora/game/gameseriesb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -40,12 +40,16 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GAMESERIESSERVICE'].methods_by_name['DraftAction']._serialized_options = b'\202\323\344\223\002-\"(/v1/game-series/{series_id}/draft/action:\001*'
   _globals['_GAMESERIESSERVICE'].methods_by_name['ToggleReady']._loaded_options = None
   _globals['_GAMESERIESSERVICE'].methods_by_name['ToggleReady']._serialized_options = b'\202\323\344\223\002&\"!/v1/game-series/{series_id}/ready:\001*'
+  _globals['_GAMESERIESSERVICE'].methods_by_name['SetGameWinner']._loaded_options = None
+  _globals['_GAMESERIESSERVICE'].methods_by_name['SetGameWinner']._serialized_options = b'\202\323\344\223\0027\"2/v1/game-series/{series_id}/games/{game_id}/winner:\001*'
   _globals['_TOGGLEREADYREQUEST']._serialized_start=161
   _globals['_TOGGLEREADYREQUEST']._serialized_end=237
   _globals['_DRAFTACTIONREQUEST']._serialized_start=239
   _globals['_DRAFTACTIONREQUEST']._serialized_end=319
   _globals['_CHAMPLOCKREQUEST']._serialized_start=321
   _globals['_CHAMPLOCKREQUEST']._serialized_end=404
-  _globals['_GAMESERIESSERVICE']._serialized_start=407
-  _globals['_GAMESERIESSERVICE']._serialized_end=688
+  _globals['_SETGAMEWINNERREQUEST']._serialized_start=406
+  _globals['_SETGAMEWINNERREQUEST']._serialized_end=520
+  _globals['_GAMESERIESSERVICE']._serialized_start=523
+  _globals['_GAMESERIESSERVICE']._serialized_end=953
 # @@protoc_insertion_point(module_scope)
