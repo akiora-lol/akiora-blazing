@@ -2020,6 +2020,7 @@ export function useSetGameWinnerMutation(tournamentId: string) {
         onSuccess: (_data, vars) => {
             invalidateTournamentQueries(queryClient, tournamentId)
             queryClient.invalidateQueries({ queryKey: ['gameseries', vars.seriesId] })
+            queryClient.invalidateQueries({ queryKey: ['series-view', vars.seriesId] })
         },
     })
 }
@@ -2092,10 +2093,9 @@ export const CHAMPION_NAMES: Record<number, string> = {
     56: 'Xayah', 57: 'Yasuo', 58: 'Yone', 59: 'Zed', 60: 'Zeri',
 }
 
-// Real game-series fetch. The gateway endpoint `GET /v1/game-series/{id}` is
-// not yet wired (only write-side endpoints exist today), so this will 404
-// until the backend lands. Callers should degrade gracefully on error rather
-// than render stale stub payloads.
+// Real game-series fetch — heavy DraftResponse shape; not used by results
+// screen (it has its own lightweight endpoint below). Will fail until/unless
+// the backend exposes the full series shape.
 export async function getGameSeries(id: string): Promise<GameSeriesDetailResponse | null> {
     try {
         const res = await gatewayApi.get<GameSeriesDetailResponse>(`/v1/game-series/${id}`)
@@ -2104,6 +2104,42 @@ export async function getGameSeries(id: string): Promise<GameSeriesDetailRespons
         handleAxiosError(error)
         return null
     }
+}
+
+// Lightweight per-series read for the host results screen. Mirrors the
+// gateway's GET /v1/game-series/{id} → GetSeriesResponse contract.
+export interface SeriesGameView {
+    id: string
+    status: string // "scheduled" | "active" | "finished" | ...
+    winner: Actor | null
+}
+
+export interface SeriesView {
+    id: string
+    status: string
+    best_of: number
+    games: SeriesGameView[]
+}
+
+export async function getSeriesView(id: string): Promise<SeriesView | null> {
+    try {
+        const res = await gatewayApi.get<SeriesView>(`/v1/game-series/${id}`)
+        return res.data
+    } catch (error) {
+        handleAxiosError(error)
+        return null
+    }
+}
+
+export function useSeriesView(seriesId: string | null | undefined) {
+    return useQuery({
+        queryKey: ['series-view', seriesId],
+        queryFn: () => getSeriesView(seriesId as string),
+        enabled: !!seriesId,
+        // Host actions mutate this; revalidate aggressively but cache for a
+        // few seconds to absorb burst clicks.
+        staleTime: 3_000,
+    })
 }
 
 export function useGameSeries(id: string) {

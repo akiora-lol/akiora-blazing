@@ -5,57 +5,57 @@ import { PageShell } from '../components/PageShell'
 import { requireAuth } from '../lib/auth'
 
 export const Route = createFileRoute('/about')({
-  beforeLoad: async ({ context }) => {
-    await requireAuth(context.queryClient)
-  },
-  component: AboutPage,
+    beforeLoad: async ({ context }) => {
+        await requireAuth(context.queryClient)
+    },
+    component: AboutPage,
 })
 
 const T = {
-  en: {
-    eyebrow: 'About',
-    title: 'AKIORA',
-    subtitle: 'Intelligence for the Rift',
-    desc: 'Next-gen analytics for League of Legends. Track your climb, master your champions, dissect the meta.',
-    missionLabel: 'MISSION',
-    mission: 'To give every player — Iron to Challenger — tools to understand their game deeply and climb confidently.',
-    creatorLabel: 'CREATOR',
-    creatorName: 'Orion',
-    creatorBio: 'Fullstack dev & LoL enthusiast. Building Akiora as a love letter to the game.',
-    contactLabel: 'CONTACT',
-    github: 'GitHub',
-    telegram: 'Telegram',
-    email: 'Email',
-    back: 'Back',
-  },
-  ru: {
-    eyebrow: 'О проекте',
-    title: 'AKIORA',
-    subtitle: 'Интеллект для Ущелья',
-    desc: 'Аналитика нового поколения для League of Legends. Отслеживай рост, осваивай чемпионов, разбирай мету.',
-    missionLabel: 'МИССИЯ',
-    mission: 'Дать каждому игроку — от Железа до Претендента — инструменты для осознанного клайма.',
-    creatorLabel: 'СОЗДАТЕЛЬ',
-    creatorName: 'Orion',
-    creatorBio: 'Fullstack-разработчик и фанат LoL. Akiora — посвящение игре и её игрокам.',
-    contactLabel: 'СВЯЗЬ',
-    github: 'GitHub',
-    telegram: 'Telegram',
-    email: 'Почта',
-    back: 'Назад',
-  },
+    en: {
+        eyebrow: 'About',
+        title: 'AKIORA',
+        subtitle: 'Intelligence for the Rift',
+        desc: 'Next-gen analytics for League of Legends. Track your climb, master your champions, dissect the meta.',
+        missionLabel: 'MISSION',
+        mission: 'To give every player — Iron to Challenger — tools to understand their game deeply and climb confidently.',
+        creatorLabel: 'CREATOR',
+        creatorName: 'Orion',
+        creatorBio: 'Fullstack dev & LoL enthusiast. Building Akiora as a love letter to the game.',
+        contactLabel: 'CONTACT',
+        github: 'GitHub',
+        telegram: 'Telegram',
+        email: 'Email',
+        back: 'Back',
+    },
+    ru: {
+        eyebrow: 'О проекте',
+        title: 'AKIORA',
+        subtitle: 'Интеллект для Ущелья',
+        desc: 'Аналитика нового поколения для League of Legends. Отслеживай рост, осваивай чемпионов, разбирай мету.',
+        missionLabel: 'МИССИЯ',
+        mission: 'Дать каждому игроку — от Железа до Претендента — инструменты для осознанного клайма.',
+        creatorLabel: 'СОЗДАТЕЛЬ',
+        creatorName: 'Orion',
+        creatorBio: 'Fullstack-разработчик и фанат LoL. Akiora — посвящение игре и её игрокам.',
+        contactLabel: 'СВЯЗЬ',
+        github: 'GitHub',
+        telegram: 'Telegram',
+        email: 'Почта',
+        back: 'Назад',
+    },
 } as const
 
 type Lang = keyof typeof T
 
 function AboutPage() {
-  const [lang, setLang] = useState<Lang>('en')
-  const navigate = useNavigate()
-  const t = T[lang]
+    const [lang, setLang] = useState<Lang>('en')
+    const navigate = useNavigate()
+    const t = T[lang]
 
-  return (
-    <>
-      <style>{`
+    return (
+        <>
+            <style>{`
         @keyframes rise-up {
           from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -218,82 +218,39 @@ function AboutPage() {
         .about-back:hover { color: rgba(255,255,255,0.6); }
       `}</style>
 
-      <PageShell lang={lang} onLangChange={setLang}>
-        <div className="about-scene">
-          <div className="orbit-wrap">
-            {/* Rings */}
-            <div className="orbit-ring" />
-            <div className="orbit-ring-inner" />
+            <PageShell lang={lang} onLangChange={setLang}>
+                <div className="about-scene">
+                    <div className="orbit-wrap">
+                        {/* Rings */}
+                        <div className="orbit-ring" />
+                        <div className="orbit-ring-inner" />
 
-            {/* Connector dots at cardinal points of inner ring */}
-            {[
-              { top: '12.5%', left: '50%', translate: '-50% -50%' },
-              { top: '50%',   left: '87.5%', translate: '-50% -50%' },
-              { top: '87.5%', left: '25%', translate: '-50% -50%' },
-              { top: '87.5%', left: '75%', translate: '-50% -50%' },
-            ].map((s, i) => (
-              <div key={i} className="orbit-dot" style={s as React.CSSProperties} />
-            ))}
+                        {/* Connector dots at cardinal points of inner ring */}
+                        {[
+                            { top: '12.5%', left: '50%', translate: '-50% -50%' },
+                            { top: '50%', left: '87.5%', translate: '-50% -50%' },
+                            { top: '87.5%', left: '25%', translate: '-50% -50%' },
+                            { top: '87.5%', left: '75%', translate: '-50% -50%' },
+                        ].map((s, i) => (
+                            <div key={i} className="orbit-dot" style={s as React.CSSProperties} />
+                        ))}
 
-            {/* Center core */}
-            <div className="orbit-core">
-              <span className="orbit-core-eyebrow">{t.eyebrow}</span>
-              <h1 className="orbit-core-title">{t.title}</h1>
-              <span className="orbit-core-subtitle">{t.subtitle}</span>
-            </div>
+                        {/* Center core */}
+                        <div className="orbit-core">
+                            <span className="orbit-core-eyebrow">{t.eyebrow}</span>
+                            <h1 className="orbit-core-title">{t.title}</h1>
+                            <span className="orbit-core-subtitle">{t.subtitle}</span>
+                        </div>
 
-            {/* Top — About */}
-            <div className="sat sat--top">
-              <div className="sat-bubble">
-                <p className="sat-text">{t.desc}</p>
-              </div>
-              <div className="sat-label">{t.eyebrow}</div>
-            </div>
 
-            {/* Right — Mission */}
-            <div className="sat sat--right">
-              <div className="sat-label">{t.missionLabel}</div>
-              <div className="sat-bubble">
-                <p className="sat-text"><em>{t.mission}</em></p>
-              </div>
-            </div>
-
-            {/* Bottom-left — Creator */}
-            <div className="sat sat--btl">
-              <div className="sat-bubble">
-                <p className="sat-text">
-                  <strong>{t.creatorName}</strong>
-                  {t.creatorBio}
-                </p>
-              </div>
-              <div className="sat-label">{t.creatorLabel}</div>
-            </div>
-
-            {/* Bottom-right — Contact */}
-            <div className="sat sat--btr">
-              <div className="sat-label">{t.contactLabel}</div>
-              <div className="sat-bubble">
-                <div className="contact-row">
-                  <a href="https://github.com/orion" target="_blank" rel="noreferrer" className="contact-link gh">
-                    <FiGithub size={12} />{t.github}
-                  </a>
-                  <a href="https://t.me/orion" target="_blank" rel="noreferrer" className="contact-link tg">
-                    <FiSend size={12} />{t.telegram}
-                  </a>
-                  <a href="mailto:orion@akiora.gg" className="contact-link em">
-                    <FiMail size={12} />{t.email}
-                  </a>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <button className="about-back" onClick={() => navigate({ to: '/' })}>
-          <FiArrowLeft size={12} />
-          {t.back}
-        </button>
-      </PageShell>
-    </>
-  )
+                <button className="about-back" onClick={() => navigate({ to: '/' })}>
+                    <FiArrowLeft size={12} />
+                    {t.back}
+                </button>
+            </PageShell>
+        </>
+    )
 }

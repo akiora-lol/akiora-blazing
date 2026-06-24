@@ -20,14 +20,32 @@ class GameSeriesService:
         id: UUID,
         participants: list[TeamParticipant],
         settings: LolGameSeriesSettings,
+        series_id: UUID | None = None,
     ) -> GameSeries:
+        # `id` is the *tournament* id (legacy positional arg name). `series_id`
+        # is the id we want for the new GameSeries document. Bracket prebuild
+        # MUST pass it so the bracket's `match.game_series_id` and the saved
+        # GameSeries.id agree — otherwise the series is unreachable from the
+        # match later (see `_create_series_for_match`).
         gs = GameSeries.domain_create(
-            id=uuid4(),
+            id=series_id if series_id is not None else uuid4(),
             tournament_id=id,
             teams=participants,
             settings=settings,
         )
         await gs.save()
+        # Materialize BO-N Game slots up front so the host results screen can
+        # submit per-game winners with real game_ids. Without this the bracket
+        # ships with empty series and SetGameWinner has no valid game_id to
+        # target. We use the series' game settings (or sensible defaults) and
+        # status=SCHEDULED — toggle_ready/chose_side flip them later.
+        n_games = settings.best_of or 1
+        for _ in range(n_games):
+            await self.game_service.create(
+                game_series_id=gs.id,
+                teams=participants,
+                settings=settings.game_settings,
+            )
         return gs
 
     async def get_by_tournament_id(self, id: UUID) -> list[GameSeries]:

@@ -6,6 +6,8 @@ from shared.contracts.gameseries import (
     ToggleReadyRequest,
     SetGameWinnerRequest,
     GameSeriesResponse,
+    GetSeriesResponse,
+    SeriesGameView,
 )
 from shared.contracts.tournament import Actor, ActorType, GameType, GameSettings
 
@@ -60,6 +62,25 @@ class GameSeriesMapper:
         )
 
     @classmethod
+    def from_grpc_get_series_response(cls, response) -> GetSeriesResponse:
+        return GetSeriesResponse(
+            id=UUID(response.id),
+            status=response.status,
+            best_of=response.best_of or 1,
+            games=[
+                SeriesGameView(
+                    id=UUID(g.id),
+                    status=g.status,
+                    # winner is a default-constructed Actor when unset
+                    # (proto3 has no presence for messages in py-stubs of
+                    # this style); treat empty actor id as "no winner".
+                    winner=cls._to_pydantic_actor(g.winner) if g.winner.id else None,
+                )
+                for g in response.games
+            ],
+        )
+
+    @classmethod
     def to_grpc_draft_action_request(cls, request: DraftActionRequest):
         action = draft_pb2_module.Action()
         if request.command.action.pick is not None:
@@ -94,6 +115,11 @@ class GameSeriesStub:
     async def set_game_winner(self, request: SetGameWinnerRequest):
         grpc_request = self.mapper.to_grpc_set_game_winner_request(request)
         return await self.stub.SetGameWinner(grpc_request)
+
+    async def get_series(self, series_id: UUID) -> GetSeriesResponse:
+        grpc_request = pb2_module.GetSeriesRequest(series_id=str(series_id))
+        response = await self.stub.GetSeries(grpc_request)
+        return self.mapper.from_grpc_get_series_response(response)
 
     def toggle_ready_sync(self, request: ToggleReadyRequest):
         grpc_request = self.mapper.to_grpc_toggle_ready_request(request)

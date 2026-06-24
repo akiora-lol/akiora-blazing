@@ -7,6 +7,7 @@ from shared.contracts.gameseries import (
     DraftActionRequest,
     ToggleReadyRequest,
     SetGameWinnerRequest,
+    GetSeriesResponse,
 )
 from stubs.gameseries_stub import GameSeriesStub
 from dependencies import get_game_channel
@@ -43,6 +44,20 @@ async def draft_action(series_id: UUID, request: DraftActionRequest):
         await _get_stub().draft_action(request)
     except grpc.RpcError as e:
         logger.warning("gRPC error in draft_action({}): {} {}", series_id, e.code(), e.details())
+        raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
+
+
+@router.get(
+    path="/{series_id}",
+    response_model=GetSeriesResponse,
+)
+async def get_series(series_id: UUID):
+    try:
+        return await _get_stub().get_series(series_id)
+    except grpc.RpcError as e:
+        logger.warning(
+            "gRPC error in get_series({}): {} {}", series_id, e.code(), e.details()
+        )
         raise HTTPException(status_code=_grpc_to_http(e.code()), detail=e.details())
 
 

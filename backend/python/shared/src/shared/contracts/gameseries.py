@@ -40,3 +40,20 @@ class GameSeriesResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SeriesGameView(BaseModel):
+    """A single game in a series as needed by the host results UI."""
+
+    id: UUID
+    status: str                       # "scheduled" | "active" | "finished" | ...
+    winner: Optional[Actor] = None    # populated for finished games
+
+
+class GetSeriesResponse(BaseModel):
+    """Lightweight read-side payload for the host's per-game results screen."""
+
+    id: UUID
+    status: str
+    best_of: int
+    games: list[SeriesGameView]

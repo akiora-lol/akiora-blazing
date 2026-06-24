@@ -317,6 +317,10 @@ class TournamentService:
         series_settings = tournament.settings.game_series_settings.model_copy(
             update={"best_of": match_best_of}
         )
+        # Critical: pass match.game_series_id as the series id so the bracket
+        # reference and the saved document match. Without this the prebuild
+        # creates orphan series with random ids that no match points to, and
+        # GET /v1/game-series/{id-from-bracket} returns 404 forever.
         await self.game_series_service.create(
             id=tournament.id,
             participants=[
@@ -344,6 +348,7 @@ class TournamentService:
                 ),
             ],
             settings=series_settings,
+            series_id=match.game_series_id,
         )
 
     def _build_bracket(self, bracket_type: BracketType, actors: list[Actor]) -> Bracket:
