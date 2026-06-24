@@ -1,0 +1,78 @@
+@startuml
+title Bracket builders - class diagram
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+interface BracketBuilder {
+  +build(participants, settings): Bracket
+}
+
+class BracketBuilderFactory {
+  +get_builder(bracket_type): BracketBuilder
+}
+
+class SingleElimBuilder {
+  +build()
+  -next_power_of_two(n)
+  -allocate_byes()
+  -seed_participants()
+  -create_winner_dependencies()
+}
+
+class SingleElimThirdPlaceBuilder {
+  +build()
+  -create_third_place_match()
+}
+
+class DoubleElimBuilder {
+  +build()
+  -build_winners_bracket()
+  -build_losers_bracket()
+  -map_loser_transitions()
+  -create_grand_final()
+}
+
+class RoundRobinBuilder {
+  +build()
+  -add_bye_if_needed()
+  -circle_method_pairs()
+  -create_rounds()
+}
+
+class SwissRoundBuilder {
+  +build_next_round()
+  -group_by_score()
+  -pair_without_rematches()
+  -assign_bye()
+}
+
+class Bracket {
+  +type: BracketType
+  +rounds: BracketRound[]
+}
+
+class BracketRound {
+  +index: int
+  +name: str
+  +matches: GameSeriesRef[]
+}
+
+class GameSeriesRef {
+  +team1: Actor?
+  +team2: Actor?
+  +source_match_ids: UUID[]
+  +best_of: int
+}
+
+BracketBuilderFactory --> BracketBuilder
+BracketBuilder <|.. SingleElimBuilder
+BracketBuilder <|.. SingleElimThirdPlaceBuilder
+BracketBuilder <|.. DoubleElimBuilder
+BracketBuilder <|.. RoundRobinBuilder
+BracketBuilder <|.. SwissRoundBuilder
+BracketBuilder --> Bracket
+Bracket "1" o-- "*" BracketRound
+BracketRound "1" o-- "*" GameSeriesRef
+
+@enduml

@@ -201,7 +201,12 @@ function MessengerPage() {
                     display: flex;
                     height: calc(100vh - 52px);
                     margin-top: 52px;
+                    /* reserve 240px on the right so the social dock doesn't cover the input/send */
+                    margin-right: 240px;
                     background: transparent;
+                }
+                @media (max-width: 900px) {
+                    .messenger-page { margin-right: 0; }
                 }
                 .chat-sidebar {
                     width: 280px;
@@ -341,19 +346,21 @@ function MessengerPage() {
                                     <p className="loading-text">Loading...</p>
                                 ) : messages && messages.length > 0 ? (
                                     <>
-                                        {messages.map((message, idx) => {
-                                            const currentDate = new Date(message.timestamp * 1000).toDateString()
-                                            const showDate = currentDate !== new Date(lastDate * 1000).toDateString()
-                                            lastDate = message.timestamp
-                                            return (
-                                                <MessageBubble
-                                                    key={message.id}
-                                                    message={message}
-                                                    isOwn={message.creator_id === user?.id}
-                                                    showDate={showDate || idx === 0}
-                                                />
-                                            )
-                                        })}
+                                        {[...messages]
+                                            .sort((a, b) => a.timestamp - b.timestamp)
+                                            .map((message, idx) => {
+                                                const currentDate = new Date(message.timestamp * 1000).toDateString()
+                                                const showDate = currentDate !== new Date(lastDate * 1000).toDateString()
+                                                lastDate = message.timestamp
+                                                return (
+                                                    <MessageBubble
+                                                        key={message.id}
+                                                        message={message}
+                                                        isOwn={message.creator_id === user?.id}
+                                                        showDate={showDate || idx === 0}
+                                                    />
+                                                )
+                                            })}
                                         <div ref={messagesEndRef} />
                                     </>
                                 ) : (

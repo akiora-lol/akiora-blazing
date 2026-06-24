@@ -1,0 +1,57 @@
+@startuml
+title Bracket generation - sequence diagram
+
+actor Organizer
+participant "Tournament UI" as FE
+participant "gRPC Gateway" as Gateway
+participant "TournamentService" as Service
+participant "BracketBuilderFactory" as Factory
+participant "SingleElimBuilder" as Single
+participant "DoubleElimBuilder" as Double
+participant "RoundRobinBuilder" as RR
+participant "SwissRoundBuilder" as Swiss
+database "MongoDB" as Mongo
+
+Organizer -> FE : clicks Generate bracket
+FE -> Gateway : POST /v1/tournaments/{id}/prebuild-bracket
+Gateway -> Service : PrebuildBracket(tournament_id, round_settings)
+Service -> Mongo : load Tournament
+Service -> Service : validate lifecycle and participants
+Service -> Factory : get_builder(bracket_type)
+
+alt SINGLE_ELIMINATION or THIRD_PLACE
+  Factory --> Service : SingleElimBuilder
+  Service -> Single : build(participants, seeding, round_settings)
+  Single -> Single : B = next_power_of_two(n)
+  Single -> Single : allocate byes = B - n
+  Single -> Single : seed participants into tree leaves
+  Single -> Single : create rounds and winner dependencies
+  Single --> Service : Bracket
+else DOUBLE_ELIMINATION
+  Factory --> Service : DoubleElimBuilder
+  Service -> Double : build(participants, seeding, round_settings)
+  Double -> Double : build winners bracket
+  Double -> Double : build losers bracket
+  Double -> Double : map loser transitions
+  Double -> Double : create grand final / reset dependency
+  Double --> Service : Bracket
+else ROUND_ROBIN
+  Factory --> Service : RoundRobinBuilder
+  Service -> RR : build(participants, round_settings)
+  RR -> RR : add bye if n is odd
+  RR -> RR : circle method pair generation
+  RR --> Service : Bracket(rounds of independent matches)
+else SWISS
+  Factory --> Service : SwissRoundBuilder
+  Service -> Swiss : build_next_round(standings, history)
+  Swiss -> Swiss : group by score
+  Swiss -> Swiss : pair without rematches
+  Swiss -> Swiss : assign bye if needed
+  Swiss --> Service : Bracket(next round)
+end
+
+Service -> Mongo : save bracket and GameSeries
+Service --> Gateway : TournamentResponse
+Gateway --> FE : render bracket
+
+@enduml

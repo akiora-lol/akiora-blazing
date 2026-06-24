@@ -45,6 +45,16 @@ class GameSeriesServiceStub(object):
                 request_serializer=game_dot_v1_dot_gameseries__service__pb2.ToggleReadyRequest.SerializeToString,
                 response_deserializer=common_dot_types__pb2.Empty.FromString,
                 _registered_method=True)
+        self.SetGameWinner = channel.unary_unary(
+                '/akiora.game.gameseries.GameSeriesService/SetGameWinner',
+                request_serializer=game_dot_v1_dot_gameseries__service__pb2.SetGameWinnerRequest.SerializeToString,
+                response_deserializer=common_dot_types__pb2.Empty.FromString,
+                _registered_method=True)
+        self.GetSeries = channel.unary_unary(
+                '/akiora.game.gameseries.GameSeriesService/GetSeries',
+                request_serializer=game_dot_v1_dot_gameseries__service__pb2.GetSeriesRequest.SerializeToString,
+                response_deserializer=game_dot_v1_dot_gameseries__service__pb2.GetSeriesResponse.FromString,
+                _registered_method=True)
 
 
 class GameSeriesServiceServicer(object):
@@ -64,6 +74,22 @@ class GameSeriesServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SetGameWinner(self, request, context):
+        """Хост турнира выставляет победителя одной игры.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetSeries(self, request, context):
+        """Read-side for the host results screen. Returns the BO-N game slots
+        (id, status, winner) so the client can submit per-game winners with
+        real game_ids and reflect what the server already recorded.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_GameSeriesServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -76,6 +102,16 @@ def add_GameSeriesServiceServicer_to_server(servicer, server):
                     servicer.ToggleReady,
                     request_deserializer=game_dot_v1_dot_gameseries__service__pb2.ToggleReadyRequest.FromString,
                     response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+            ),
+            'SetGameWinner': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetGameWinner,
+                    request_deserializer=game_dot_v1_dot_gameseries__service__pb2.SetGameWinnerRequest.FromString,
+                    response_serializer=common_dot_types__pb2.Empty.SerializeToString,
+            ),
+            'GetSeries': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetSeries,
+                    request_deserializer=game_dot_v1_dot_gameseries__service__pb2.GetSeriesRequest.FromString,
+                    response_serializer=game_dot_v1_dot_gameseries__service__pb2.GetSeriesResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -132,6 +168,60 @@ class GameSeriesService(object):
             '/akiora.game.gameseries.GameSeriesService/ToggleReady',
             game_dot_v1_dot_gameseries__service__pb2.ToggleReadyRequest.SerializeToString,
             common_dot_types__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SetGameWinner(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.gameseries.GameSeriesService/SetGameWinner',
+            game_dot_v1_dot_gameseries__service__pb2.SetGameWinnerRequest.SerializeToString,
+            common_dot_types__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetSeries(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akiora.game.gameseries.GameSeriesService/GetSeries',
+            game_dot_v1_dot_gameseries__service__pb2.GetSeriesRequest.SerializeToString,
+            game_dot_v1_dot_gameseries__service__pb2.GetSeriesResponse.FromString,
             options,
             channel_credentials,
             insecure,

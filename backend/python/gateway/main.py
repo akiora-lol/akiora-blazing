@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from dishka.integrations.fastapi import setup_dishka
 from ioc import container
+from shared.metrics import setup_fastapi_metrics
 from routes.user import router as user_router
 from routes.club import router as club_router
 from routes.team import router as team_router
@@ -13,6 +14,7 @@ from routes.messenger import router as messenger_router
 from routes.tournament import router as tournament_router
 from routes.gameseries import router as gameseries_router
 from routes.search import router as search_router
+from routes.presence import router as presence_router
 from dependencies import close_all_channels
 from settings import Settings
 
@@ -33,9 +35,26 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Akiora Gateway", lifespan=lifespan)
 
+setup_fastapi_metrics(app, service_name="gateway")
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+_default_origins = [
+    "http://localhost:3000",
+    "http://localhost:4173",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:4173",
+    "http://127.0.0.1:5173",
+]
+_extra = [o.strip() for o in (settings.allowed_origins or "").split(",") if o.strip()] if getattr(settings, "allowed_origins", None) else []
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_default_origins + _extra,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,6 +89,9 @@ app.include_router(messenger_router)
 app.include_router(tournament_router)
 app.include_router(gameseries_router)
 app.include_router(search_router)
+
+# Presence
+app.include_router(presence_router)
 
 setup_dishka(container=container, app=app)
 

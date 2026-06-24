@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: akiora
+    env: dev
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: akiora-http
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - auth:8000
+          - gateway:8000
+          - socketgw:8000
+        labels:
+          tier: http
+
+  - job_name: akiora-grpc
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - community:9100
+          - messenger:9100
+          - game:9100
+          - search:9100
+        labels:
+          tier: grpc

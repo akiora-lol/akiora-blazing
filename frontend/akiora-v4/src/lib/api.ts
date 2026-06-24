@@ -1974,6 +1974,57 @@ export function useUpdateBracketMatchMutation(tournamentId: string) {
     })
 }
 
+export function useFinishTournamentMutation(tournamentId: string) {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({ actorId, winnerId }: { actorId: string; winnerId?: string }) =>
+            finishTournament(tournamentId, actorId, winnerId),
+        onSuccess: () => invalidateTournamentQueries(queryClient, tournamentId),
+    })
+}
+
+export async function setGameWinner(
+    seriesId: string,
+    gameId: string,
+    actorId: string,
+    winner: Actor,
+) {
+    try {
+        await gatewayApi.post(`/v1/game-series/${seriesId}/games/${gameId}/winner`, {
+            series_id: seriesId,
+            game_id: gameId,
+            actor_id: actorId,
+            winner: toGatewayActor(winner),
+        })
+    } catch (error) {
+        handleAxiosError(error)
+    }
+}
+
+export function useSetGameWinnerMutation(tournamentId: string) {
+    // Server propagates the winner through the bracket and may auto-finish the
+    // tournament, so we invalidate the whole tournament tree on success.
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({
+            seriesId,
+            gameId,
+            actorId,
+            winner,
+        }: {
+            seriesId: string
+            gameId: string
+            actorId: string
+            winner: Actor
+        }) => setGameWinner(seriesId, gameId, actorId, winner),
+        onSuccess: (_data, vars) => {
+            invalidateTournamentQueries(queryClient, tournamentId)
+            queryClient.invalidateQueries({ queryKey: ['gameseries', vars.seriesId] })
+            queryClient.invalidateQueries({ queryKey: ['series-view', vars.seriesId] })
+        },
+    })
+}
+
 // GameSeries / Game / Draft types
 export type GameStatus = 'scheduled' | 'side_chosen' | 'active' | 'finished' | 'canceled'
 
@@ -2042,75 +2093,53 @@ export const CHAMPION_NAMES: Record<number, string> = {
     56: 'Xayah', 57: 'Yasuo', 58: 'Yone', 59: 'Zed', 60: 'Zeri',
 }
 
-// Dummy game series data
-function generateMockGameSeries(gsId: string): GameSeriesDetailResponse {
-    const blueTeam: DraftTeam = { type: 'blue', id: 'team-1' }
-    const redTeam: DraftTeam = { type: 'red', id: 'team-2' }
-
-    const makeDraft = (gameId: string, seed: number): DraftResponse => {
-        const history: DraftCommand[] = []
-        const stages = [
-            { team: blueTeam, action: { type: 'ban' as const, champion_id: 1 + seed } },
-            { team: redTeam, action: { type: 'ban' as const, champion_id: 3 + seed } },
-            { team: blueTeam, action: { type: 'ban' as const, champion_id: 57 } },
-            { team: redTeam, action: { type: 'ban' as const, champion_id: 59 } },
-            { team: blueTeam, action: { type: 'ban' as const, champion_id: 35 } },
-            { team: redTeam, action: { type: 'ban' as const, champion_id: 33 } },
-            { team: blueTeam, action: { type: 'pick' as const, champion_id: 26 + seed } },
-            { team: redTeam, action: { type: 'pick' as const, champion_id: 16 } },
-            { team: redTeam, action: { type: 'pick' as const, champion_id: 36 } },
-            { team: blueTeam, action: { type: 'pick' as const, champion_id: 21 } },
-            { team: blueTeam, action: { type: 'pick' as const, champion_id: 51 } },
-            { team: redTeam, action: { type: 'pick' as const, champion_id: 29 } },
-            { team: redTeam, action: { type: 'ban' as const, champion_id: 42 } },
-            { team: blueTeam, action: { type: 'ban' as const, champion_id: 30 } },
-            { team: redTeam, action: { type: 'ban' as const, champion_id: 22 } },
-            { team: blueTeam, action: { type: 'ban' as const, champion_id: 54 } },
-            { team: redTeam, action: { type: 'pick' as const, champion_id: 8 + seed } },
-            { team: blueTeam, action: { type: 'pick' as const, champion_id: 14 } },
-            { team: blueTeam, action: { type: 'pick' as const, champion_id: 37 } },
-            { team: redTeam, action: { type: 'pick' as const, champion_id: 46 } },
-        ]
-        for (const s of stages) history.push(s)
-        return { history, deadline: 0, game_id: gameId, teams: [blueTeam, redTeam], forbidden_champions: [], stage: 20, team_size: 5, seconds_per_action: 30 }
-    }
-
-    const games: GameResponse[] = [
-        {
-            id: `${gsId}-g1`, game_series_id: gsId,
-            teams: [{ actor: { id: 'team-1', type: 'team' }, players: [] }, { actor: { id: 'team-2', type: 'team' }, players: [] }],
-            results: [{ actor: { id: 'team-1', type: 'team' }, players: [] }],
-            start: Math.floor(Date.now() / 1000) - 5400, end: Math.floor(Date.now() / 1000) - 3600,
-            status: 'finished', settings: { team_size: 5, map: 11 }, draft: makeDraft(`${gsId}-g1`, 0),
-        },
-        {
-            id: `${gsId}-g2`, game_series_id: gsId,
-            teams: [{ actor: { id: 'team-1', type: 'team' }, players: [] }, { actor: { id: 'team-2', type: 'team' }, players: [] }],
-            results: [{ actor: { id: 'team-2', type: 'team' }, players: [] }],
-            start: Math.floor(Date.now() / 1000) - 3500, end: Math.floor(Date.now() / 1000) - 1800,
-            status: 'finished', settings: { team_size: 5, map: 11 }, draft: makeDraft(`${gsId}-g2`, 5),
-        },
-        {
-            id: `${gsId}-g3`, game_series_id: gsId,
-            teams: [{ actor: { id: 'team-1', type: 'team' }, players: [] }, { actor: { id: 'team-2', type: 'team' }, players: [] }],
-            results: [{ actor: { id: 'team-1', type: 'team' }, players: [] }],
-            start: Math.floor(Date.now() / 1000) - 1700, end: Math.floor(Date.now() / 1000) - 300,
-            status: 'finished', settings: { team_size: 5, map: 11 }, draft: makeDraft(`${gsId}-g3`, 10),
-        },
-    ]
-
-    return {
-        id: gsId, tournament_id: 'tournament-1',
-        teams: [{ actor: { id: 'team-1', type: 'team' }, players: [] }, { actor: { id: 'team-2', type: 'team' }, players: [] }],
-        start: Math.floor(Date.now() / 1000) - 5400, end: Math.floor(Date.now() / 1000) - 300,
-        status: 'finished',
-        settings: { game_settings: { team_size: 5, map: 11 }, forbidden_champions: [], best_of: 3, draft_type: 'classic' },
-        games,
+// Real game-series fetch — heavy DraftResponse shape; not used by results
+// screen (it has its own lightweight endpoint below). Will fail until/unless
+// the backend exposes the full series shape.
+export async function getGameSeries(id: string): Promise<GameSeriesDetailResponse | null> {
+    try {
+        const res = await gatewayApi.get<GameSeriesDetailResponse>(`/v1/game-series/${id}`)
+        return res.data
+    } catch (error) {
+        handleAxiosError(error)
+        return null
     }
 }
 
-export async function getGameSeries(id: string) {
-    return generateMockGameSeries(id)
+// Lightweight per-series read for the host results screen. Mirrors the
+// gateway's GET /v1/game-series/{id} → GetSeriesResponse contract.
+export interface SeriesGameView {
+    id: string
+    status: string // "scheduled" | "active" | "finished" | ...
+    winner: Actor | null
+}
+
+export interface SeriesView {
+    id: string
+    status: string
+    best_of: number
+    games: SeriesGameView[]
+}
+
+export async function getSeriesView(id: string): Promise<SeriesView | null> {
+    try {
+        const res = await gatewayApi.get<SeriesView>(`/v1/game-series/${id}`)
+        return res.data
+    } catch (error) {
+        handleAxiosError(error)
+        return null
+    }
+}
+
+export function useSeriesView(seriesId: string | null | undefined) {
+    return useQuery({
+        queryKey: ['series-view', seriesId],
+        queryFn: () => getSeriesView(seriesId as string),
+        enabled: !!seriesId,
+        // Host actions mutate this; revalidate aggressively but cache for a
+        // few seconds to absorb burst clicks.
+        staleTime: 3_000,
+    })
 }
 
 export function useGameSeries(id: string) {
@@ -2121,3 +2150,32 @@ export function useGameSeries(id: string) {
         staleTime: 30000,
     })
 }
+
+// Presence
+export interface PresenceCheckResponse {
+    online: Record<string, boolean>
+}
+
+export async function checkPresence(userIds: string[]): Promise<Record<string, boolean>> {
+    if (userIds.length === 0) return {}
+    try {
+        const res = await gatewayApi.post<PresenceCheckResponse>("/v1/presence/check", { user_ids: userIds })
+        return res.data.online ?? {}
+    } catch (error) {
+        handleAxiosError(error)
+    }
+}
+
+export function usePresence(userIds: string[], intervalMs = 15000) {
+    // Sort keeps the query key stable even if friend order shifts between renders.
+    const stableIds = [...userIds].sort()
+    return useQuery({
+        queryKey: ["presence", stableIds],
+        queryFn: () => checkPresence(stableIds),
+        enabled: stableIds.length > 0,
+        refetchInterval: intervalMs,
+        refetchIntervalInBackground: false,
+        staleTime: intervalMs / 2,
+    })
+}
+

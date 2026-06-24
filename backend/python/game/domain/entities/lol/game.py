@@ -1,7 +1,7 @@
 from beanie import Document
 from uuid import UUID, uuid4
 from domain.value_objects.actors import TeamParticipant, Actor
-from datetime import datetime
+from datetime import datetime, UTC
 
 from domain.value_objects.statuses import GameStatus
 from domain.value_objects.settings import LolGameSettings
@@ -73,4 +73,25 @@ class Game(Document):
                 self.teams[side],
             )
         self.status = GameStatus.SIDE_CHOSEN
+        return self
+
+    def set_winner(self, winner_actor: Actor) -> "Game":
+        """Mark this game as finished with the given winner.
+
+        Idempotent: re-calling overwrites the previously recorded winner
+        (per product spec — host can correct mistakes any time before the
+        whole tournament is FINISHED). `results` stores exactly one entry
+        for a finished game (the winning team participant).
+        """
+        winner_tp = next(
+            (tp for tp in self.teams if tp.actor == winner_actor),
+            None,
+        )
+        if winner_tp is None:
+            raise Exception(
+                f"Winner {winner_actor.id} is not a participant of this game"
+            )
+        self.results = [winner_tp]
+        self.status = GameStatus.FINISHED
+        self.end = datetime.now(UTC)
         return self

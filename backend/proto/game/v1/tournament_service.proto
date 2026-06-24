@@ -10,7 +10,7 @@ import "common/types.proto";
 
 option go_package = "akiora/game/tournament";
 
-// ============= ENUMS =============
+
 enum TournamentType {
   UNSPECIFIED = 0;
   PRESIGNED = 1;
@@ -38,7 +38,7 @@ enum DraftPickDirection {
   MANUAL = 3;
 }
 
-// ============= SETTINGS MESSAGES =============
+
 message LolTournamentSettings {
   TournamentType tournament_type = 1;
   common.LolBracketMode bracket_mode = 2;
@@ -67,7 +67,7 @@ message TournamentSettings {
   }
 }
 
-// ============= BASE MESSAGES =============
+
 message PaginationRequest {
   optional int32 page = 1;
   optional int32 page_size = 2;
@@ -139,7 +139,7 @@ message BracketInfo {
   repeated BracketMatchInfo matches = 5;
 }
 
-// ============= REQUEST/RESPONSE MESSAGES =============
+
 message ListTournamentsRequest {
   optional TournamentFilter filter = 1;
   optional PaginationRequest pagination = 2;
@@ -183,10 +183,10 @@ message GetBracketResponse {
 
 message CreateTournamentRequest {
   common.Actor host = 1;
-  TournamentSettings settings = 2;  // Исправлено: было 3, должно быть 2
-  int64 start = 3;                   // Исправлено: было 4
-  string prizepool = 4;              // Исправлено: было 5
-  bool is_open = 5;                  // Исправлено: было 6
+  TournamentSettings settings = 2;  
+  int64 start = 3;                   
+  string prizepool = 4;             
+  bool is_open = 5;                
   optional string name = 6;
   optional string description = 7;
   optional string avatar = 8;
@@ -360,7 +360,7 @@ message IsParticipantResponse {
   optional string role = 2;
 }
 
-// ============= SERVICE =============
+
 service TournamentService {
   rpc CreateTournament(CreateTournamentRequest) returns (TournamentResponse) {
     option (google.api.http) = {

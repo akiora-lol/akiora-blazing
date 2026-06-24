@@ -1,0 +1,40 @@
+@startuml
+title Email login and session creation - sequence diagram
+
+actor User
+participant "WebFrontend" as FE
+participant "Auth HTTP API" as AuthApi
+participant "AuthService" as Auth
+participant "Community UserService" as Community
+database "MongoDB" as Mongo
+database "Redis" as Redis
+
+User -> FE : enters email
+FE -> AuthApi : POST /email/login/start(email)
+AuthApi -> Auth : start_email_login(email)
+Auth -> Redis : store login code / challenge
+AuthApi --> FE : 200 code sent
+
+User -> FE : enters code
+FE -> AuthApi : POST /email/login/finish(code)
+AuthApi -> Auth : finish_email_login(code)
+Auth -> Redis : validate code
+Auth -> Community : GetUserByEmail(email)
+Community -> Mongo : find user
+
+alt user not found
+  Community --> Auth : NOT_FOUND
+  Auth -> Community : CreateUser(email)
+  Community -> Mongo : insert user
+  Community --> Auth : UserResponse
+else user exists
+  Community --> Auth : UserResponse
+end
+
+Auth -> Redis : set sid:<signed_sid> = Session(user)
+AuthApi --> FE : AuthResponse + Set-Cookie sid
+FE -> AuthApi : GET /me
+AuthApi -> Redis : get sid session
+AuthApi --> FE : authenticated user
+
+@enduml

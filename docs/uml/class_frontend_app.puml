@@ -1,0 +1,304 @@
+@startuml
+allowmixing
+title Frontend application - class diagram
+
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty methods
+
+package "Application shell" {
+  class RootDocument {
+    +AuthProvider
+    +SocialDockContext.Provider
+    +GlobalBackground
+    +TopDock
+    +SocialDock
+    +MainContent
+  }
+
+  class TopDock {
+    +navigation items
+    +notifications popover
+    +pending friend requests
+    +respondFriendRequest()
+  }
+
+  class SocialDock {
+    +friends panel
+    +incoming requests
+    +mini chat
+    +toggleMiniChat()
+    +handleMiniSend()
+    +openFullMessenger()
+  }
+
+  class RealtimeBridge {
+    +useNotificationStream(user_id)
+  }
+
+  class SocialDockContext {
+    +open: boolean
+    +toggle()
+  }
+}
+
+package "Auth context" {
+  class AuthProvider {
+    +fetch current user
+    +provide auth state
+  }
+
+  class AuthContextValue {
+    +user: AuthUser?
+    +isAuthenticated: boolean
+    +isLoading: boolean
+  }
+
+  class useAuthContext {
+    +returns AuthContextValue
+  }
+}
+
+package "Routes / pages" {
+  class LoginPage {
+    +email login form
+    +submit code
+  }
+
+  class ProfilePage {
+    +edit profile
+    +link LoL account
+    +rank display
+  }
+
+  class CommunityPage {
+    +user search
+    +profile preview
+    +send friend request
+  }
+
+  class UserProfilePage {
+    +public user profile
+    +friend status
+  }
+
+  class SearchPage {
+    +cold deck cards
+    +hot forms list
+    +filters
+    +swipe actions
+  }
+
+  class TournamentsPage {
+    +tournament list
+    +CreateTournamentModal
+    +status filters
+  }
+
+  class TournamentDetailsPage {
+    +join draft modal
+    +admin lifecycle controls
+    +captain setup
+    +draft pool modal
+    +bracket view
+  }
+
+  class MessengerPage {
+    +chat list
+    +message history
+    +send message
+    +selected chat by query param
+  }
+}
+
+package "API module / hooks" {
+  class ApiClient {
+    -authApi: AxiosInstance
+    -gatewayApi: AxiosInstance
+    +handleAxiosError()
+  }
+
+  class AuthApiHooks {
+    +useLoginEmailStartMutation()
+    +useLoginEmailFinishMutation()
+    +useLogoutMutation()
+    +useStartLolVerificationMutation()
+    +useFinishLolVerificationMutation()
+  }
+
+  class CommunityApiHooks {
+    +useCommunityUsers()
+    +useUserProfile()
+    +useFriends()
+    +usePendingFriendRequests()
+    +useSendFriendRequestMutation()
+    +useRespondFriendRequestMutation()
+    +useCommunityClubs()
+    +useCommunityTeams()
+  }
+
+  class SearchApiHooks {
+    +useColdDeck()
+    +useHotForms()
+    +useCreateColdSearchFormMutation()
+    +useCreateHotSearchFormMutation()
+    +useSwipeColdSearchFormMutation()
+    +useSwipeHotSearchFormMutation()
+  }
+
+  class MessengerApiHooks {
+    +useUserChats()
+    +useGetOrCreatePrivateChatMutation()
+    +useMessages()
+    +useSendMessage()
+  }
+
+  class TournamentApiHooks {
+    +useTournaments()
+    +useTournament()
+    +useCreateTournamentMutation()
+    +useAddTournamentParticipantMutation()
+    +useLockTournamentRegistrationMutation()
+    +useSetDraftCaptainsMutation()
+    +useDraftPickPlayerMutation()
+    +usePrebuildTournamentBracketMutation()
+  }
+
+  class TanStackQueryClient {
+    +query cache
+    +invalidateQueries()
+    +setQueryData()
+  }
+}
+
+package "DTO / frontend contracts" {
+  class AuthUser {
+    +id: string
+    +email: string
+    +nickname: string
+    +avatar: string?
+    +bio: string?
+    +league_accounts: LeagueAccount[]
+  }
+
+  class LeagueAccount {
+    +status: string
+    +username: string
+    +tagline: string
+    +server: string
+    +profile_image_url: string?
+    +solo_tier: string?
+    +solo_division: number?
+    +solo_lp: number?
+  }
+
+  class FriendListItem {
+    +friendship: FriendResponse
+    +user: AuthUser
+  }
+
+  class ColdFormResponse {
+    +id: string
+    +owner_id: string
+    +owner: SearchOwnerPreview?
+    +rank_range: SearchRankRange[]
+    +my_roles: SearchRole[]
+    +looking_for_roles: SearchRole[]
+    +description: string
+  }
+
+  class HotFormResponse {
+    +id: string
+    +owner_id: string
+    +expires_at: string?
+  }
+
+  class ChatResponse {
+    +id: string
+    +owner_id: string
+    +type: ChatType
+    +status: ChatStatus
+    +allowed_users: string[]
+  }
+
+  class MessageResponse {
+    +id: string
+    +chat_id: string
+    +creator_id: string
+    +body: string
+    +timestamp: number
+    +reply_to: string?
+  }
+
+  class TournamentResponse {
+    +id: string
+    +name: string
+    +status: TournamentStatus
+    +lifecycle: TournamentLifecycle
+    +settings: LolTournamentSettings
+    +participant_pool: TeamParticipant[]
+    +draft_state: DraftState?
+    +bracket: BracketResponse?
+  }
+}
+
+package "Realtime events" {
+  class NotificationStreamEvent {
+    +event_id: string
+    +type: string
+    +chat_id: string?
+    +message: MessageResponse?
+    +friendship: FriendResponse?
+  }
+
+  class WebSocketConnection {
+    +url: VITE_SOCKETGW_BASE_URL
+    +onmessage(event)
+    +onclose()
+    +onerror()
+  }
+}
+
+RootDocument --> AuthProvider
+RootDocument --> SocialDockContext
+RootDocument --> RealtimeBridge
+RootDocument --> TopDock
+RootDocument --> SocialDock
+
+AuthProvider --> AuthApiHooks
+useAuthContext --> AuthContextValue
+AuthContextValue --> AuthUser
+
+TopDock --> CommunityApiHooks : pending requests
+SocialDock --> CommunityApiHooks : friends and requests
+SocialDock --> MessengerApiHooks : mini chat
+RealtimeBridge --> WebSocketConnection
+RealtimeBridge --> TanStackQueryClient : invalidate chat/friend queries
+WebSocketConnection --> NotificationStreamEvent
+
+LoginPage --> AuthApiHooks
+ProfilePage --> AuthApiHooks
+ProfilePage --> CommunityApiHooks
+CommunityPage --> CommunityApiHooks
+UserProfilePage --> CommunityApiHooks
+SearchPage --> SearchApiHooks
+TournamentsPage --> TournamentApiHooks
+TournamentDetailsPage --> TournamentApiHooks
+MessengerPage --> MessengerApiHooks
+
+AuthApiHooks --> ApiClient
+CommunityApiHooks --> ApiClient
+SearchApiHooks --> ApiClient
+MessengerApiHooks --> ApiClient
+TournamentApiHooks --> ApiClient
+
+ApiClient --> TanStackQueryClient : hooks cache data
+
+AuthUser "1" o-- "*" LeagueAccount
+FriendListItem --> AuthUser
+ColdFormResponse --> AuthUser : owner preview data
+ChatResponse "1" o-- "*" MessageResponse
+TournamentResponse "1" o-- "*" TeamParticipant
+
+@enduml

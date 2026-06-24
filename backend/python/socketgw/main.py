@@ -8,6 +8,7 @@ from redis.asyncio import Redis
 
 from routes import notification_stream_worker, router
 from settings import Settings
+from shared.metrics import setup_fastapi_metrics
 from shared.redis import RedisService
 
 
@@ -36,6 +37,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Akiora SocketGW", lifespan=lifespan)
+
+setup_fastapi_metrics(app, service_name="socketgw")
 
 app.add_middleware(
     CORSMiddleware,

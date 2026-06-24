@@ -1,6 +1,7 @@
 version: '3.9'
 include:
     - backend/storage.yml
+    - backend/observability.yml
 services:
   
 
@@ -31,6 +32,7 @@ services:
       dockerfile: community/Dockerfile
     ports:
       - "50051:50051"
+      - "9101:9100"
     env_file:
       - .env
     environment:
@@ -51,6 +53,7 @@ services:
       dockerfile: messenger/Dockerfile
     ports:
       - "50052:50051"
+      - "9102:9100"
     env_file:
       - .env
     environment:
@@ -70,6 +73,7 @@ services:
       dockerfile: game/Dockerfile
     ports:
       - "50053:50051"
+      - "9103:9100"
     env_file:
       - .env
     environment:
@@ -108,6 +112,7 @@ services:
       dockerfile: search/Dockerfile
     ports:
       - "50054:50051"
+      - "9104:9100"
     env_file:
       - .env
     environment:

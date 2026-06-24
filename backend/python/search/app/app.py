@@ -4,6 +4,8 @@ from grpc import aio
 from grpc_reflection.v1alpha import reflection
 from loguru import logger
 
+from shared.metrics import PrometheusGrpcInterceptor, start_grpc_metrics_server
+
 from app.search_grpc import PartnerSearchGrpc
 from search.v1.partner_search_service_pb2 import DESCRIPTOR as search_descriptor
 from search.v1.partner_search_service_pb2_grpc import (
@@ -21,7 +23,8 @@ class _PartnerSearchGrpc(PartnerSearchGrpc, PartnerSearchServiceServicer):
 async def serve():
     await setup()
 
-    server = aio.server()
+    start_grpc_metrics_server()
+    server = aio.server(interceptors=[PrometheusGrpcInterceptor("search")])
     add_PartnerSearchServiceServicer_to_server(_PartnerSearchGrpc(), server)
 
     service_names = [

@@ -1,0 +1,78 @@
+@startuml
+allowmixing
+title gRPC Gateway - class diagram
+
+skinparam classAttributeIconSize 0
+hide empty methods
+
+class GatewayApp {
+  +include_router(user_router)
+  +include_router(messenger_router)
+  +include_router(tournament_router)
+  +include_router(search_router)
+  +setup_dishka()
+}
+
+class UserRoutes {
+  +list_users()
+  +get_user()
+  +update_user()
+  +send_friend_request()
+  +respond_friend_request()
+  +get_friends()
+}
+
+class MessengerRoutes {
+  +create_chat()
+  +get_user_chats()
+  +send_message()
+  +get_messages()
+}
+
+class TournamentRoutes {
+  +create_tournament()
+  +lock_registration()
+  +set_draft_captains()
+  +draft_pick_player()
+  +prebuild_bracket()
+}
+
+class SearchRoutes {
+  +create_cold_form()
+  +get_cold_deck()
+  +swipe_cold_form()
+  +list_hot_forms()
+}
+
+class UserStub
+class MessengerStub
+class TournamentStub
+class SearchStub
+
+class RedisService {
+  +publish_stream(stream, message)
+}
+
+class RedisInvalidator {
+  +update_session_user(sid, user)
+  +delete_session(sid)
+}
+
+queue "notification_stream" as NotificationStream
+
+GatewayApp --> UserRoutes
+GatewayApp --> MessengerRoutes
+GatewayApp --> TournamentRoutes
+GatewayApp --> SearchRoutes
+
+UserRoutes --> UserStub
+MessengerRoutes --> MessengerStub
+TournamentRoutes --> TournamentStub
+SearchRoutes --> SearchStub
+
+UserRoutes --> RedisService : friend events
+MessengerRoutes --> RedisService : chat events
+UserRoutes --> RedisInvalidator : profile session sync
+RedisService --> NotificationStream
+
+@enduml

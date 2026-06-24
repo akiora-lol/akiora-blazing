@@ -7,6 +7,7 @@ from routes import router
 from dishka.integrations.fastapi import setup_dishka
 from ioc import container
 from shared.logging import setup_logging
+from shared.metrics import setup_fastapi_metrics
 from loguru import logger
 import time
 
@@ -21,7 +22,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-origins = ["http://localhost:3000"]
+setup_fastapi_metrics(app, service_name="auth")
+
+origins = [
+    "http://localhost:3000",
+    "http://localhost:4173",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:4173",
+    "http://127.0.0.1:5173",
+]
 
 
 @app.middleware("http")

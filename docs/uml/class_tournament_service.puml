@@ -1,0 +1,124 @@
+@startuml
+allowmixing
+title Tournament service - class diagram
+
+skinparam classAttributeIconSize 0
+hide empty methods
+
+class TournamentGrpc {
+  +CreateTournament()
+  +ListTournaments()
+  +GetTournament()
+  +AddParticipant()
+  +RemoveParticipant()
+  +LockRegistration()
+  +SetDraftCaptains()
+  +UpdateDraftPickOrder()
+  +DraftPickPlayer()
+  +PrebuildBracket()
+  +UpdateBracketMatch()
+  +StartTournament()
+}
+
+class TournamentService {
+  +create_tournament()
+  +lock_registration()
+  +reschedule()
+  +add_participant()
+  +remove_participant()
+  +set_draft_captains()
+  +draft_pick_player()
+  +prebuild_bracket()
+  +update_bracket_match()
+}
+
+class Tournament {
+  +id: UUID
+  +creator_id: UUID
+  +name: str
+  +description: str?
+  +type: TournamentType
+  +lifecycle: TournamentLifecycle
+  +bracket_type: BracketType
+  +start: int
+  +draft_start: int?
+  +registration_locked_at: int?
+  +participants: Participant[]
+  +wait_list: Participant[]
+  +draft_state: DraftState?
+  +bracket: Bracket?
+}
+
+class Participant {
+  +actor: Actor
+  +team_name: str?
+  +primary_role: LolRole?
+  +secondary_role: LolRole?
+  +seed: int?
+}
+
+class Actor {
+  +id: UUID
+  +type: ActorType
+}
+
+class DraftState {
+  +captain_count: int
+  +captain_ids: UUID[]
+  +pick_order: UUID[]
+  +pick_direction: DraftPickDirection
+  +max_extra_players_per_team: int
+  +teams: DraftTeam[]
+  +picks: DraftPick[]
+  +current_pick_index: int
+}
+
+class DraftTeam {
+  +captain_id: UUID
+  +player_ids: UUID[]
+}
+
+class DraftPick {
+  +captain_id: UUID
+  +player_id: UUID
+  +pick_number: int
+  +created_at: int
+}
+
+class Bracket {
+  +type: BracketType
+  +rounds: BracketRound[]
+}
+
+class BracketRound {
+  +index: int
+  +name: str
+  +best_of: int
+  +matches: GameSeriesRef[]
+}
+
+class GameSeriesRef {
+  +id: UUID
+  +round_index: int
+  +match_index: int
+  +team1: Actor?
+  +team2: Actor?
+  +best_of: int
+  +source_match_ids: UUID[]
+}
+
+database "MongoDB" as Mongo
+
+TournamentGrpc --> TournamentService
+TournamentService --> Tournament
+TournamentService --> Mongo
+Tournament "1" o-- "*" Participant
+Participant --> Actor
+Tournament "1" o-- "0..1" DraftState
+DraftState "1" o-- "*" DraftTeam
+DraftState "1" o-- "*" DraftPick
+Tournament "1" o-- "0..1" Bracket
+Bracket "1" o-- "*" BracketRound
+BracketRound "1" o-- "*" GameSeriesRef
+
+@enduml

@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "beanie>=2.0.0",
-    "dishka>=1.9.1",
+    "dishka>=1.10.1",
     "fastapi>=0.136.0",
     "fastapi-sso>=0.21.0",
     "faststream>=0.6.7",
@@ -19,6 +19,7 @@ dependencies = [
     "msgspec>=0.21.1",
     "mypy-protobuf>=5.0.0",
     "protobuf>=6.33.6",
+    "prometheus-client>=0.21.0",
     "pydantic-settings>=2.13.1",
     "redis>=7.4.0",
     "shortuuid>=1.0.13",

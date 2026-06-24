@@ -1,0 +1,43 @@
+@startuml
+title League of Legends account verification - sequence diagram
+
+actor User
+participant "Profile page" as FE
+participant "Auth HTTP API" as AuthApi
+participant "AuthService" as Auth
+cloud "OP.GG Summoner API" as Opgg
+database "Redis" as Redis
+participant "Community UserService" as Community
+database "MongoDB" as Mongo
+
+User -> FE : inputs server, username, tagline
+FE -> AuthApi : POST /lol/verification/start
+AuthApi -> Auth : start_lol_account_verification(sid, data)
+Auth -> Redis : get sid:<sid>
+Auth -> Opgg : GET /api/v3/{server}/summoners?riot_id=username#tagline
+Opgg --> Auth : data[0].profile_image_url, rank info
+Auth -> Auth : parse current_icon_id
+Auth -> Auth : target_icon_id = current_icon_id % 30 + 1
+Auth -> Redis : store verification challenge
+AuthApi --> FE : verification_id + target_profile_image_url
+
+User -> FE : changes icon in LoL client
+User -> FE : clicks Confirm
+FE -> AuthApi : POST /lol/verification/finish(verification_id)
+AuthApi -> Auth : finish_lol_account_verification(sid, verification_id)
+Auth -> Redis : load challenge
+Auth -> Opgg : repeat summoner lookup
+Opgg --> Auth : current profile image
+Auth -> Auth : compare current icon with target_icon_id
+
+alt icon matches
+  Auth -> Community : UpdateUser(league_accounts += verified account)
+  Community -> Mongo : update user document
+  Community --> Auth : UserResponse
+  Auth -> Redis : update sid session user
+  AuthApi --> FE : verified=true + updated user
+else icon does not match
+  AuthApi --> FE : verified=false / error
+end
+
+@enduml

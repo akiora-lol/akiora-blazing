@@ -1,0 +1,88 @@
+@startuml
+allowmixing
+title Auth service - class diagram
+
+skinparam classAttributeIconSize 0
+hide empty methods
+
+class AuthHttpRoutes {
+  +email_login_start(request)
+  +email_login_finish(request)
+  +desktop_email_login_start(request)
+  +desktop_email_login_finish(request)
+  +lol_verification_start(request)
+  +lol_verification_finish(request)
+  +me(cookie)
+  +logout(cookie)
+}
+
+class AuthService {
+  +create_user_session(email, provider)
+  +verify_session(signed_sid)
+  +start_email_login(email)
+  +finish_email_login(code)
+  +start_lol_account_verification(signed_sid, data)
+  +finish_lol_account_verification(signed_sid, verification_id)
+}
+
+class SessionService {
+  +create_session(email, user_data)
+  +get_session(signed_sid)
+  +get_session_user(signed_sid)
+  +update_session_user(signed_sid, user_info)
+}
+
+class SessionRepo {
+  +create(signed_sid, session)
+  +get(signed_sid)
+  +delete(signed_sid)
+}
+
+class Session {
+  +email: str
+  +provider: str
+  +created_at: int
+  +custom_data: dict
+}
+
+class LoginCodeChallenge {
+  +email: str
+  +code: str
+  +expires_at: int
+}
+
+class LolVerificationChallenge {
+  +verification_id: str
+  +sid: str
+  +server: str
+  +riot_id: str
+  +target_icon_id: int
+  +current_profile_icon_id: int
+  +expires_at: int
+}
+
+class UserStub {
+  +get_user_by_email()
+  +create_user()
+  +update_user()
+}
+
+class RedisService {
+  +create()
+  +get()
+  +delete()
+}
+
+cloud "OP.GG Summoner API" as OpggApi
+
+AuthHttpRoutes --> AuthService
+AuthService --> SessionService
+SessionService --> SessionRepo
+SessionRepo --> RedisService
+SessionService o-- Session
+AuthService ..> LoginCodeChallenge : stores in Redis
+AuthService ..> LolVerificationChallenge : stores in Redis
+AuthService --> UserStub : community gRPC
+AuthService --> OpggApi : profile icon check
+
+@enduml

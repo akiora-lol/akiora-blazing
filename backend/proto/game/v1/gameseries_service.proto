@@ -30,6 +30,37 @@ message ChampLockRequest{
     common.ChampLock champ_lock = 2;
 }
 
+// Host-only: report the winner of one game in a series. The backend
+// propagates the result through the tournament bracket and finishes the
+// tournament automatically once the final match is decided.
+message SetGameWinnerRequest{
+    string series_id = 1;
+    string game_id = 2;
+    string actor_id = 3;            // caller — must be the tournament host
+    common.Actor winner = 4;        // winning team participant
+}
+
+// Single game inside a series, in display order.
+message SeriesGame {
+    string id = 1;
+    string status = 2;              // "scheduled" | "active" | "finished" | ...
+    common.Actor winner = 3;        // null until finished
+}
+
+// Lightweight read-side for the results screen: enough to render BO-N slots,
+// fire SetGameWinner with a real game_id, and reflect server state without
+// pulling the full draft/state machine.
+message GetSeriesRequest {
+    string series_id = 1;
+}
+
+message GetSeriesResponse {
+    string id = 1;
+    string status = 2;              // mirrors GameSeriesStatus on the server
+    int32 best_of = 3;
+    repeated SeriesGame games = 4;  // ordered; finished games carry winner
+}
+
 service GameSeriesService {
 
     // Действие в драфте
@@ -45,6 +76,23 @@ service GameSeriesService {
         option (google.api.http) = {
             post: "/v1/game-series/{series_id}/ready"
             body: "*"
+        };
+    }
+
+    // Хост турнира выставляет победителя одной игры.
+    rpc SetGameWinner(SetGameWinnerRequest) returns (common.Empty) {
+        option (google.api.http) = {
+            post: "/v1/game-series/{series_id}/games/{game_id}/winner"
+            body: "*"
+        };
+    }
+
+    // Read-side for the host results screen. Returns the BO-N game slots
+    // (id, status, winner) so the client can submit per-game winners with
+    // real game_ids and reflect what the server already recorded.
+    rpc GetSeries(GetSeriesRequest) returns (GetSeriesResponse) {
+        option (google.api.http) = {
+            get: "/v1/game-series/{series_id}"
         };
     }
 

@@ -1,0 +1,33 @@
+@startuml
+title Community service - user search and profile preview
+
+actor User
+participant "Community page" as FE
+participant "gRPC Gateway\nUserRoutes" as Gateway
+participant "Community UserGrpc" as UserGrpc
+participant "UserService" as UserService
+database "MongoDB" as Mongo
+
+User -> FE : opens Community tab
+FE -> Gateway : GET /v1/users?page=1&page_size=50&search=query
+Gateway -> UserGrpc : ListUsers(filter, pagination)
+UserGrpc -> UserService : list_users(filter, pagination)
+UserService -> Mongo : query users by search/filter
+Mongo --> UserService : users + total_count
+UserService -> UserService : map documents to UserResponse[]
+UserService --> UserGrpc : ListUsersResponse
+UserGrpc --> Gateway : ListUsersResponse
+Gateway --> FE : users list
+
+User -> FE : clicks Add friend / preview
+FE -> Gateway : GET /v1/users/{selected_user_id}
+Gateway -> UserGrpc : GetUser(id)
+UserGrpc -> UserService : get_user(id)
+UserService -> Mongo : find user
+Mongo --> UserService : user document
+UserService --> UserGrpc : UserResponse
+UserGrpc --> Gateway : UserResponse
+Gateway --> FE : profile preview data
+FE -> FE : render mini profile preview + link to /users/{id}
+
+@enduml

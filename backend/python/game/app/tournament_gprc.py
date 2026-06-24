@@ -389,7 +389,19 @@ class TournamentGrpc(TournamentServiceServicer):
 
     @inject
     async def StartTournament(self, request, context, tournament_service: FromDishka[TournamentService]):
-        tournament = await tournament_service.start_tournament(UUID(request.tournament_id))
+        try:
+            tournament = await tournament_service.start_tournament(UUID(request.tournament_id))
+        except Exception as e:
+            # Surface domain validation failures as proper gRPC status with a useful
+            # message instead of letting them bubble up as opaque UNKNOWN errors.
+            logger.exception(
+                "StartTournament failed tournament_id={} actor_id={}: {}",
+                request.tournament_id,
+                getattr(request, "actor_id", ""),
+                e,
+            )
+            await context.abort(grpc.StatusCode.FAILED_PRECONDITION, str(e) or type(e).__name__)
+            return  # unreachable, abort raises
         return _tournament_to_proto(tournament)
 
     @inject

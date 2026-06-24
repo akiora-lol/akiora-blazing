@@ -277,7 +277,7 @@ class TournamentService:
         gss = await self.game_series_service.get_by_tournament_id(id)
         for gs in gss:
             await self.game_series_service.start(gs.id)
-        t.start()
+        t.begin()
         await t.save()
         return t
 
@@ -317,6 +317,10 @@ class TournamentService:
         series_settings = tournament.settings.game_series_settings.model_copy(
             update={"best_of": match_best_of}
         )
+        # Critical: pass match.game_series_id as the series id so the bracket
+        # reference and the saved document match. Without this the prebuild
+        # creates orphan series with random ids that no match points to, and
+        # GET /v1/game-series/{id-from-bracket} returns 404 forever.
         await self.game_series_service.create(
             id=tournament.id,
             participants=[
@@ -344,6 +348,7 @@ class TournamentService:
                 ),
             ],
             settings=series_settings,
+            series_id=match.game_series_id,
         )
 
     def _build_bracket(self, bracket_type: BracketType, actors: list[Actor]) -> Bracket:
@@ -413,14 +418,159 @@ class TournamentService:
         raise Exception("Bracket match not found")
 
     async def finish_tournament(self, id: UUID) -> Tournament:
-        from datetime import datetime, UTC
-
         t = await Tournament.get(id)
         t.status = TournamentStatus.FINISHED
         t.lifecycle = TournamentLifecycle.TOURNAMENT_FINISHED
         t.end = datetime.now(UTC)
         await t.save()
         return t
+
+    async def set_game_winner(
+        self,
+        tournament_id: UUID,
+        game_id: UUID,
+        actor_id: UUID,
+        winner_actor: Actor,
+    ) -> Tournament:
+        """Host-only: record winner of a single game, propagate through bracket.
+
+        - Verifies the caller is the tournament host.
+        - Delegates the per-game/per-series bookkeeping to GameSeriesService.
+        - When the series clinches: writes `winner` on the matching bracket
+          Match and pushes that winner into the `next_match` slot (SE only —
+          other bracket types have next_match_id=None and stay manual).
+        - If the clinched series belongs to the final match (no next_match_id
+          and it lives in the last round), auto-finishes the tournament.
+        """
+        t = await Tournament.get(tournament_id)
+        if t is None:
+            raise Exception(f"Tournament {tournament_id} not found")
+        if t.host.id != actor_id:
+            # Domain-level authz. Gateway has no session middleware in this
+            # repo, so the only honest gate lives here.
+            raise PermissionError("Only the tournament host can set match results")
+        if not t.bracket:
+            raise Exception("Bracket not built yet — cannot set game winner")
+
+        # We need the game's series_id to find the right bracket match.
+        game = await Game.get(game_id)
+        if game is None:
+            raise Exception(f"Game {game_id} not found")
+        series_id = game.game_series_id
+
+        # Validate the series actually belongs to this tournament's bracket.
+        match_for_series: Match | None = None
+        round_index_of_match = -1
+        for round_index, round_matches in enumerate(t.bracket.rounds):
+            for match in round_matches:
+                if match.game_series_id == series_id:
+                    match_for_series = match
+                    round_index_of_match = round_index
+                    break
+            if match_for_series:
+                break
+        if match_for_series is None:
+            raise Exception(
+                f"GameSeries {series_id} is not part of this tournament's bracket"
+            )
+
+        _, _, series_winner = await self.game_series_service.set_game_winner(
+            series_id, game_id, winner_actor
+        )
+
+        if series_winner is None:
+            # Series not yet clinched — nothing to propagate.
+            await t.save()
+            return t
+
+        # Clinched: write match winner and try to push into the next match.
+        match_for_series.winner = series_winner
+
+        next_match_id = match_for_series.next_match_id
+        if next_match_id is not None:
+            next_match = self._find_match_by_number(t, next_match_id)
+            if next_match is not None:
+                # Slot the winner in. Convention: first arriving winner takes
+                # team1, second takes team2. Only overwrite a slot if it's
+                # empty OR already this same actor (idempotent re-submit).
+                if next_match.team1 is None or next_match.team1 == series_winner:
+                    next_match.team1 = series_winner
+                elif next_match.team2 is None or next_match.team2 == series_winner:
+                    next_match.team2 = series_winner
+                else:
+                    # Both slots filled with different actors — host overwrote
+                    # an earlier result. Replace whichever slot held the old
+                    # winner of THIS match's sibling? We can't tell which is
+                    # which without more state, so leave it and let the host
+                    # adjust via the existing bracket-edit RPC.
+                    pass
+
+                # Mirror the new team into the next match's GameSeries so the
+                # downstream UI shows the right opponents.
+                next_gs = await GameSeries.get(next_match.game_series_id)
+                if next_gs is not None:
+                    new_teams = []
+                    for slot, actor in (
+                        (0, next_match.team1),
+                        (1, next_match.team2),
+                    ):
+                        if actor is None:
+                            if slot < len(next_gs.teams):
+                                new_teams.append(next_gs.teams[slot])
+                            continue
+                        players = next(
+                            (
+                                p.players
+                                for p in t.participant_pool
+                                if p.actor == actor
+                            ),
+                            [],
+                        )
+                        new_teams.append(TeamParticipant(actor=actor, players=players))
+                    if new_teams:
+                        next_gs.teams = new_teams
+                        await next_gs.save()
+        else:
+            # No next match → this could be the final. The "final" in SE/SE-with-third
+            # is the single match in the highest-numbered upper round whose match has
+            # no next_match_id. Heuristic: if this match has no next AND no other match
+            # in the bracket points to a higher next_match_id than this match's number,
+            # treat it as the final.
+            is_final = self._is_final_match(t, match_for_series)
+            if is_final:
+                await t.save()  # persist match.winner before finish overwrites
+                return await self.finish_tournament(tournament_id)
+
+        await t.save()
+        return t
+
+    def _find_match_by_number(self, t: Tournament, match_number: int) -> Match | None:
+        if not t.bracket:
+            return None
+        for round_matches in t.bracket.rounds:
+            for match in round_matches:
+                if match.match_number == match_number:
+                    return match
+        return None
+
+    def _is_final_match(self, t: Tournament, match: Match) -> bool:
+        """A match is the final iff it has no next_match_id and no other match
+        in the bracket targets a number greater than this match's number via
+        next_match_id. This stays correct for SE (with/without third-place
+        match — the third-place match also has no next, and its number is
+        higher than the final's, so the actual final would NOT pass this
+        check; we explicitly exclude that case below)."""
+        if match.next_match_id is not None or not t.bracket:
+            return False
+        all_matches = [m for r in t.bracket.rounds for m in r]
+        terminal = [m for m in all_matches if m.next_match_id is None]
+        if len(terminal) == 1:
+            return True
+        # If there's a third-place match, the real final is the terminal match
+        # with the LOWEST round (the third-place match is appended in a higher
+        # round in single_elim_builder).
+        terminal_sorted = sorted(terminal, key=lambda m: m.round)
+        return match is terminal_sorted[0]
 
     async def remove_participant(self, id: UUID, participant_id: UUID) -> Tournament:
         t = await Tournament.get(id)

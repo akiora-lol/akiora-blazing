@@ -13,10 +13,9 @@ import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 
 import { useState, useRef, useCallback, useEffect, createContext, useContext } from 'react'
 import {
-    FiHome, FiBarChart2, FiUsers, FiInfo, FiList, FiUser, FiMessageSquare,
-    FiSettings, FiZap, FiChevronRight, FiSend, FiSearch, FiPlay, FiBell, FiCheck, FiX, FiExternalLink
+    FiHome, FiUsers, FiInfo, FiUser, FiMessageSquare,
+    FiSettings, FiZap, FiChevronRight, FiSend, FiSearch, FiBell, FiCheck, FiX, FiExternalLink
 } from 'react-icons/fi'
-import { GiCrossedSwords } from 'react-icons/gi'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { AuthProvider, useAuthContext } from '../contexts/AuthContext'
 import {
@@ -24,6 +23,7 @@ import {
     useGetOrCreatePrivateChatMutation,
     useMessages,
     usePendingFriendRequests,
+    usePresence,
     useRespondFriendRequestMutation,
     useSendMessage,
 } from '../lib/api'
@@ -34,12 +34,8 @@ interface MyRouterContext {
 
 const NAV_ITEMS = [
     { icon: FiHome, label: 'Home', to: '/' },
-    { icon: FiPlay, label: 'Play', to: '/gameseries/gs-qf1' },
     { icon: FiMessageSquare, label: 'Messages', to: '/messenger' },
     { icon: FiSearch, label: 'Search', to: '/search' },
-    { icon: FiBarChart2, label: 'Stats', to: '/stats' },
-    { icon: GiCrossedSwords, label: 'Champions', to: '/champions' },
-    { icon: FiList, label: 'Tierlist', to: '/tierlist' },
     { icon: FiZap, label: 'Tournaments', to: '/tournaments' },
     { icon: FiUsers, label: 'Community', to: '/community' },
     { icon: FiInfo, label: 'About', to: '/about' },
@@ -50,27 +46,6 @@ const SOCKETGW_BASE = import.meta.env.VITE_SOCKETGW_BASE_URL ?? 'ws://localhost:
 
 // ─── Social Dock Data ─────────────────────────────────────────────
 interface DockFriend { id: string; name: string; tag: string; online: boolean; inGame: boolean }
-interface DummyClub { id: string; name: string; tag: string; members: number; rank: string }
-interface DummyGroup { id: string; name: string; members: number; activity: string }
-
-const DUMMY_CLUBS: DummyClub[] = [
-    { id: 'c1', name: 'Elite Players', tag: 'ELTP', members: 128, rank: 'Diamond' },
-    { id: 'c2', name: 'Pro League', tag: 'PROL', members: 256, rank: 'Master' },
-    { id: 'c3', name: 'Casual Gaming', tag: 'CSLG', members: 89, rank: 'Gold' },
-]
-
-const DUMMY_GROUPS: DummyGroup[] = [
-    { id: 'g1', name: 'Tournament Team', members: 12, activity: 'Playing' },
-    { id: 'g2', name: 'Stream Squad', members: 24, activity: 'Active' },
-    { id: 'g3', name: 'Practice Group', members: 8, activity: 'Idle' },
-    { id: 'g4', name: 'Ranked Pushers', members: 16, activity: 'Ranked' },
-]
-
-const RANK_COLORS: Record<string, string> = {
-    Diamond: '#06B6D4',
-    Master: '#a600ff',
-    Gold: '#F59E0B',
-}
 
 // Social dock toggle context
 export const SocialDockContext = createContext<{ open: boolean; toggle: () => void }>({ open: true, toggle: () => { } })
@@ -101,23 +76,55 @@ function useNotificationStream(userId?: string, enabled = true) {
             socket.onmessage = (event) => {
                 try {
                     const payload = JSON.parse(event.data)
-                    if (payload.type === 'notification.connected') return
+                    const type: string | undefined = payload?.type
+                    if (!type || type === 'notification.connected') return
 
-                    if (payload.type === 'chat.message.created') {
-                        const chatId = payload.chat_id ?? payload.message?.chat_id
+                    // ─── Chat / message events ────────────────────────────
+                    if (type.startsWith('chat.message.') || type === 'chat.message.read') {
+                        const chatId: string | undefined =
+                            payload.chat_id ?? payload.message?.chat_id
+                        const messageId: string | undefined =
+                            payload.message_id ?? payload.message?.id
+
+                        // Chat list (last-message preview, unread badge).
                         queryClient.invalidateQueries({ queryKey: ['messenger', 'chats'] })
+
                         if (chatId) {
                             queryClient.invalidateQueries({ queryKey: ['messenger', 'messages', chatId] })
+                            queryClient.invalidateQueries({ queryKey: ['messenger', 'unread-count', chatId] })
+                        }
+
+                        // Single-message reads (history, reactions, the message itself).
+                        if (messageId) {
+                            queryClient.invalidateQueries({ queryKey: ['messenger', 'message', messageId] })
+                            queryClient.invalidateQueries({ queryKey: ['messenger', 'message', messageId, 'history'] })
+                            queryClient.invalidateQueries({ queryKey: ['messenger', 'message', messageId, 'reactions'] })
                         }
                         return
                     }
 
-                    if (
-                        payload.type === 'friend.request.created' ||
-                        payload.type === 'friend.request.accepted' ||
-                        payload.type === 'friend.request.rejected'
-                    ) {
+                    // ─── Chat membership / lifecycle events ──────────────
+                    if (type.startsWith('chat.member.') || type === 'chat.created' || type === 'chat.updated' || type === 'chat.deleted') {
+                        const chatId: string | undefined = payload.chat_id ?? payload.chat?.id
+                        queryClient.invalidateQueries({ queryKey: ['messenger', 'chats'] })
+                        if (chatId) {
+                            queryClient.invalidateQueries({ queryKey: ['messenger', 'chat', chatId] })
+                            queryClient.invalidateQueries({ queryKey: ['messenger', 'members', chatId] })
+                        }
+                        return
+                    }
+
+                    // ─── Friend-request events ───────────────────────────
+                    if (type.startsWith('friend.request.') || type === 'friend.removed') {
                         invalidateFriendQueries()
+                        return
+                    }
+
+                    // ─── Persisted notifications (from notification svc) ─
+                    if (type === 'friend_request' || type.startsWith('notification.')) {
+                        invalidateFriendQueries()
+                        queryClient.invalidateQueries({ queryKey: ['notifications', userId] })
+                        return
                     }
                 } catch (error) {
                     console.warn('Failed to process notification event', error)
@@ -447,7 +454,6 @@ function TopDock() {
                 {NAV_ITEMS.map((item, i) => {
                     return (
                         <span key={item.to} style={{ display: 'contents' }}>
-                            {i === 6 && <div className="dock-divider" />}
                             <Link
                                 to={item.to}
                                 className="dock-item"
@@ -670,8 +676,6 @@ function SocialDock() {
     const hasError = useRouterState({ select: s => s.matches.some(m => m.status === 'error') })
     const { open: dockOpen } = useContext(SocialDockContext)
     const [openFriends, setOpenFriends] = useState(true)
-    const [openClubs, setOpenClubs] = useState(true)
-    const [openGroups, setOpenGroups] = useState(true)
     const [miniChat, setMiniChat] = useState<{ id: string; name: string; type: 'friend' | 'club' | 'group'; chatId?: string } | null>(null)
     const [demoMiniMessages, setDemoMiniMessages] = useState<{ id: number; text: string; own: boolean; time: string }[]>([])
     const [miniInput, setMiniInput] = useState('')
@@ -689,13 +693,16 @@ function SocialDock() {
     const respondFriendRequest = useRespondFriendRequestMutation(user?.id)
     const { data: miniApiMessages = [], isLoading: miniMessagesLoading } = useMessages(miniChat?.chatId ?? '', 40)
 
+    const friendIds = friendItems.map(({ user: friendUser }) => friendUser.id)
+    const { data: presenceMap = {} } = usePresence(friendIds)
+
     if (!isAuthenticated || !dockOpen || HIDDEN_ROUTES.has(location) || isSplat || hasError) return null
 
     const friends: DockFriend[] = friendItems.map(({ user: friendUser }) => ({
         id: friendUser.id,
         name: friendUser.nickname || friendUser.email,
         tag: friendUser.email ? `#${friendUser.email.split('@')[0]}` : '',
-        online: false,
+        online: Boolean(presenceMap[friendUser.id]),
         inGame: false,
     }))
     const onlineFriends = friends.filter(f => f.online)
@@ -1082,77 +1089,6 @@ function SocialDock() {
                         </>
                     )}
 
-                    <div className="social-dock-divider" style={{ margin: '10px 12px' }} />
-
-                    {/* Clubs */}
-                    <SectionHeader
-                        icon={<FiZap size={11} />}
-                        label="Clubs"
-                        count={DUMMY_CLUBS.length}
-                        open={openClubs}
-                        onToggle={() => setOpenClubs(v => !v)}
-                    />
-                    {openClubs && DUMMY_CLUBS.map(c => (
-                        <div key={c.id} className="dock-card" onClick={() => void toggleMiniChat(c.id, c.name, 'club')}
-                            style={miniChat?.id === c.id ? { background: 'rgba(166,0,255,0.1)', borderColor: 'rgba(166,0,255,0.15)' } : undefined}
-                        >
-                            <div className="dock-avatar dock-avatar-square" style={{
-                                background: `linear-gradient(135deg, ${RANK_COLORS[c.rank] ?? '#a600ff'}20, ${RANK_COLORS[c.rank] ?? '#a600ff'}60)`,
-                                border: `1px solid ${RANK_COLORS[c.rank] ?? '#a600ff'}70`,
-                                boxShadow: `0 0 8px ${RANK_COLORS[c.rank] ?? '#a600ff'}30`
-                            }}>
-                                <span style={{ fontFamily: "'Russo One', sans-serif", fontSize: '9px', color: RANK_COLORS[c.rank] ?? '#fff', textShadow: `0 0 4px ${RANK_COLORS[c.rank] ?? '#a600ff'}` }}>{c.tag[0]}</span>
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <p className="dock-name">{c.name}</p>
-                                <p className="dock-meta">{c.members} members</p>
-                            </div>
-                            <span className="dock-badge" style={{
-                                background: `${RANK_COLORS[c.rank] ?? '#a600ff'}15`,
-                                color: RANK_COLORS[c.rank] ?? '#a600ff',
-                                border: `1px solid ${RANK_COLORS[c.rank] ?? '#a600ff'}50`,
-                                textShadow: `0 0 4px ${RANK_COLORS[c.rank] ?? '#a600ff'}60`
-                            }}>
-                                {c.rank}
-                            </span>
-                        </div>
-                    ))}
-
-                    <div className="social-dock-divider" style={{ margin: '10px 12px' }} />
-
-                    {/* Groups */}
-                    <SectionHeader
-                        icon={<FiUsers size={11} />}
-                        label="Groups"
-                        count={DUMMY_GROUPS.length}
-                        open={openGroups}
-                        onToggle={() => setOpenGroups(v => !v)}
-                    />
-                    {openGroups && DUMMY_GROUPS.map(g => (
-                        <div key={g.id} className="dock-card" onClick={() => void toggleMiniChat(g.id, g.name, 'group')}
-                            style={miniChat?.id === g.id ? { background: 'rgba(166,0,255,0.1)', borderColor: 'rgba(166,0,255,0.15)' } : undefined}
-                        >
-                            <div className="dock-avatar dock-avatar-square" style={{
-                                background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.4))',
-                                border: '1px solid rgba(16,185,129,0.4)',
-                                boxShadow: '0 0 8px rgba(16,185,129,0.2)'
-                            }}>
-                                <FiUsers size={12} color="#10B981" />
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <p className="dock-name">{g.name}</p>
-                                <p className="dock-meta">{g.members} members</p>
-                            </div>
-                            <span className="dock-badge" style={{
-                                background: 'rgba(16,185,129,0.12)',
-                                color: '#10B981',
-                                border: '1px solid rgba(16,185,129,0.35)',
-                                textShadow: '0 0 4px rgba(16,185,129,0.5)'
-                            }}>
-                                {g.activity}
-                            </span>
-                        </div>
-                    ))}
                 </div>
             </aside>
 
@@ -1175,7 +1111,7 @@ function SocialDock() {
                             miniMessagesLoading ? (
                                 <p className="section-label">Loading messages...</p>
                             ) : miniApiMessages.length > 0 ? (
-                                miniApiMessages.map(m => (
+                                [...miniApiMessages].sort((a, b) => a.timestamp - b.timestamp).map(m => (
                                     <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: m.creator_id === user?.id ? 'flex-end' : 'flex-start' }}>
                                         <div className={`mini-msg ${m.creator_id === user?.id ? 'mini-msg-own' : 'mini-msg-other'}`}>
                                             {m.body}
