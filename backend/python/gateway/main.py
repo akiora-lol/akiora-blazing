@@ -45,13 +45,22 @@ async def health():
 
 _default_origins = [
     "http://localhost:3000",
+    "http://185.88.101.251",
+    "http://185.88.101.251:3000",
+    "http://185.88.101.251:8000",
+    "http://185.88.101.251:8001",
+    "http://front:3000",
     "http://localhost:4173",
     "http://localhost:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:4173",
     "http://127.0.0.1:5173",
 ]
-_extra = [o.strip() for o in (settings.allowed_origins or "").split(",") if o.strip()] if getattr(settings, "allowed_origins", None) else []
+_extra = (
+    [o.strip() for o in (settings.allowed_origins or "").split(",") if o.strip()]
+    if getattr(settings, "allowed_origins", None)
+    else []
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_default_origins + _extra,

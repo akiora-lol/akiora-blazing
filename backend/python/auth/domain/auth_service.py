@@ -93,7 +93,6 @@ class AuthService:
         response.set_cookie(
             key="email",
             value=email,
-            domain="localhost",
             httponly=True,
             samesite="lax",
             max_age=30 * 24 * 60 * 60,
@@ -103,7 +102,6 @@ class AuthService:
             key="cvid",
             value=str(ver_ses_id),
             httponly=True,
-            domain="localhost",
             samesite="lax",
             max_age=30 * 24 * 60 * 60,
         )
@@ -142,7 +140,9 @@ class AuthService:
         if data.get("code") != code:
             raise HTTPException(status_code=401, detail="Invalid verification code")
 
-        signed_sid, user = await self.create_user_session(data["email"], "desktop_email")
+        signed_sid, user = await self.create_user_session(
+            data["email"], "desktop_email"
+        )
         await self.redis.delete(f"desktop:cvid:{verification_id}")
         return {"authenticated": True, "sid": signed_sid, "user": user}
 
@@ -199,7 +199,7 @@ class AuthService:
 
             response = JSONResponse(content={"authenticated": True, "user": data})
         else:
-            response = RedirectResponse(url="http://localhost:3000/about")
+            response = RedirectResponse(url="https://akiora.webhop.me/about")
 
         response.set_cookie(
             key="sid",
@@ -208,7 +208,6 @@ class AuthService:
             samesite="lax",
             max_age=30 * 24 * 60 * 60,
             path="/",
-            domain="localhost",
         )
 
         return response
@@ -221,6 +220,7 @@ class AuthService:
         tagline: str,
     ):
         from fastapi import HTTPException
+
         if self.verify_session(signed_sid) is None:
             raise HTTPException(status_code=401, detail="Invalid session")
 
@@ -233,7 +233,9 @@ class AuthService:
         profile_image_url = summoner.get("profile_image_url")
         current_profile_icon_id = self._parse_profile_icon_id(profile_image_url)
         if current_profile_icon_id is None:
-            raise HTTPException(status_code=502, detail="Profile icon is missing in OP.GG response")
+            raise HTTPException(
+                status_code=502, detail="Profile icon is missing in OP.GG response"
+            )
 
         target_icon_id = current_profile_icon_id % 30 + 1
         target_profile_image_url = self._replace_profile_icon_id(
@@ -273,7 +275,9 @@ class AuthService:
             "riot_id": f"{summoner.get('game_name') or username}#{summoner.get('tagline') or tagline}",
         }
 
-    async def finish_lol_account_verification(self, signed_sid: str, verification_id: str):
+    async def finish_lol_account_verification(
+        self, signed_sid: str, verification_id: str
+    ):
         from fastapi import HTTPException
         import httpx
 
@@ -286,7 +290,9 @@ class AuthService:
             raise HTTPException(status_code=401, detail="Invalid verification session")
 
         if challenge.get("sid") != signed_sid:
-            raise HTTPException(status_code=403, detail="Verification belongs to another session")
+            raise HTTPException(
+                status_code=403, detail="Verification belongs to another session"
+            )
 
         payload = await self._fetch_opgg_summoner(
             challenge["server"],
@@ -369,7 +375,9 @@ class AuthService:
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.get(url)
         if response.status_code >= 400:
-            raise HTTPException(status_code=502, detail="Failed to fetch OP.GG summoner")
+            raise HTTPException(
+                status_code=502, detail="Failed to fetch OP.GG summoner"
+            )
         return response.json()
 
     def _first_opgg_summoner(self, payload):
@@ -395,8 +403,10 @@ class AuthService:
                 for key, item in value.items():
                     if key in icon_keys and isinstance(item, int):
                         return item
-                    if isinstance(item, str) and "profile" in key.lower() and (
-                        "icon" in key.lower() or "image" in key.lower()
+                    if (
+                        isinstance(item, str)
+                        and "profile" in key.lower()
+                        and ("icon" in key.lower() or "image" in key.lower())
                     ):
                         match = re.search(r"(\d+)(?:\.\w+)?$", item)
                         if match:

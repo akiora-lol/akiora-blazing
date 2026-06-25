@@ -126,6 +126,18 @@ services:
       - redis
     restart: unless-stopped
 
+  front:
+    build:
+      context: ./frontend/akiora-v4
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"  
+    
+    networks:
+      - backend_akiora
+   
+    restart: unless-stopped
+
   gateway:
     build:
       context: ./backend/python
@@ -167,6 +179,33 @@ services:
       - redis
     restart: unless-stopped
 
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: hotel_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      
+      - DOMAIN=akiora.webhop.me
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/templates:/etc/nginx/templates:ro
+      # Same volume backend writes to — nginx serves /api/assets/* from here.
+      - backend_assets:/srv/assets:ro
+      - ./assets:/srv/static-assets:ro
+      # Cert material managed by certbot.
+      - letsencrypt_certs:/etc/letsencrypt:ro
+      - letsencrypt_www:/var/www/certbot:ro
+      - frontend_static:/usr/share/nginx/html/public:ro
+      - admin_static:/usr/share/nginx/html/admin:ro
+    depends_on:
+      - backend
+      - frontend
+      - admin-frontend
+    networks:
+      - hotel-network
 
 
 networks:

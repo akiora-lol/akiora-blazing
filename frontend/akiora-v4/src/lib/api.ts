@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import axios, { type AxiosError } from "axios"
 
-const AUTH_BASE = import.meta.env.VITE_AUTH_BASE_URL ?? "http://localhost:8000"
-const GATEWAY_BASE = import.meta.env.VITE_GATEWAY_BASE_URL ?? "http://localhost:8001"
+const AUTH_BASE = "http://auth:8000"
+const GATEWAY_BASE = "http://gateway:8000"
 
 const authApi = axios.create({
     baseURL: AUTH_BASE,
