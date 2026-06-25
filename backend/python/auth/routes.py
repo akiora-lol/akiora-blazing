@@ -70,9 +70,9 @@ async def logout(
     from fastapi.responses import JSONResponse
 
     response = JSONResponse(content={"message": "logged_out"})
-    response.delete_cookie(key="sid", path="/", domain="localhost")
-    response.delete_cookie(key="email", path="/", domain="localhost")
-    response.delete_cookie(key="cvid", path="/", domain="localhost")
+    response.delete_cookie(key="sid", path="/")
+    response.delete_cookie(key="email", path="/")
+    response.delete_cookie(key="cvid", path="/")
 
     if cookie.sid:
         session_id = auth_service.verify_session(cookie.sid)

@@ -28,5 +28,9 @@ class Settings(BaseSettings):
 
     community_grpc_address: str = "localhost:50051"
 
+    # Comma-separated list of extra CORS origins. Lets ops add new server IPs
+    # without code edits — e.g. ALLOWED_ORIGINS="http://1.2.3.4:3000,..."
+    allowed_origins: str = ""
+
 
 settings = Settings()
