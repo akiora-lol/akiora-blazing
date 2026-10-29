@@ -1,0 +1,39 @@
+seller2 ready: {Java_programming=450}
+seller3 ready: {Clean_code=650, Java_programming=600}
+seller1 ready: {Clean_code=900, Java_programming=700}
+buyer1 searching Java_programming; sellers=3
+buyer3 searching Java_programming; sellers=3
+buyer2 searching Clean_code; sellers=3
+missing searching Missing_book; sellers=3
+seller1 -> buyer3 PROPOSE 700
+seller2 -> buyer3 PROPOSE 450
+seller3 -> buyer3 PROPOSE 600
+seller1 -> buyer2 PROPOSE 900
+seller2 sold Java_programming to buyer3
+seller3 -> buyer2 PROPOSE 650
+seller1 -> missing REFUSE not-available
+seller2 -> buyer2 REFUSE not-available
+seller3 -> missing REFUSE not-available
+seller1 -> buyer1 PROPOSE 700
+seller2 -> missing REFUSE not-available
+missing: no offers for Missing_book
+buyer3 BOUGHT Java_programming from seller2 price=450
+seller3 sold Clean_code to buyer2
+buyer2 BOUGHT Clean_code from seller3 price=650
+seller2 -> buyer1 REFUSE not-available
+buyer3 terminating.
+seller3 -> buyer1 PROPOSE 600
+buyer2 terminating.
+seller3 sold Java_programming to buyer1
+buyer1 BOUGHT Java_programming from seller3 price=600
+buyer1 terminating.
+missing searching Missing_book; sellers=3
+seller2 -> missing REFUSE not-available
+seller3 -> missing REFUSE not-available
+seller1 -> missing REFUSE not-available
+missing: no offers for Missing_book
+missing searching Missing_book; sellers=3
+seller3 -> missing REFUSE not-available
+seller2 -> missing REFUSE not-available
+seller1 -> missing REFUSE not-available
+missing: no offers for Missing_book
